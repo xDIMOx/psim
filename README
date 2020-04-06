@@ -1,7 +1,7 @@
 Yet another MIPS processor simulator.
 
-The simulator runs only MIPSEL (little endian MIPS). It does not comply with
-any architecture specification.
+This simulator runs a subset of the little endian MIPS32 (MIPSEL)
+specification.  Full compliance to the specification is a non-goal.
 
 The goal is to be a multiprocessor simulator, then to implement COP2 to have
 some transputer-like functionality.
