@@ -5,10 +5,52 @@
  * load it, then tries to execute it.
  */
 
-#include <stdlib.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 
-int 
-main(void)
+#include <elf.h>
+#include <err.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#define IS_ELF(eh) ((eh).e_ident[EI_MAG0] == ELFMAG0 && \
+                    (eh).e_ident[EI_MAG1] == ELFMAG1 && \
+                    (eh).e_ident[EI_MAG2] == ELFMAG2 && \
+                    (eh).e_ident[EI_MAG3] == ELFMAG3)
+
+int
+main(int argc, char *argv[])
 {
+	int             fd;
+
+	Elf32_Ehdr     *eh;
+
+	/*
+	 * Read file
+	 */
+	if (argc <= 1)
+		errx(EXIT_FAILURE, "usage: %s /path/to/objfile", argv[0]);
+
+	if ((fd = open(argv[1], O_RDONLY)) < 0)
+		err(EXIT_FAILURE, "open: %s", argv[1]);
+
+	if ((eh = mmap(NULL, sizeof(Elf32_Ehdr), PROT_READ, MAP_PRIVATE,
+		       fd, 0)) == MAP_FAILED)
+		err(EXIT_FAILURE, "mmap");
+
+	/* Checks file type */
+	if (!IS_ELF(*eh) || eh->e_ident[EI_CLASS] != ELFCLASS32 ||
+	    eh->e_ident[EI_DATA] != ELFDATA2LSB || eh->e_type != ET_EXEC ||
+	    eh->e_machine != EM_MIPS)
+		errx(EXIT_FAILURE, "%s is not a MIPS32 EL executable",
+		     argv[1]);
+
+	if (munmap(eh, sizeof(Elf32_Ehdr)) < 0)
+		err(EXIT_FAILURE, "munmap");
+
+	if (close(fd) < 0)
+		err(EXIT_FAILURE, "close");
+
 	return EXIT_SUCCESS;
 }
