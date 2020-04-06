@@ -5,3 +5,10 @@ any architecture specification.
 
 The goal is to be a multiprocessor simulator, then to implement COP2 to have
 some transputer-like functionality.
+
+To build the simulator:
+	- Build dependencies: c99 compiler, POSIX compatible libc, elf.h
+	  (installed via libelf on Linux) and err.h (installed via libbsd
+	  on Linux)
+	- check config.mk and, if needed, set compiler and flags to your liking
+	- make
