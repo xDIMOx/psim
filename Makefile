@@ -4,7 +4,7 @@
 
 include config.mk
 
-SRC = main.c cpu.c
+SRC = main.c cpu.c mem.c
 OBJ = ${SRC:.c=.o}
 
 all: psim
@@ -14,6 +14,7 @@ all: psim
 	@${CC} ${CFLAGS} -c $<
 
 cpu.o: cpu.c cpu.h
+mem.o: mem.c mem.h
 
 psim: ${OBJ}
 	@echo CC -o $@

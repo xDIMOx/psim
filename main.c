@@ -16,6 +16,7 @@
 #include <unistd.h>
 
 #include "cpu.h"
+#include "mem.h"
 
 #define IS_ELF(eh) ((eh).e_ident[EI_MAG0] == ELFMAG0 && \
                     (eh).e_ident[EI_MAG1] == ELFMAG1 && \
@@ -30,6 +31,8 @@ main(int argc, char *argv[])
 	Elf32_Ehdr     *eh;
 
 	CPU            *cpu;
+
+	Mem            *mem;
 
 	/*
 	 * Read file
@@ -60,6 +63,10 @@ main(int argc, char *argv[])
 	if (!(cpu = CPU_create()))
 		err(EXIT_FAILURE, "CPU_create");
 
+	if (!(mem = Mem_create(1024)))
+		err(EXIT_FAILURE, "Mem_create");
+
+	Mem_destroy(mem);
 	CPU_destroy(cpu);
 
 	return EXIT_SUCCESS;
