@@ -11,8 +11,11 @@
 #include <elf.h>
 #include <err.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#include "cpu.h"
 
 #define IS_ELF(eh) ((eh).e_ident[EI_MAG0] == ELFMAG0 && \
                     (eh).e_ident[EI_MAG1] == ELFMAG1 && \
@@ -25,6 +28,8 @@ main(int argc, char *argv[])
 	int             fd;
 
 	Elf32_Ehdr     *eh;
+
+	CPU            *cpu;
 
 	/*
 	 * Read file
@@ -51,6 +56,11 @@ main(int argc, char *argv[])
 
 	if (close(fd) < 0)
 		err(EXIT_FAILURE, "close");
+
+	if (!(cpu = CPU_create()))
+		err(EXIT_FAILURE, "CPU_create");
+
+	CPU_destroy(cpu);
 
 	return EXIT_SUCCESS;
 }
