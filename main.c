@@ -28,11 +28,15 @@ main(int argc, char *argv[])
 {
 	int             fd;
 
+	void           *file;
+
 	Elf32_Ehdr     *eh;
 
 	CPU            *cpu;
 
 	Mem            *mem;
+
+	struct stat     stat;
 
 	/*
 	 * Read file
@@ -43,28 +47,32 @@ main(int argc, char *argv[])
 	if ((fd = open(argv[1], O_RDONLY)) < 0)
 		err(EXIT_FAILURE, "open: %s", argv[1]);
 
-	if ((eh = mmap(NULL, sizeof(Elf32_Ehdr), PROT_READ, MAP_PRIVATE,
-		       fd, 0)) == MAP_FAILED)
+	if (fstat(fd, &stat) < 0)
+		err(EXIT_FAILURE, "fstat");
+
+	if ((file = mmap(NULL, stat.st_size * sizeof(unsigned char), PROT_READ,
+			 MAP_PRIVATE, fd, 0)) == MAP_FAILED)
 		err(EXIT_FAILURE, "mmap");
 
 	/* Checks file type */
+	eh = file;
 	if (!IS_ELF(*eh) || eh->e_ident[EI_CLASS] != ELFCLASS32 ||
 	    eh->e_ident[EI_DATA] != ELFDATA2LSB || eh->e_type != ET_EXEC ||
 	    eh->e_machine != EM_MIPS)
 		errx(EXIT_FAILURE, "%s is not a MIPS32 EL executable",
 		     argv[1]);
 
-	if (munmap(eh, sizeof(Elf32_Ehdr)) < 0)
-		err(EXIT_FAILURE, "munmap");
-
-	if (close(fd) < 0)
-		err(EXIT_FAILURE, "close");
-
 	if (!(cpu = CPU_create()))
 		err(EXIT_FAILURE, "CPU_create");
 
 	if (!(mem = Mem_create(1024)))
 		err(EXIT_FAILURE, "Mem_create");
+
+	if (munmap(file, stat.st_size * sizeof(unsigned char)) < 0)
+		err(EXIT_FAILURE, "munmap");
+
+	if (close(fd) < 0)
+		err(EXIT_FAILURE, "close");
 
 	Mem_destroy(mem);
 	CPU_destroy(cpu);
