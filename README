@@ -12,3 +12,12 @@ To build the simulator:
 	  on Linux)
 	- check config.mk and, if needed, set compiler and flags to your liking
 	- make
+
+To build the examples:
+	- Build dependencies: MIPSEL capable assembler, compiler and linker
+	- cd examples
+	- check config.mk and, if needed, set compiler and flags to your liking
+	- make
+
+To run the simulator (from the repository's root directory):
+	- ./psim /path/to/mipsel_object_file
