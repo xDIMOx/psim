@@ -23,6 +23,9 @@ void            Mem_destroy(Mem *mem);
 
 int             Mem_progld(Mem *mem, unsigned char *elf);
 
+int64_t         Mem_lw(Mem *mem, size_t addr);
+int             Mem_sw(Mem *mem, size_t addr, uint32_t data);
+
 const char     *Mem_strerror(int errno);
 
 /*
@@ -63,10 +66,10 @@ Mem_destroy(Mem *mem)
 int
 Mem_progld(Mem *mem, unsigned char *elf)
 {
-	uint16_t phnum;
+	uint16_t        phnum;
 
-	Elf32_Ehdr *eh;
-	Elf32_Phdr *ph;
+	Elf32_Ehdr     *eh;
+	Elf32_Phdr     *ph;
 
 	Mem_errno = MEMERR_SUCC;
 
@@ -75,7 +78,7 @@ Mem_progld(Mem *mem, unsigned char *elf)
 	eh = (Elf32_Ehdr *) elf;
 
 	for (ph = (Elf32_Phdr *) elf + eh->e_phoff, phnum = eh->e_phnum;
-	phnum > 0; --phnum, ++ph) {
+	     phnum > 0; --phnum, ++ph) {
 		if (ph->p_type != PT_LOAD)
 			continue;
 
@@ -87,9 +90,60 @@ Mem_progld(Mem *mem, unsigned char *elf)
 				return -1;
 			}
 			memcpy(mem->data.b + ph->p_paddr,
-			     (uint8_t *) elf + ph->p_offset, ph->p_filesz);
+			       (uint8_t *) elf + ph->p_offset, ph->p_filesz);
 		}
 	}
+
+	return 0;
+}
+
+/*
+ * Mem_lw: load word
+ *
+ * mem: pointer to memory
+ * addr: address where the data is
+ *
+ * Returns data if successful, -1 otherwise, Mem_errno indicates the error
+ */
+int64_t
+Mem_lw(Mem *mem, size_t addr)
+{
+	Mem_errno = MEMERR_SUCC;
+
+	if (addr >= mem->size) {
+		Mem_errno = MEMERR_BND;
+		return -1;
+	}
+	if (addr & 3) {
+		Mem_errno = MEMERR_ALIGN;
+		return -1;
+	}
+	return mem->data.w[addr >> 2];
+}
+
+/*
+ * Mem_sw: store word
+ *
+ * mem: Pointer to memory
+ * addr: Address where the data is;
+ * data: Data to be stored
+ *
+ * Returns 0 if successful, -1 otherwise, Mem_errno indicates the error
+ */
+int
+Mem_sw(Mem *mem, size_t addr, uint32_t data)
+{
+	Mem_errno = MEMERR_SUCC;
+
+	if (addr >= mem->size) {
+		Mem_errno = MEMERR_BND;
+		return -1;
+	}
+	if (addr & 3) {
+		Mem_errno = MEMERR_ALIGN;
+		return -1;
+	}
+	mem->data.w[addr >> 2] = data;
 
 	return 0;
 }
