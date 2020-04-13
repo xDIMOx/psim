@@ -77,7 +77,7 @@ Mem_progld(Mem *mem, unsigned char *elf)
 
 	eh = (Elf32_Ehdr *) elf;
 
-	for (ph = (Elf32_Phdr *) elf + eh->e_phoff, phnum = eh->e_phnum;
+	for (ph = (Elf32_Phdr *) (elf + eh->e_phoff), phnum = eh->e_phnum;
 	     phnum > 0; --phnum, ++ph) {
 		if (ph->p_type != PT_LOAD)
 			continue;
