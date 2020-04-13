@@ -4,6 +4,7 @@
  * Processor's datapath
  */
 
+#include <err.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -19,9 +20,24 @@ static const char *Datapath_errlist[] = {
 };
 #undef X
 
+static int64_t  fetch(CPU *cpu, Mem *mem);
+
 int             Datapath_execute(CPU *cpu, Mem *mem);
 
 const char     *Datapath_strerror(int errno);
+
+static int64_t
+fetch(CPU *cpu, Mem *mem)
+{
+	int64_t         instr;
+
+	if ((instr = Mem_lw(mem, cpu->pc)) < 0) {
+		Datapath_errno = DATAPATHERR_FET;
+		warnx("fetch Mem_lw: %s", Mem_strerror(Mem_errno));
+		return -1;
+	}
+	return instr;
+}
 
 int
 Datapath_execute(CPU *cpu, Mem *mem)
