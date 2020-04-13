@@ -1,7 +1,8 @@
 Yet another MIPS processor simulator.
 
 This simulator runs a subset of the little endian MIPS32 (MIPSEL)
-specification.  Full compliance to the specification is a non-goal.
+specification.  Full compliance to the specification is a non-goal. It does
+not implement caches and any type of memory management.
 
 The goal is to be a multiprocessor simulator, then to implement COP2 to have
 some transputer-like functionality.
