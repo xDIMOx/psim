@@ -40,8 +40,15 @@ Mem_create(size_t size)
 {
 	Mem            *mem;
 
-	if (!(mem = malloc(sizeof(Mem) * size)))
+	Mem_errno = MEMERR_SUCC;
+
+	if (!(mem = malloc(sizeof(Mem))) ||
+	    !(mem->data.b = malloc(size * sizeof(uint8_t)))) {
+		Mem_errno = MEMERR_ALLOC;
 		return NULL;
+	}
+
+	mem->size = size;
 
 	return mem;
 }
