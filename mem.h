@@ -8,9 +8,10 @@
  * Error handling
  */
 
-#define MemErrList        \
-X(MEMERR_SUCC, "Success") \
-X(MEMERR_ALLOC, "Could not allocate memory")
+#define MemErrList                           \
+X(MEMERR_SUCC, "Success")                    \
+X(MEMERR_ALLOC, "Could not allocate memory") \
+X(MEMERR_BND, "Address is out of bounds")
 
 #define X(a, b) a,
 enum MemErrNo {
@@ -34,5 +35,7 @@ typedef struct {
 
 Mem            *Mem_create(size_t size);
 void            Mem_destroy(Mem *mem);
+
+int             Mem_progld(Mem *mem, unsigned char *elf);
 
 const char     *Mem_strerror(int errno);
