@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "cpu.h"
@@ -26,11 +27,14 @@
 int
 main(int argc, char *argv[])
 {
+	uint16_t        phnum;
+
 	int             fd;
 
 	void           *file;
 
 	Elf32_Ehdr     *eh;
+	Elf32_Phdr     *ph;
 
 	CPU            *cpu;
 
@@ -62,11 +66,34 @@ main(int argc, char *argv[])
 		errx(EXIT_FAILURE, "%s is not a MIPS32 EL executable",
 		     argv[1]);
 
+	/*
+	 * Program loading
+	 */
 	if (!(cpu = CPU_create()))
 		err(EXIT_FAILURE, "CPU_create");
 
 	if (!(mem = Mem_create(1024)))
 		err(EXIT_FAILURE, "Mem_create");
+
+	for (ph = (Elf32_Phdr *) file + eh->e_phoff, phnum = eh->e_phnum;
+	     phnum > 0;
+	     phnum--, ph += eh->e_phentsize) {
+		if (ph->p_type != PT_LOAD)
+			continue;
+
+		switch (ph->p_flags) {
+		case PF_R + PF_X:
+		case PF_R + PF_W + PF_X:
+			if (ph->p_paddr >= mem->size)
+				errx(EXIT_FAILURE,
+				     "Program loading: insufficient memory");
+
+			memcpy(mem->data.b + ph->p_paddr,
+			     (uint8_t *) file + ph->p_offset, ph->p_filesz);
+		}
+	}
+
+	cpu->pc = eh->e_entry;
 
 	if (munmap(file, stat.st_size * sizeof(unsigned char)) < 0)
 		err(EXIT_FAILURE, "munmap");
