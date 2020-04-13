@@ -10,8 +10,16 @@
 /* Implements */
 #include "mem.h"
 
+#define X(a, b) b,
+static const char *Mem_errlist[] = {
+	MemErrList
+};
+#undef X
+
 Mem            *Mem_create(size_t size);
 void            Mem_destroy(Mem *mem);
+
+const char     *Mem_strerror(int errno);
 
 /*
  * Mem_create: create memory object
@@ -38,4 +46,17 @@ void
 Mem_destroy(Mem *mem)
 {
 	free(mem);
+}
+
+/*
+ * Mem_strerror: Map error number to error message string
+ *
+ * errno: error number
+ *
+ * Returns error message string
+ */
+inline const char *
+Mem_strerror(int errno)
+{
+	return Mem_errlist[errno];
 }

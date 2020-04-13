@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 		errx(EXIT_FAILURE, "CPU_create: %s", CPU_strerror(CPU_errno));
 
 	if (!(mem = Mem_create(1024)))
-		err(EXIT_FAILURE, "Mem_create");
+		errx(EXIT_FAILURE, "Mem_create: %s", Mem_strerror(Mem_errno));
 
 	for (ph = (Elf32_Phdr *) file + eh->e_phoff, phnum = eh->e_phnum;
 	     phnum > 0;
