@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 	 * Program loading
 	 */
 	if (!(cpu = CPU_create()))
-		err(EXIT_FAILURE, "CPU_create");
+		errx(EXIT_FAILURE, "CPU_create: %s", CPU_strerror(CPU_errno));
 
 	if (!(mem = Mem_create(1024)))
 		err(EXIT_FAILURE, "Mem_create");

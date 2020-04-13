@@ -6,6 +6,26 @@
  * Implementation a MIPS processor
  */
 
+/*
+ * Error handling
+ */
+
+#define CPUErrList        \
+X(CPUERR_SUCC, "Success") \
+X(CPUERR_ALLOC, "Could not allocate CPU")
+
+#define X(a, b) a,
+enum CPUErrNo {
+	CPUErrList
+};
+#undef X
+
+int             CPU_errno;
+
+/*
+ * Definitions
+ */
+
 #define N_GPR 32		/* No. of registers */
 
 enum CPURegNo {
@@ -50,3 +70,5 @@ typedef struct {
 
 CPU            *CPU_create(void);
 void            CPU_destroy(CPU *cpu);
+
+const char     *CPU_strerror(int errno);
