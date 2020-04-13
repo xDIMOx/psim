@@ -13,6 +13,7 @@ all: psim
 	@echo CC -c $<
 	@${CC} ${CFLAGS} -c $<
 
+main.o: main.c cpu.h mem.h datapath.h
 cpu.o: cpu.c cpu.h
 mem.o: mem.c mem.h
 datapath.o: datapath.c datapath.h cpu.h mem.h
