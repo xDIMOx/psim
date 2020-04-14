@@ -63,10 +63,13 @@ main(int argc, char *argv[])
 		errx(EXIT_FAILURE, "%s is not a MIPS32 EL executable",
 		     argv[1]);
 
+	/*
+	 * Component creation
+	 */
 	if (!(cpu = CPU_create()))
 		errx(EXIT_FAILURE, "CPU_create: %s", CPU_strerror(CPU_errno));
 
-	if (!(mem = Mem_create(1024)))
+	if (!(mem = Mem_create((1 << 24))))	/* 8 MiB */
 		errx(EXIT_FAILURE, "Mem_create: %s", Mem_strerror(Mem_errno));
 
 	/*
