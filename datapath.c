@@ -7,6 +7,7 @@
 #include <err.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "cpu.h"
 #include "mem.h"
@@ -42,7 +43,16 @@ fetch(CPU *cpu, Mem *mem)
 int
 Datapath_execute(CPU *cpu, Mem *mem)
 {
+	int64_t         instr;
+
 	Datapath_errno = DATAPATHERR_SUCC;
+
+	if ((instr = fetch(cpu, mem)) < 0)
+		return -1;
+
+	printf("%x\n", (uint32_t) instr);
+
+	cpu->pc += 4;
 
 	return 0;
 }

@@ -18,6 +18,7 @@
 
 #include "cpu.h"
 #include "mem.h"
+#include "datapath.h"
 
 #define IS_ELF(eh) ((eh).e_ident[EI_MAG0] == ELFMAG0 && \
                     (eh).e_ident[EI_MAG1] == ELFMAG1 && \
@@ -85,6 +86,16 @@ main(int argc, char *argv[])
 
 	if (close(fd) < 0)
 		err(EXIT_FAILURE, "close");
+
+	/*
+	 * Program execution
+	 */
+	while (!Datapath_execute(cpu, mem));
+
+	if (Datapath_errno != DATAPATHERR_SUCC) {
+		errx(EXIT_FAILURE, "Datapath_execute %s",
+		     Datapath_strerror(Datapath_errno));
+	}
 
 	Mem_destroy(mem);
 	CPU_destroy(cpu);
