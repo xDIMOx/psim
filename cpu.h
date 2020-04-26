@@ -68,7 +68,7 @@ typedef struct {
 	uint32_t        gpr[N_GPR];	/* General purpose registers */
 } CPU;
 
-CPU            *CPU_create(void);
+CPU            *CPU_create(uint32_t id);
 void            CPU_destroy(CPU *cpu);
 
 const char     *CPU_strerror(int errno);

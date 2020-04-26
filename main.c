@@ -67,7 +67,7 @@ main(int argc, char *argv[])
 	/*
 	 * Component creation
 	 */
-	if (!(cpu = CPU_create()))
+	if (!(cpu = CPU_create(0)))
 		errx(EXIT_FAILURE, "CPU_create: %s", CPU_strerror(CPU_errno));
 
 	if (!(mem = Mem_create((1 << 24))))	/* 8 MiB */

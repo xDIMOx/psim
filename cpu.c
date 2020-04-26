@@ -18,16 +18,20 @@ static const char *CPU_errlist[] = {
 };
 #undef X
 
-CPU            *CPU_create(void);
+CPU            *CPU_create(uint32_t id);
 void            CPU_destroy(CPU *cpu);
 
 const char     *CPU_strerror(int errno);
 
 /*
  * CPU_create: create CPU object
+ *
+ * id: CPU id
+ *
+ * Returns cpu if success, NULL otherwise
  */
 CPU            *
-CPU_create(void)
+CPU_create(uint32_t id)
 {
 	CPU            *cpu;
 
@@ -37,6 +41,7 @@ CPU_create(void)
 		CPU_errno = CPUERR_ALLOC;
 		return NULL;
 	}
+	cpu->gpr[K0] = id;
 
 	return cpu;
 }
