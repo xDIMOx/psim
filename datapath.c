@@ -9,6 +9,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifndef NDEBUG
+#include <unistd.h>
+#endif
+
 #include "cpu.h"
 #include "mem.h"
 
@@ -50,7 +54,9 @@ Datapath_execute(CPU *cpu, Mem *mem)
 	if ((instr = fetch(cpu, mem)) < 0)
 		return -1;
 
-	printf("%x\n", (uint32_t) instr);
+#ifndef NDEBUG
+	write(cpu->debug.fd, &instr, sizeof(uint32_t));
+#endif
 
 	cpu->pc += 4;
 

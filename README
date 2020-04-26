@@ -22,3 +22,7 @@ To build the examples:
 
 To run the simulator (from the repository's root directory):
 	- ./psim /path/to/mipsel_object_file
+	- if NDEBUG was not set when compiling, files called cpuXXXX_instrdump
+	  will be created when the program is executed. To check these files
+	  you will need a MIPSEL capable objdump(1):
+		* objdump -b binary -m mips -D cpuXXXX_instrdump

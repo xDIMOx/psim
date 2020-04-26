@@ -9,6 +9,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifndef NDEBUG
+#include <err.h>
+#include <fcntl.h>
+#include <stdio.h>
+#endif
+
 /* Implements */
 #include "cpu.h"
 
@@ -42,6 +48,13 @@ CPU_create(uint32_t id)
 		return NULL;
 	}
 	cpu->gpr[K0] = id;
+
+#ifndef NDEBUG
+	snprintf(cpu->debug.fname, 20, "cpu%04d_instrdump", id);
+	if ((cpu->debug.fd = open(cpu->debug.fname, O_CREAT | O_WRONLY |
+				  O_TRUNC, S_IRUSR | S_IWUSR)) < 0)
+		warn("open: %s", cpu->debug.fname);
+#endif
 
 	return cpu;
 }

@@ -66,6 +66,13 @@ enum CPURegNo {
 typedef struct {
 	uint32_t        pc;	/* Program counter */
 	uint32_t        gpr[N_GPR];	/* General purpose registers */
+
+#ifndef NDEBUG
+	struct {
+		int             fd;
+		char            fname[20];
+	}               debug;
+#endif
 } CPU;
 
 CPU            *CPU_create(uint32_t id);
