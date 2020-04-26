@@ -31,6 +31,14 @@ int             Datapath_execute(CPU *cpu, Mem *mem);
 
 const char     *Datapath_strerror(int errno);
 
+/*
+ * fetch: Fetch an instruction
+ *
+ * cpu: CPU fetching the instruction
+ * mem: memory where the instruction is
+ *
+ * Returns instruction if success, -1 otherwise
+ */
 static int64_t
 fetch(CPU *cpu, Mem *mem)
 {
@@ -44,6 +52,14 @@ fetch(CPU *cpu, Mem *mem)
 	return instr;
 }
 
+/*
+ * Datapath_execute: execute a cycle
+ *
+ * cpu: CPU running at the moment
+ * mem: memory that the CPU is using
+ *
+ * Returns 0 if success, -1 otherwise
+ */
 int
 Datapath_execute(CPU *cpu, Mem *mem)
 {
