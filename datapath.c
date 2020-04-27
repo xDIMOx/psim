@@ -113,6 +113,8 @@ decode(Decoder *dec)
 	case OPC_IGN2:
 	case OPC_IGN3:
 	case SPECIAL2:
+		dec->sign |= FUNC(dec->raw);
+		return 0;
 	case JALX:
 	case OPC_IGN4:
 	case SPECIAL3:
