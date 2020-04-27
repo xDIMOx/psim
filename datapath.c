@@ -27,6 +27,7 @@ static const char *Datapath_errlist[] = {
 #undef X
 
 static int64_t  fetch(CPU *cpu, Mem *mem);
+static int      decode(Decoder *dec);
 
 int             Datapath_execute(CPU *cpu, Mem *mem);
 
@@ -60,7 +61,7 @@ fetch(CPU *cpu, Mem *mem)
  *
  * Returns 0 if success, -1 otherwise
  */
-int
+static int
 decode(Decoder *dec)
 {
 	dec->rd = RD(dec->raw) >> 11;
