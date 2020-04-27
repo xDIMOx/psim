@@ -1,2 +1,3 @@
 -TCPU
 -TMem
+-TDecoder

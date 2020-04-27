@@ -64,8 +64,15 @@ enum CPURegNo {
 };
 
 typedef struct {
+	uint32_t        raw;
+	uint8_t         rd;
+	uint8_t         rs, rt;
+} Decoder;
+
+typedef struct {
 	uint32_t        pc;	/* Program counter */
 	uint32_t        gpr[N_GPR];	/* General purpose registers */
+	Decoder         dec;	/* instruction decoder */
 
 #ifndef NDEBUG
 	struct {
