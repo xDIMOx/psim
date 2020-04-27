@@ -191,6 +191,10 @@ int
 execute(CPU *cpu)
 {
 	switch (cpu->dec.sign) {
+	case (uint32_t) (SPECIAL << 26) | OR:
+		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] |
+		    cpu->gpr[cpu->dec.rt];
+		break;
 	case (uint32_t) (JAL << 26):
 		cpu->gpr[31] = cpu->pc + 8;
 		cpu->dec.npc = (cpu->pc & 0xF0000000) | cpu->dec.idx;
@@ -217,6 +221,8 @@ Datapath_execute(CPU *cpu, Mem *mem)
 	int64_t         instr;
 
 	Datapath_errno = DATAPATHERR_SUCC;
+
+	cpu->gpr[0] = 0;	/* forces that r0 is zero */
 
 	if ((instr = fetch(cpu, mem)) < 0)
 		return -1;
