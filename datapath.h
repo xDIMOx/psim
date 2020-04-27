@@ -8,9 +8,10 @@
  * Error handling
  */
 
-#define DatapathErrList        \
-X(DATAPATHERR_SUCC, "Success") \
-X(DATAPATHERR_FET, "Could not fetch")
+#define DatapathErrList               \
+X(DATAPATHERR_SUCC, "Success")        \
+X(DATAPATHERR_FET, "Could not fetch") \
+X(DATAPATHERR_DEC, "Could not decode")
 
 #define X(a, b) a,
 enum DatapathErrNo {

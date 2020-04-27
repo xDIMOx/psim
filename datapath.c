@@ -46,8 +46,8 @@ fetch(CPU *cpu, Mem *mem)
 	int64_t         instr;
 
 	if ((instr = Mem_lw(mem, cpu->pc)) < 0) {
-		Datapath_errno = DATAPATHERR_FET;
 		warnx("fetch Mem_lw: %s", Mem_strerror(Mem_errno));
+		Datapath_errno = DATAPATHERR_FET;
 		return -1;
 	}
 	return instr;
@@ -167,8 +167,11 @@ decode(Decoder *dec)
 		return 0;
 	}
 
+	Datapath_errno = DATAPATHERR_DEC;
+
 	return -1;
 }
+
 /*
  * Datapath_execute: execute a cycle
  *
