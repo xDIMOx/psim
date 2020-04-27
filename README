@@ -1,9 +1,10 @@
 Yet another MIPS processor simulator.
 
 This simulator runs a subset of the little endian MIPS32 (MIPSEL)
-specification.  Full compliance to the specification is a non-goal. It does
+specification.  Full compliance to the specification is a non-goal, in
+fact it only implements enough instructions to run the examples. It does
 not implement caches and any type of memory management. It does not have a
-delay slot.
+delay slot. It does not implements interruptions of any kind.
 
 The goal is to be a multiprocessor simulator, then to implement COP2 to have
 some transputer-like functionality.
@@ -20,10 +21,16 @@ To build the examples:
 	- cd examples
 	- check config.mk and, if needed, set compiler and flags to your liking
 	- make
+		* It is possible to build individual programs by running
+		  make PROGRAM_NAME, where PROGRAM_NAME is the program's file
+		  name excluding the '.c'
 
 To run the simulator (from the repository's root directory):
 	- ./psim /path/to/mipsel_object_file
+
+NOTES:
 	- if NDEBUG was not set when compiling, files called cpuXXXX_instrdump
 	  will be created when the program is executed. To check these files
-	  you will need a MIPSEL capable objdump(1):
-		* objdump -b binary -m mips -D cpuXXXX_instrdump
+	  a MIPSEL capable objdump(1) is needed:
+		* objdump -b binary -m mips -EL -Mno-aliases \
+		  -D cpuXXXX_instrdump
