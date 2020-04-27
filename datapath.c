@@ -201,6 +201,9 @@ execute(CPU *cpu)
 		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] |
 		    cpu->gpr[cpu->dec.rt];
 		break;
+	case (uint32_t) (J << 26):
+		cpu->dec.npc = (cpu->pc & 0xF0000000) | cpu->dec.idx;
+		break;
 	case (uint32_t) (JAL << 26):
 		cpu->gpr[31] = cpu->pc + 8;
 		cpu->dec.npc = (cpu->pc & 0xF0000000) | cpu->dec.idx;
