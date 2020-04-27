@@ -371,3 +371,23 @@ enum bshfl {
 	BSHFL_IGN27,
 	BSHFL_IGN28,
 };
+
+enum cop0_rs {
+	MFC0,
+	COP0RS_IGN0,
+	COP0RS_IGN1,
+	COP0RS_IGN2,
+	MTC0,
+	COP0RS_IGN3,
+	COP0RS_IGN4,
+	COP0RS_IGN5,
+	COP0RS_IGN6,
+	COP0RS_IGN7,
+	RDPGPR,
+	MFMC0,
+	COP0RS_IGN8,
+	COP0RS_IGN9,
+	WRPGPR,
+	COP0RS_IGN10,		/* For values after this, it encodes the C0
+				 * value */
+};

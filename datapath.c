@@ -102,6 +102,8 @@ decode(Decoder *dec)
 	case XORI:
 	case LUI:
 	case COP0:
+		dec->sign |= RS(dec->raw);
+		return 0;
 	case COP1:
 	case COP2:
 	case COP1X:
