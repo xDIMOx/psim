@@ -324,3 +324,8 @@ enum movci {
 	MOVF,
 	MOVT,
 };
+
+enum srl {
+	SRL,
+	ROTR,
+};
