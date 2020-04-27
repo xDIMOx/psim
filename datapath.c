@@ -208,6 +208,9 @@ execute(CPU *cpu)
 		cpu->gpr[31] = cpu->pc + 8;
 		cpu->dec.npc = (cpu->pc & 0xF0000000) | cpu->dec.idx;
 		break;
+	case (uint32_t) (LUI << 26):
+		cpu->gpr[cpu->dec.rt] = cpu->dec.imm << 16;
+		break;
 	default:
 		Datapath_errno = DATAPATHERR_IMPL;
 		return -1;
