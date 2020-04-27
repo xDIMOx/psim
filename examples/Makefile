@@ -8,7 +8,7 @@ include config.mk
 ASRC = start.s
 
 # C source files
-CSRC = null.c
+CSRC = null.c hello.c
 
 # Object files
 OBJ = ${ASRC:.s=.o} ${CSRC:.c=.o}
@@ -17,7 +17,8 @@ OBJ = ${ASRC:.s=.o} ${CSRC:.c=.o}
 EXE = ${CSRC:.c=}
 
 # prerequisites
-NULL_PREREQ = start.o null.o
+NULL_PREREQ  = start.o null.o
+HELLO_PREREQ = start.o hello.o
 
 all: ${EXE}
 
@@ -31,10 +32,15 @@ all: ${EXE}
 
 start.o: start.s
 null.o: null.c
+hello.o: hello.c
 
 null: ${NULL_PREREQ}
 	@echo LD -o $@
 	@${LD} ${LDFLAGS} ${NULL_PREREQ} -o $@
+
+hello: ${HELLO_PREREQ}
+	@echo LD -o $@
+	@${LD} ${LDFLAGS} ${HELLO_PREREQ} -o $@
 
 clean:
 	@echo cleaning
