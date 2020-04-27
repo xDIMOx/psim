@@ -173,6 +173,18 @@ decode(Decoder *dec)
 	return -1;
 }
 
+int
+execute(CPU *cpu)
+{
+	switch(cpu->dec.sign) {
+	default:
+		Datapath_errno = DATAPATHERR_IMPL;
+		return -1;
+	}
+
+	return 0;
+}
+
 /*
  * Datapath_execute: execute a cycle
  *
@@ -197,6 +209,9 @@ Datapath_execute(CPU *cpu, Mem *mem)
 
 	cpu->dec.raw = (uint32_t) instr;
 	if (decode(&cpu->dec))
+		return -1;
+
+	if (execute(cpu))
 		return -1;
 
 	cpu->pc += 4;
