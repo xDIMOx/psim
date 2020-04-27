@@ -329,3 +329,8 @@ enum srl {
 	SRL,
 	ROTR,
 };
+
+enum srlv {
+	SRLV,
+	ROTRV,
+};
