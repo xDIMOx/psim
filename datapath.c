@@ -101,13 +101,17 @@ decode(Decoder *dec)
 	case ORI:
 	case XORI:
 	case LUI:
+		return 0;
 	case COP0:
 		dec->sign |= RS(dec->raw);
 		if (dec->rs > COP0RS_IGN10)
 			dec->sign |= FUNC(dec->raw);
 		return 0;
 	case COP1:
+		return 0;
 	case COP2:
+		dec->sign |= RS(dec->raw);
+		return 0;
 	case COP1X:
 	case BEQL:
 	case BNEL:
@@ -117,6 +121,7 @@ decode(Decoder *dec)
 	case OPC_IGN1:
 	case OPC_IGN2:
 	case OPC_IGN3:
+		return 0;
 	case SPECIAL2:
 		dec->sign |= FUNC(dec->raw);
 		return 0;
