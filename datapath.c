@@ -191,6 +191,9 @@ int
 execute(CPU *cpu)
 {
 	switch (cpu->dec.sign) {
+	case (uint32_t) (SPECIAL << 26) | SLL:
+		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rt] << cpu->dec.sa;
+		break;
 	case (uint32_t) (SPECIAL << 26) | JR:
 		cpu->dec.npc = cpu->gpr[cpu->dec.rs];
 		break;
