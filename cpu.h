@@ -67,9 +67,12 @@ typedef struct {
 	uint32_t        raw;
 	uint32_t        sign;
 	int16_t         imm;
+	uint8_t         isjump;
 	uint8_t         sa;
 	uint8_t         rd;
 	uint8_t         rs, rt;
+	uint32_t        idx;
+	uint32_t        npc;
 } Decoder;
 
 typedef struct {

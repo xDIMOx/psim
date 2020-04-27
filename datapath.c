@@ -69,6 +69,9 @@ decode(Decoder *dec)
 	dec->rt = RT(dec->raw) >> 16;
 	dec->sa = SA(dec->raw) >> 6;
 
+	dec->isjump = 0;
+	dec->idx = INSTR_IDX(dec->raw) << 2;
+
 	dec->sign = OPC(dec->raw);
 	switch (OPC(dec->raw) >> 26) {
 	case SPECIAL:
@@ -83,6 +86,10 @@ decode(Decoder *dec)
 		case SRLV_FIELD:
 			dec->sign |= SHROTV(dec->raw);
 			break;
+		case JR:
+		case JALR:
+			dec->isjump = 1;
+			break;
 		}
 		return 0;
 	case REGIMM:
@@ -94,6 +101,8 @@ decode(Decoder *dec)
 	case BNE:
 	case BLEZ:
 	case BGTZ:
+		dec->isjump = 1;
+		return 0;
 	case ADDI:
 	case ADDIU:
 	case SLTI:
@@ -114,10 +123,13 @@ decode(Decoder *dec)
 		dec->sign |= RS(dec->raw);
 		return 0;
 	case COP1X:
+		return 0;
 	case BEQL:
 	case BNEL:
 	case BLEZL:
 	case BGTZL:
+		dec->isjump = 1;
+		return 0;
 	case OPC_IGN0:
 	case OPC_IGN1:
 	case OPC_IGN2:
@@ -127,6 +139,8 @@ decode(Decoder *dec)
 		dec->sign |= FUNC(dec->raw);
 		return 0;
 	case JALX:
+		dec->isjump = 1;
+		return 0;
 	case OPC_IGN4:
 	case SPECIAL3:
 		dec->sign |= FUNC(dec->raw);
@@ -176,7 +190,11 @@ decode(Decoder *dec)
 int
 execute(CPU *cpu)
 {
-	switch(cpu->dec.sign) {
+	switch (cpu->dec.sign) {
+	case (uint32_t) (JAL << 26):
+		cpu->gpr[31] = cpu->pc + 8;
+		cpu->dec.npc = (cpu->pc & 0xF0000000) | cpu->dec.idx;
+		break;
 	default:
 		Datapath_errno = DATAPATHERR_IMPL;
 		return -1;
@@ -214,7 +232,10 @@ Datapath_execute(CPU *cpu, Mem *mem)
 	if (execute(cpu))
 		return -1;
 
-	cpu->pc += 4;
+	if (cpu->dec.isjump)
+		cpu->pc = cpu->dec.npc;
+	else
+		cpu->pc += 4;
 
 	return 0;
 }

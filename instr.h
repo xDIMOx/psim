@@ -15,6 +15,8 @@
 
 #define IMM(i) ((int16_t) ((i) & 0xFFFF))
 
+#define INSTR_IDX(i) ((i) & 0x3FFFFFF)
+
 #define RD(i) (((i) & 0xF800))
 #define RT(i) (((i) & 0x1F0000))
 #define RS(i) (((i) & 0x3E00000))
