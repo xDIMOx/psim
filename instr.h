@@ -4,16 +4,16 @@
  * CPU instruction codes and helper macros
  */
 
-#define OPC(i) (((i) & 0xFC000000) >> 26)
+#define OPC(i) (((i) & 0xFC000000))
 
 #define FUNC(i) ((i) & 0x3F)
 #define TF(i) ((i) & 0x100)
 #define SHROT(i) ((i) & 0x200000)
 #define SHROTV(i) ((i) & 0x40)
 
-#define RD(i) (((i) & 0xF800) >> 11)
-#define RT(i) (((i) & 0x1F0000) >> 21)
-#define RS(i) (((i) & 0x3E00000) >> 16)
+#define RD(i) (((i) & 0xF800))
+#define RT(i) (((i) & 0x1F0000))
+#define RS(i) (((i) & 0x3E00000))
 
 enum opcodes {
 	SPECIAL,

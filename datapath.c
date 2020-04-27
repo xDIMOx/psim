@@ -63,13 +63,14 @@ fetch(CPU *cpu, Mem *mem)
 int
 decode(Decoder *dec)
 {
-	dec->rd = RD(dec->raw);
-	dec->rs = RS(dec->raw);
-	dec->rt = RT(dec->raw);
+	dec->rd = RD(dec->raw) >> 11;
+	dec->rs = RS(dec->raw) >> 21;
+	dec->rt = RT(dec->raw) >> 16;
 
-	switch (OPC(dec->raw)) {
+	dec->sign = OPC(dec->raw);
+	switch (OPC(dec->raw) >> 26) {
 	case SPECIAL:
-		dec->sign = OPC(dec->raw) | FUNC(dec->raw);
+		dec->sign |= FUNC(dec->raw);
 		switch (FUNC(dec->raw)) {
 		case MOVCI:
 			dec->sign |= TF(dec->raw);
@@ -83,6 +84,8 @@ decode(Decoder *dec)
 		}
 		return 0;
 	case REGIMM:
+		dec->sign |= RT(dec->raw);
+		return 0;
 	case J:
 	case JAL:
 	case BEQ:
