@@ -118,6 +118,8 @@ decode(Decoder *dec)
 	case JALX:
 	case OPC_IGN4:
 	case SPECIAL3:
+		dec->sign |= FUNC(dec->raw);
+		return 0;
 	case LB:
 	case LH:
 	case LWL:
