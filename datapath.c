@@ -69,6 +69,19 @@ decode(Decoder *dec)
 
 	switch (OPC(dec->raw)) {
 	case SPECIAL:
+		dec->sign = OPC(dec->raw) | FUNC(dec->raw);
+		switch (FUNC(dec->raw)) {
+		case MOVCI:
+			dec->sign |= TF(dec->raw);
+			break;
+		case SRL_FIELD:
+			dec->sign |= SHROT(dec->raw);
+			break;
+		case SRLV_FIELD:
+			dec->sign |= SHROTV(dec->raw);
+			break;
+		}
+		return 0;
 	case REGIMM:
 	case J:
 	case JAL:

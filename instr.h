@@ -6,6 +6,11 @@
 
 #define OPC(i) (((i) & 0xFC000000) >> 26)
 
+#define FUNC(i) ((i) & 0x3F)
+#define TF(i) ((i) & 0x100)
+#define SHROT(i) ((i) & 0x200000)
+#define SHROTV(i) ((i) & 0x40)
+
 #define RD(i) (((i) & 0xF800) >> 11)
 #define RT(i) (((i) & 0x1F0000) >> 21)
 #define RS(i) (((i) & 0x3E00000) >> 16)
@@ -75,4 +80,71 @@ enum opcodes {
 	SDC1,
 	SDC2,
 	OPC_IGN12,
+};
+
+enum special_func {
+	SLL,
+	MOVCI,
+	SRL_FIELD,
+	SRA,
+	SLLV,
+	FUNC_IGN0,
+	SRLV_FIELD,
+	SRAV,
+	JR,
+	JALR,
+	MOVZ,
+	MOVN,
+	SYSCALL,
+	BREAK,
+	FUNC_IGN1,
+	SYNC,
+	MFHI,
+	MTHI,
+	MFLO,
+	MTLO,
+	FUNC_IGN2,
+	FUNC_IGN3,
+	FUNC_IGN4,
+	FUNC_IGN5,
+	MULT,
+	MULTU,
+	DIV,
+	DIVU,
+	FUNC_IGN6,
+	FUNC_IGN7,
+	FUNC_IGN8,
+	FUNC_IGN9,
+	ADD,
+	ADDU,
+	SUB,
+	SUBU,
+	AND,
+	OR,
+	XOR,
+	NOR,
+	FUNC_IGN10,
+	FUNC_IGN11,
+	SLT,
+	SLTU,
+	FUNC_IGN12,
+	FUNC_IGN13,
+	FUNC_IGN14,
+	FUNC_IGN15,
+	TGE,
+	TGEU,
+	TLT,
+	TLTU,
+	TEQ,
+	FUNC_IGN16,
+	TNE,
+	FUNC_IGN17,
+	FUNC_IGN18,
+	FUNC_IGN19,
+	FUNC_IGN20,
+	FUNC_IGN21,
+	FUNC_IGN22,
+	FUNC_IGN23,
+	FUNC_IGN24,
+	FUNC_IGN25,
 };
