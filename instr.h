@@ -11,6 +11,8 @@
 #define SHROT(i) ((i) & 0x200000)
 #define SHROTV(i) ((i) & 0x40)
 
+#define IMM(i) ((int16_t) ((i) & 0xFFFF))
+
 #define RD(i) (((i) & 0xF800))
 #define RT(i) (((i) & 0x1F0000))
 #define RS(i) (((i) & 0x3E00000))
@@ -147,4 +149,39 @@ enum special_func {
 	FUNC_IGN23,
 	FUNC_IGN24,
 	FUNC_IGN25,
+};
+
+enum regimm_rt {
+	BLTZ,
+	BGEZ,
+	BLTZL,
+	BGEZL,
+	RT_IGN0,
+	RT_IGN1,
+	RT_IGN2,
+	RT_IGN3,
+	TGEI,
+	TGEIU,
+	TLTI,
+	TLTIU,
+	TEQI,
+	RT_IGN4,
+	TNEI,
+	RT_IGN5,
+	BLTZAL,
+	BGEZAL,
+	BLTZALL,
+	BGEZALL,
+	RT_IGN6,
+	RT_IGN7,
+	RT_IGN8,
+	RT_IGN9,
+	RT_IGN10,
+	RT_IGN11,
+	RT_IGN12,
+	RT_IGN13,
+	RT_IGN14,
+	RT_IGN15,
+	RT_IGN16,
+	SYNCI,
 };
