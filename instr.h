@@ -319,3 +319,8 @@ enum special3_func {
 	SPECIAL3_IGN60,
 	SPECIAL3_IGN61,
 };
+
+enum movci {
+	MOVF,
+	MOVT,
+};
