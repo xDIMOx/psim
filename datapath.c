@@ -120,6 +120,8 @@ decode(Decoder *dec)
 	case OPC_IGN4:
 	case SPECIAL3:
 		dec->sign |= FUNC(dec->raw);
+		if (FUNC(dec->raw) == BSHFL)
+			dec->sign |= SA(dec->raw);
 		return 0;
 	case LB:
 	case LH:
