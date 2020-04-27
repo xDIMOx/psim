@@ -103,6 +103,8 @@ decode(Decoder *dec)
 	case LUI:
 	case COP0:
 		dec->sign |= RS(dec->raw);
+		if (dec->rs > COP0RS_IGN10)
+			dec->sign |= FUNC(dec->raw);
 		return 0;
 	case COP1:
 	case COP2:
