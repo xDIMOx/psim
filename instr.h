@@ -11,6 +11,8 @@
 #define SHROT(i) ((i) & 0x200000)
 #define SHROTV(i) ((i) & 0x40)
 
+#define SA(i) (((i) & 0x7C0))
+
 #define IMM(i) ((int16_t) ((i) & 0xFFFF))
 
 #define RD(i) (((i) & 0xF800))

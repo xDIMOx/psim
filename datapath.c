@@ -66,6 +66,7 @@ decode(Decoder *dec)
 	dec->rd = RD(dec->raw) >> 11;
 	dec->rs = RS(dec->raw) >> 21;
 	dec->rt = RT(dec->raw) >> 16;
+	dec->sa = SA(dec->raw) >> 6;
 
 	dec->sign = OPC(dec->raw);
 	switch (OPC(dec->raw) >> 26) {
