@@ -6,6 +6,10 @@
 
 #define OPC(i) (((i) & 0xFC000000) >> 26)
 
+#define RD(i) (((i) & 0xF800) >> 11)
+#define RT(i) (((i) & 0x1F0000) >> 21)
+#define RS(i) (((i) & 0x3E00000) >> 16)
+
 enum opcodes {
 	SPECIAL,
 	REGIMM,

@@ -15,6 +15,7 @@
 
 #include "cpu.h"
 #include "mem.h"
+#include "instr.h"
 
 /* Implements */
 #include "datapath.h"
@@ -53,6 +54,90 @@ fetch(CPU *cpu, Mem *mem)
 }
 
 /*
+ * decode: decode an instruction
+ *
+ * dec: struct containing decoding information
+ *
+ * Returns 0 if success, -1 otherwise
+ */
+int
+decode(Decoder *dec)
+{
+	dec->rd = RD(dec->raw);
+	dec->rs = RS(dec->raw);
+	dec->rt = RT(dec->raw);
+
+	switch (OPC(dec->raw)) {
+	case SPECIAL:
+	case REGIMM:
+	case J:
+	case JAL:
+	case BEQ:
+	case BNE:
+	case BLEZ:
+	case BGTZ:
+	case ADDI:
+	case ADDIU:
+	case SLTI:
+	case SLTIU:
+	case ANDI:
+	case ORI:
+	case XORI:
+	case LUI:
+	case COP0:
+	case COP1:
+	case COP2:
+	case COP1X:
+	case BEQL:
+	case BNEL:
+	case BLEZL:
+	case BGTZL:
+	case OPC_IGN0:
+	case OPC_IGN1:
+	case OPC_IGN2:
+	case OPC_IGN3:
+	case SPECIAL2:
+	case JALX:
+	case OPC_IGN4:
+	case SPECIAL3:
+	case LB:
+	case LH:
+	case LWL:
+	case LW:
+	case LBU:
+	case LHU:
+	case LWR:
+	case OPC_IGN5:
+	case SB:
+	case SH:
+	case SWL:
+	case SW:
+	case OPC_IGN6:
+	case OPC_IGN7:
+	case SWR:
+	case CACHE:
+	case LL:
+	case LWC1:
+	case LWC2:
+	case PREF:
+	case OPC_IGN8:
+	case LDC1:
+	case LDC2:
+	case OPC_IGN9:
+	case SC:
+	case SWC1:
+	case SWC2:
+	case OPC_IGN10:
+	case OPC_IGN11:
+	case SDC1:
+	case SDC2:
+	case OPC_IGN12:
+		return 0;
+	}
+
+	return -1;
+}
+/*
  * Datapath_execute: execute a cycle
  *
  * cpu: CPU running at the moment
@@ -73,6 +158,10 @@ Datapath_execute(CPU *cpu, Mem *mem)
 #ifndef NDEBUG
 	write(cpu->debug.fd, &instr, sizeof(uint32_t));
 #endif
+
+	cpu->dec.raw = (uint32_t) instr;
+	if (decode(&cpu->dec))
+		return -1;
 
 	cpu->pc += 4;
 
