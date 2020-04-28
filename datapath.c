@@ -220,7 +220,8 @@ execute(CPU *cpu, Mem *mem)
 		cpu->gpr[cpu->dec.rt] = cpu->gpr[cpu->dec.rs] + cpu->dec.imm;
 		break;
 	case ((uint32_t) ORI << 26):
-		cpu->gpr[cpu->dec.rt] = cpu->gpr[cpu->dec.rs] | cpu->dec.imm;
+		cpu->gpr[cpu->dec.rt] = cpu->gpr[cpu->dec.rs] |
+		    (uint16_t) cpu->dec.imm;
 		break;
 	case ((uint32_t) LUI << 26):
 		cpu->gpr[cpu->dec.rt] = cpu->dec.imm << 16;
