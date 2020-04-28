@@ -188,6 +188,8 @@ execute(CPU *cpu, Mem *mem)
 
 	int64_t         data;
 
+	addr = cpu->gpr[cpu->dec.rs] + cpu->dec.imm;
+
 	switch (cpu->dec.sign) {
 	case ((uint32_t) SPECIAL << 26) | SLL:
 		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rt] << cpu->dec.sa;
@@ -224,7 +226,6 @@ execute(CPU *cpu, Mem *mem)
 		cpu->gpr[cpu->dec.rt] = cpu->dec.imm << 16;
 		break;
 	case ((uint32_t) LB << 26):
-		addr = cpu->gpr[cpu->dec.rs] + cpu->dec.imm;
 		if ((data = Mem_lb(mem, addr)) < 0) {
 			warnx("Mem_lb: %s", Mem_strerror(Mem_errno));
 			return -1;
@@ -232,6 +233,12 @@ execute(CPU *cpu, Mem *mem)
 		/* sign extention */
 		ext = (int8_t) data;
 		cpu->gpr[cpu->dec.rt] = ext;
+		break;
+	case ((uint32_t) SB << 26):
+		if (Mem_sb(mem, addr, (uint8_t) cpu->gpr[cpu->dec.rt])) {
+			warnx("Mem_sb: %s", Mem_strerror(Mem_errno));
+			return -1;
+		}
 		break;
 	default:
 		Datapath_errno = DATAPATHERR_IMPL;
