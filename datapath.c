@@ -69,6 +69,8 @@ decode(Decoder *dec)
 	dec->rt = RT(dec->raw) >> 16;
 	dec->sa = SA(dec->raw) >> 6;
 
+	dec->imm = IMM(dec->raw);
+
 	dec->isjump = 0;
 	dec->idx = INSTR_IDX(dec->raw) << 2;
 
