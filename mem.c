@@ -26,6 +26,9 @@ int             Mem_progld(Mem *mem, unsigned char *elf);
 int64_t         Mem_lw(Mem *mem, size_t addr);
 int             Mem_sw(Mem *mem, size_t addr, uint32_t data);
 
+int64_t         Mem_lb(Mem *mem, size_t addr);
+int             Mem_sb(Mem *mem, size_t addr, uint8_t data);
+
 const char     *Mem_strerror(int errno);
 
 /*
@@ -151,6 +154,45 @@ Mem_sw(Mem *mem, size_t addr, uint32_t data)
 		return -1;
 	}
 	mem->data.w[addr >> 2] = data;
+
+	return 0;
+}
+
+/*
+ * Mem_lb: Load byte
+ *
+ * addr: Address where the data is;
+ *
+ * Returns the data if success, -1 otherwise
+ */
+int64_t
+Mem_lb(Mem *mem, size_t addr)
+{
+	Mem_errno = MEMERR_SUCC;
+
+	if (addr >= mem->size) {
+		Mem_errno = MEMERR_BND;
+		return -1;
+	}
+	return mem->data.b[addr];
+}
+
+/*
+ * Mem_sb: Store byte
+ *
+ * addr: Address where the data is;
+ * data: Data to be stored
+ */
+int
+Mem_sb(Mem *mem, size_t addr, uint8_t data)
+{
+	Mem_errno = MEMERR_SUCC;
+
+	if (addr >= mem->size) {
+		Mem_errno = MEMERR_BND;
+		return -1;
+	}
+	mem->data.b[addr] = data;
 
 	return 0;
 }

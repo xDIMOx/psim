@@ -42,4 +42,7 @@ int             Mem_progld(Mem *mem, unsigned char *elf);
 int64_t         Mem_lw(Mem *mem, size_t addr);
 int             Mem_sw(Mem *mem, size_t addr, uint32_t data);
 
+int64_t         Mem_lb(Mem *mem, size_t addr);
+int             Mem_sb(Mem *mem, size_t addr, uint8_t data);
+
 const char     *Mem_strerror(int errno);
