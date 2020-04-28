@@ -180,30 +180,30 @@ int
 execute(CPU *cpu)
 {
 	switch (cpu->dec.sign) {
-	case (uint32_t) (SPECIAL << 26) | SLL:
+	case ((uint32_t) SPECIAL << 26) | SLL:
 		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rt] << cpu->dec.sa;
 		break;
-	case (uint32_t) (SPECIAL << 26) | JR:
+	case ((uint32_t) SPECIAL << 26) | JR:
 		cpu->dec.npc = cpu->gpr[cpu->dec.rs];
 		break;
-	case (uint32_t) (SPECIAL << 26) | OR:
+	case ((uint32_t) SPECIAL << 26) | OR:
 		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] |
 		    cpu->gpr[cpu->dec.rt];
 		break;
-	case (uint32_t) (J << 26):
+	case ((uint32_t) J << 26):
 		cpu->dec.npc = (cpu->pc & 0xF0000000) | cpu->dec.idx;
 		break;
-	case (uint32_t) (JAL << 26):
+	case ((uint32_t) JAL << 26):
 		cpu->gpr[31] = cpu->pc + 8;
 		cpu->dec.npc = (cpu->pc & 0xF0000000) | cpu->dec.idx;
 		break;
-	case (uint32_t) (ADDIU << 26):
+	case ((uint32_t) ADDIU << 26):
 		cpu->gpr[cpu->dec.rt] = cpu->gpr[cpu->dec.rs] + cpu->dec.imm;
 		break;
-	case (uint32_t) (ORI << 26):
+	case ((uint32_t) ORI << 26):
 		cpu->gpr[cpu->dec.rt] = cpu->gpr[cpu->dec.rs] | cpu->dec.imm;
 		break;
-	case (uint32_t) (LUI << 26):
+	case ((uint32_t) LUI << 26):
 		cpu->gpr[cpu->dec.rt] = cpu->dec.imm << 16;
 		break;
 	default:
