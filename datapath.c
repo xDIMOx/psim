@@ -28,6 +28,7 @@ static const char *Datapath_errlist[] = {
 
 static int64_t  fetch(CPU *cpu, Mem *mem);
 static int      decode(Decoder *dec);
+static int      execute(CPU *cpu, Mem *mem);
 
 int             Datapath_execute(CPU *cpu, Mem *mem);
 
@@ -179,7 +180,15 @@ decode(Decoder *dec)
 	return -1;
 }
 
-int
+/*
+ * execute: execute instruction
+ *
+ * cpu: CPU executing the instruction
+ * mem: memory
+ *
+ * Returns 0 if success, -1 otherwise
+ */
+static int
 execute(CPU *cpu, Mem *mem)
 {
 	int32_t         ext;
