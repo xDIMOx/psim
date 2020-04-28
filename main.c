@@ -12,6 +12,7 @@
 #include <err.h>
 #include <fcntl.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -90,7 +91,8 @@ main(int argc, char *argv[])
 	/*
 	 * Program execution
 	 */
-	while (!Datapath_execute(cpu, mem));
+	while (!Datapath_execute(cpu, mem))
+		fflush(stdout);
 
 	if (Datapath_errno != DATAPATHERR_SUCC) {
 		errx(EXIT_FAILURE, "Datapath_execute %s",

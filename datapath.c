@@ -26,6 +26,8 @@ static const char *Datapath_errlist[] = {
 };
 #undef X
 
+#define IO_ADDR 0xFFFF
+
 static int64_t  fetch(CPU *cpu, Mem *mem);
 static int      decode(Decoder *dec);
 static int      execute(CPU *cpu, Mem *mem);
@@ -244,16 +246,22 @@ execute(CPU *cpu, Mem *mem)
 		cpu->gpr[cpu->dec.rt] = cpu->dec.imm << 16;
 		break;
 	case ((uint32_t) LB << 26):
-		if ((data = Mem_lb(mem, addr)) < 0) {
-			warnx("Mem_lb: %s", Mem_strerror(Mem_errno));
-			return -1;
+		if (addr == IO_ADDR)
+			cpu->gpr[cpu->dec.rt] = (int32_t) getchar();
+		else {
+			if ((data = Mem_lb(mem, addr)) < 0) {
+				warnx("Mem_lb: %s", Mem_strerror(Mem_errno));
+				return -1;
+			}
+			/* sign extention */
+			ext = (int8_t) data;
+			cpu->gpr[cpu->dec.rt] = ext;
 		}
-		/* sign extention */
-		ext = (int8_t) data;
-		cpu->gpr[cpu->dec.rt] = ext;
 		break;
 	case ((uint32_t) SB << 26):
-		if (Mem_sb(mem, addr, (uint8_t) cpu->gpr[cpu->dec.rt])) {
+		if (addr == IO_ADDR)
+			putchar((int) cpu->gpr[cpu->dec.rt]);
+		else if (Mem_sb(mem, addr, (uint8_t) cpu->gpr[cpu->dec.rt])) {
 			warnx("Mem_sb: %s", Mem_strerror(Mem_errno));
 			return -1;
 		}
