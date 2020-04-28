@@ -183,7 +183,9 @@ int
 execute(CPU *cpu, Mem *mem)
 {
 	int32_t         ext;
+	uint32_t        off;
 	uint32_t        addr;
+
 	int64_t         data;
 
 	switch (cpu->dec.sign) {
@@ -203,6 +205,14 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) JAL << 26):
 		cpu->gpr[31] = cpu->pc + 8;
 		cpu->dec.npc = (cpu->pc & 0xF0000000) | cpu->dec.idx;
+		break;
+	case ((uint32_t) BNE << 26):
+		if (cpu->gpr[cpu->dec.rs] != cpu->gpr[cpu->dec.rt]) {
+			ext = cpu->dec.imm;
+			off = ext << 2;
+			cpu->dec.npc = cpu->pc + 4 + off;
+		} else
+			cpu->dec.isjump = 0;
 		break;
 	case ((uint32_t) ADDIU << 26):
 		cpu->gpr[cpu->dec.rt] = cpu->gpr[cpu->dec.rs] + cpu->dec.imm;
