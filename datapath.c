@@ -165,6 +165,7 @@ decode(Decoder *dec)
 	case SWC2:
 	case SDC1:
 	case SDC2:
+		dec->ismem = 1;
 		return 0;
 	default:
 		Datapath_errno = DATAPATHERR_RES;
@@ -177,8 +178,12 @@ decode(Decoder *dec)
 }
 
 int
-execute(CPU *cpu)
+execute(CPU *cpu, Mem *mem)
 {
+	int32_t         ext;
+	uint32_t        addr;
+	int64_t         data;
+
 	switch (cpu->dec.sign) {
 	case ((uint32_t) SPECIAL << 26) | SLL:
 		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rt] << cpu->dec.sa;
@@ -205,6 +210,16 @@ execute(CPU *cpu)
 		break;
 	case ((uint32_t) LUI << 26):
 		cpu->gpr[cpu->dec.rt] = cpu->dec.imm << 16;
+		break;
+	case ((uint32_t) LB << 26):
+		addr = cpu->gpr[cpu->dec.rs] + cpu->dec.imm;
+		if ((data = Mem_lb(mem, addr)) < 0) {
+			warnx("Mem_lb: %s", Mem_strerror(Mem_errno));
+			return -1;
+		}
+		/* sign extention */
+		ext = (int8_t) data;
+		cpu->gpr[cpu->dec.rt] = ext;
 		break;
 	default:
 		Datapath_errno = DATAPATHERR_IMPL;
@@ -242,7 +257,7 @@ Datapath_execute(CPU *cpu, Mem *mem)
 	if (decode(&cpu->dec))
 		return -1;
 
-	if (execute(cpu))
+	if (execute(cpu, mem))
 		return -1;
 
 	if (cpu->dec.isjump)
