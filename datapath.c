@@ -130,18 +130,12 @@ decode(Decoder *dec)
 	case BGTZL:
 		dec->isjump = 1;
 		return 0;
-	case OPC_IGN0:
-	case OPC_IGN1:
-	case OPC_IGN2:
-	case OPC_IGN3:
-		return 0;
 	case SPECIAL2:
 		dec->sign |= FUNC(dec->raw);
 		return 0;
 	case JALX:
 		dec->isjump = 1;
 		return 0;
-	case OPC_IGN4:
 	case SPECIAL3:
 		dec->sign |= FUNC(dec->raw);
 		if (FUNC(dec->raw) == BSHFL)
@@ -154,32 +148,27 @@ decode(Decoder *dec)
 	case LBU:
 	case LHU:
 	case LWR:
-	case OPC_IGN5:
 	case SB:
 	case SH:
 	case SWL:
 	case SW:
-	case OPC_IGN6:
-	case OPC_IGN7:
 	case SWR:
 	case CACHE:
 	case LL:
 	case LWC1:
 	case LWC2:
 	case PREF:
-	case OPC_IGN8:
 	case LDC1:
 	case LDC2:
-	case OPC_IGN9:
 	case SC:
 	case SWC1:
 	case SWC2:
-	case OPC_IGN10:
-	case OPC_IGN11:
 	case SDC1:
 	case SDC2:
-	case OPC_IGN12:
 		return 0;
+	default:
+		Datapath_errno = DATAPATHERR_RES;
+		return -1;
 	}
 
 	Datapath_errno = DATAPATHERR_DEC;
