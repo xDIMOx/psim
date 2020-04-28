@@ -208,6 +208,14 @@ execute(CPU *cpu, Mem *mem)
 		cpu->gpr[31] = cpu->pc + 8;
 		cpu->dec.npc = (cpu->pc & 0xF0000000) | cpu->dec.idx;
 		break;
+	case ((uint32_t) BEQ << 26):
+		if (cpu->gpr[cpu->dec.rs] == cpu->gpr[cpu->dec.rt]) {
+			ext = cpu->dec.imm;
+			off = ext << 2;
+			cpu->dec.npc = cpu->pc + 4 + off;
+		} else
+			cpu->dec.isjump = 0;
+		break;
 	case ((uint32_t) BNE << 26):
 		if (cpu->gpr[cpu->dec.rs] != cpu->gpr[cpu->dec.rt]) {
 			ext = cpu->dec.imm;
