@@ -8,12 +8,13 @@
  * Error handling
  */
 
-#define DatapathErrList                    \
-X(DATAPATHERR_SUCC, "Success")             \
-X(DATAPATHERR_FET, "Could not fetch")      \
-X(DATAPATHERR_DEC, "Could not decode")     \
-X(DATAPATHERR_RES, "Reserved instruction") \
-X(DATAPATHERR_IMPL, "Instruction not implemented")
+#define DatapathErrList                            \
+X(DATAPATHERR_SUCC, "Success")                     \
+X(DATAPATHERR_FET, "Could not fetch")              \
+X(DATAPATHERR_DEC, "Could not decode")             \
+X(DATAPATHERR_RES, "Reserved instruction")         \
+X(DATAPATHERR_IMPL, "Instruction not implemented") \
+X(DATAPATHERR_EXIT, "Simulation ended")
 
 #define X(a, b) a,
 enum DatapathErrNo {

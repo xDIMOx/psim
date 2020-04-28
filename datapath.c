@@ -118,9 +118,10 @@ decode(Decoder *dec)
 	case LUI:
 		return 0;
 	case COP0:
-		dec->sign |= RS(dec->raw);
 		if (dec->rs > COP0RS_IGN10)
 			dec->sign |= FUNC(dec->raw);
+		else
+			dec->sign |= RS(dec->raw);
 		return 0;
 	case COP1:
 		return 0;
@@ -245,6 +246,9 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) LUI << 26):
 		cpu->gpr[cpu->dec.rt] = cpu->dec.imm << 16;
 		break;
+	case ((uint32_t) COP0 << 26) | WAIT:
+		Datapath_errno = DATAPATHERR_EXIT;
+		return -1;
 	case ((uint32_t) LB << 26):
 		if (addr == IO_ADDR)
 			cpu->gpr[cpu->dec.rt] = (int32_t) getchar();

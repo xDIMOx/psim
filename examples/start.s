@@ -10,8 +10,9 @@ _start:
 	jal main
 	nop
 
-_BUSYWAIT:
-	j _BUSYWAIT
+BUSYWAIT:
+	bnez $k0, BUSYWAIT
+	wait # only processor 0 can stop the simulation
 	nop
 
 	.end _start
