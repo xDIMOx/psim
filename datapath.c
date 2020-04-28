@@ -208,6 +208,9 @@ execute(CPU *cpu)
 		cpu->gpr[31] = cpu->pc + 8;
 		cpu->dec.npc = (cpu->pc & 0xF0000000) | cpu->dec.idx;
 		break;
+	case (uint32_t) (ADDIU << 26):
+		cpu->gpr[cpu->dec.rt] = cpu->gpr[cpu->dec.rs] + cpu->dec.imm;
+		break;
 	case (uint32_t) (ORI << 26):
 		cpu->gpr[cpu->dec.rt] = cpu->gpr[cpu->dec.rs] | cpu->dec.imm;
 		break;
