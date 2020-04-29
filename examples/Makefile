@@ -5,7 +5,7 @@
 include config.mk
 
 # Assembly source files
-ASRC = start.s
+ASRC = start.s common.s spinlock.s
 
 # C source files
 CSRC = null.c hello.c
@@ -31,6 +31,8 @@ all: ${EXE}
 	@${CC} ${CFLAGS} -c $<
 
 start.o: start.s
+common.o: common.s
+spinlock.o: spinlock.s
 null.o: null.c
 hello.o: hello.c
 
