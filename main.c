@@ -29,7 +29,10 @@
 int
 main(int argc, char *argv[])
 {
+	int             c;
 	int             fd;
+
+	size_t          memsz;
 
 	unsigned char  *elf;
 
@@ -40,6 +43,30 @@ main(int argc, char *argv[])
 	Mem            *mem;
 
 	struct stat     stat;
+
+	/*
+	 * Default options
+	 */
+	memsz = (1 << 24);	/* 16 Mib */
+
+	/*
+	 * Parse command line options
+	 */
+	while ((c = getopt(argc, argv, ":m:")) != -1) {
+		switch (c) {
+		case 'm':
+			memsz = atol(optarg);
+			break;
+		case ':':
+			errx(EXIT_FAILURE, "Option -%c requires an operand",
+			     optopt);
+			break;
+		case '?':
+			errx(EXIT_FAILURE, "Unrecognized option: '-%c'",
+			     optopt);
+			break;
+		}
+	}
 
 	/*
 	 * Read file
@@ -71,7 +98,7 @@ main(int argc, char *argv[])
 	if (!(cpu = CPU_create(0)))
 		errx(EXIT_FAILURE, "CPU_create: %s", CPU_strerror(CPU_errno));
 
-	if (!(mem = Mem_create((1 << 24))))	/* 8 MiB */
+	if (!(mem = Mem_create(memsz)))
 		errx(EXIT_FAILURE, "Mem_create: %s", Mem_strerror(Mem_errno));
 
 	/*
