@@ -71,11 +71,11 @@ main(int argc, char *argv[])
 	/*
 	 * Read file
 	 */
-	if (argc <= 1)
+	if (!(argv[optind]))
 		errx(EXIT_FAILURE, "usage: %s /path/to/objfile", argv[0]);
 
-	if ((fd = open(argv[1], O_RDONLY)) < 0)
-		err(EXIT_FAILURE, "open: %s", argv[1]);
+	if ((fd = open(argv[optind], O_RDONLY)) < 0)
+		err(EXIT_FAILURE, "open: %s", argv[optind]);
 
 	if (fstat(fd, &stat) < 0)
 		err(EXIT_FAILURE, "fstat");
@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 	    eh->e_ident[EI_DATA] != ELFDATA2LSB || eh->e_type != ET_EXEC ||
 	    eh->e_machine != EM_MIPS)
 		errx(EXIT_FAILURE, "%s is not a MIPS32 EL executable",
-		     argv[1]);
+		     argv[optind]);
 
 	/*
 	 * Component creation
