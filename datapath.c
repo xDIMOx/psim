@@ -50,7 +50,8 @@ fetch(CPU *cpu, Mem *mem)
 	int64_t         instr;
 
 	if ((instr = Mem_lw(mem, cpu->pc)) < 0) {
-		warnx("fetch Mem_lw: %s", Mem_strerror(Mem_errno));
+		warnx("cpu[%u] -- fetch Mem_lw: %s",
+		      cpu->gpr[K0], Mem_strerror(Mem_errno));
 		Datapath_errno = DATAPATHERR_FET;
 		return -1;
 	}
@@ -254,7 +255,8 @@ execute(CPU *cpu, Mem *mem)
 			cpu->gpr[cpu->dec.rt] = (int32_t) getchar();
 		else {
 			if ((data = Mem_lb(mem, addr)) < 0) {
-				warnx("Mem_lb: %s", Mem_strerror(Mem_errno));
+				warnx("cpu[%u] -- Mem_lb: %s",
+				      cpu->gpr[K0], Mem_strerror(Mem_errno));
 				return -1;
 			}
 			/* sign extention */
@@ -266,7 +268,8 @@ execute(CPU *cpu, Mem *mem)
 		if (addr == IO_ADDR)
 			putchar((int) cpu->gpr[cpu->dec.rt]);
 		else if (Mem_sb(mem, addr, (uint8_t) cpu->gpr[cpu->dec.rt])) {
-			warnx("Mem_sb: %s", Mem_strerror(Mem_errno));
+			warnx("cpu[%u] -- Mem_sb: %s",
+			      cpu->gpr[K0], Mem_strerror(Mem_errno));
 			return -1;
 		}
 		break;

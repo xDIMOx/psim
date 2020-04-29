@@ -10,9 +10,10 @@
  * Error handling
  */
 
-#define CPUErrList        \
-X(CPUERR_SUCC, "Success") \
-X(CPUERR_ALLOC, "Could not allocate CPU")
+#define CPUErrList                        \
+X(CPUERR_SUCC, "Success")                 \
+X(CPUERR_ALLOC, "Could not allocate CPU") \
+X(CPUERR_DEBUG, "Could not generate debug info")
 
 #define X(a, b) a,
 enum CPUErrNo {

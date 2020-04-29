@@ -32,13 +32,15 @@ main(int argc, char *argv[])
 	int             c;
 	int             fd;
 
+	size_t          i;
 	size_t          memsz;
+	size_t          ncpu;
 
 	unsigned char  *elf;
 
 	Elf32_Ehdr     *eh;
 
-	CPU            *cpu;
+	CPU           **cpus;
 
 	Mem            *mem;
 
@@ -48,14 +50,18 @@ main(int argc, char *argv[])
 	 * Default options
 	 */
 	memsz = (1 << 24);	/* 16 Mib */
+	ncpu = 1;
 
 	/*
 	 * Parse command line options
 	 */
-	while ((c = getopt(argc, argv, ":m:")) != -1) {
+	while ((c = getopt(argc, argv, ":m:c:")) != -1) {
 		switch (c) {
+		case 'c':
+			ncpu = strtoul(optarg, NULL, 10);
+			break;
 		case 'm':
-			memsz = atol(optarg);
+			memsz = strtoul(optarg, NULL, 10);
 			break;
 		case ':':
 			errx(EXIT_FAILURE, "Option -%c requires an operand",
@@ -95,8 +101,15 @@ main(int argc, char *argv[])
 	/*
 	 * Component creation
 	 */
-	if (!(cpu = CPU_create(0)))
-		errx(EXIT_FAILURE, "CPU_create: %s", CPU_strerror(CPU_errno));
+	if (!(cpus = malloc(sizeof(CPU *) * ncpu)))
+		err(EXIT_FAILURE, "could not allocate cpu array");
+
+	for (i = 0; i < ncpu; ++i) {
+		if (!(cpus[i] = CPU_create(i))) {
+			errx(EXIT_FAILURE, "cpu[%u] CPU_create: %s",
+			     i, CPU_strerror(CPU_errno));
+		}
+	}
 
 	if (!(mem = Mem_create(memsz)))
 		errx(EXIT_FAILURE, "Mem_create: %s", Mem_strerror(Mem_errno));
@@ -107,7 +120,8 @@ main(int argc, char *argv[])
 	if (Mem_progld(mem, elf) < 0)
 		errx(EXIT_FAILURE, "Mem_progld: %s", Mem_strerror(Mem_errno));
 
-	cpu->pc = eh->e_entry;
+	for (i = 0; i < ncpu; ++i)
+		cpus[i]->pc = eh->e_entry;
 
 	if (munmap(elf, stat.st_size * sizeof(unsigned char)) < 0)
 		err(EXIT_FAILURE, "munmap");
@@ -118,8 +132,10 @@ main(int argc, char *argv[])
 	/*
 	 * Program execution
 	 */
-	while (!Datapath_execute(cpu, mem))
-		fflush(stdout);
+	for (i = 0; !Datapath_execute(cpus[i], mem); i = (i + 1) % ncpu) {
+		if (i == (ncpu - 1))
+			fflush(stdout);
+	}
 
 	if (Datapath_errno != DATAPATHERR_SUCC) {
 		errx(EXIT_FAILURE, "Datapath_execute %s",
@@ -127,7 +143,9 @@ main(int argc, char *argv[])
 	}
 
 	Mem_destroy(mem);
-	CPU_destroy(cpu);
+
+	for (i = 0; i < ncpu; ++i)
+		CPU_destroy(cpus[i]);
 
 	return EXIT_SUCCESS;
 }

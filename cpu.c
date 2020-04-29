@@ -13,6 +13,7 @@
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <unistd.h>
 #endif
 
 /* Implements */
@@ -51,9 +52,13 @@ CPU_create(uint32_t id)
 
 #ifndef NDEBUG
 	snprintf(cpu->debug.fname, 20, "cpu%04d_instrdump", id);
-	if ((cpu->debug.fd = open(cpu->debug.fname, O_CREAT | O_WRONLY |
-				  O_TRUNC, S_IRUSR | S_IWUSR)) < 0)
-		warn("open: %s", cpu->debug.fname);
+	if ((cpu->debug.fd = open(cpu->debug.fname,
+				  O_CREAT | O_WRONLY | O_TRUNC,
+				  S_IRUSR | S_IWUSR)) < 0) {
+		warn("cpu id = %u -- open: %s", id, cpu->debug.fname);
+		CPU_errno = CPUERR_DEBUG;
+		return NULL;
+	}
 #endif
 
 	return cpu;
@@ -65,6 +70,9 @@ CPU_create(uint32_t id)
 void
 CPU_destroy(CPU *cpu)
 {
+#ifndef NDEBUG
+	close(cpu->debug.fd);
+#endif
 	free(cpu);
 }
 
