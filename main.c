@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 
 	for (i = 0; i < ncpu; ++i) {
 		if (!(cpus[i] = CPU_create(i))) {
-			errx(EXIT_FAILURE, "cpu[%u] CPU_create: %s",
+			errx(EXIT_FAILURE, "cpu[%lu] -- CPU_create: %s",
 			     i, CPU_strerror(CPU_errno));
 		}
 	}
@@ -138,8 +138,8 @@ main(int argc, char *argv[])
 	}
 
 	if (Datapath_errno != DATAPATHERR_SUCC) {
-		errx(EXIT_FAILURE, "Datapath_execute %s",
-		     Datapath_strerror(Datapath_errno));
+		errx(EXIT_FAILURE, "cpu[%lu] -- Datapath_execute %s",
+		     i, Datapath_strerror(Datapath_errno));
 	}
 
 	Mem_destroy(mem);
