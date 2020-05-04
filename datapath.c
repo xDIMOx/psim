@@ -237,6 +237,7 @@ execute(CPU *cpu, Mem *mem)
 		} else
 			cpu->dec.isjump = 0;
 		break;
+	case ((uint32_t) ADDI << 26):
 	case ((uint32_t) ADDIU << 26):
 		cpu->gpr[cpu->dec.rt] = cpu->gpr[cpu->dec.rs] + cpu->dec.imm;
 		break;
