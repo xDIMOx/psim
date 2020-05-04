@@ -278,6 +278,14 @@ execute(CPU *cpu, Mem *mem)
 			cpu->gpr[cpu->dec.rt] = ext;
 		}
 		break;
+	case ((uint32_t) LW << 26):
+		if ((data = Mem_lw(mem, addr)) < 0) {
+			warnx("cpu[%u] -- Mem_lw: %s",
+			      cpu->gpr[K0], Mem_strerror(Mem_errno));
+			return -1;
+		}
+		cpu->gpr[cpu->dec.rt] = data;
+		break;
 	case ((uint32_t) SB << 26):
 		if (addr == IO_ADDR)
 			putchar((int) cpu->gpr[cpu->dec.rt]);
