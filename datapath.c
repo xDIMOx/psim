@@ -287,6 +287,15 @@ execute(CPU *cpu, Mem *mem)
 			return -1;
 		}
 		break;
+	case ((uint32_t) SW << 26):
+		if (addr == IO_ADDR)
+			printf("%08x\n", cpu->gpr[cpu->dec.rt]);
+		else if (Mem_sw(mem, addr, cpu->gpr[cpu->dec.rt])) {
+			warnx("cpu[%u] -- Mem_sw: %s",
+			      cpu->gpr[K0], Mem_strerror(Mem_errno));
+			return -1;
+		}
+		break;
 	default:
 		Datapath_errno = DATAPATHERR_IMPL;
 		return -1;
