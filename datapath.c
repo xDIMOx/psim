@@ -127,7 +127,10 @@ decode(Decoder *dec)
 	case COP1:
 		return 0;
 	case COP2:
-		dec->sign |= RS(dec->raw);
+		if (dec->rs > COP2RS_IGN8)
+			dec->sign |= CO(dec->raw);
+		else
+			dec->sign |= RS(dec->raw);
 		return 0;
 	case COP1X:
 		return 0;
@@ -251,6 +254,16 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) COP0 << 26) | WAIT:
 		Datapath_errno = DATAPATHERR_EXIT;
 		return -1;
+	case ((uint32_t) COP2 << 26) | (1 << 25): /* coprocessor operation */
+		switch (COFUN(cpu->dec.raw)) {
+		case MEMSZ:
+			cpu->gpr[K1] = mem->size;
+			break;
+		default:
+			Datapath_errno = DATAPATHERR_IMPL;
+			return -1;
+		}
+		break;
 	case ((uint32_t) LB << 26):
 		if (addr == IO_ADDR)
 			cpu->gpr[cpu->dec.rt] = (int32_t) getchar();

@@ -21,6 +21,9 @@
 #define RT(i) (((i) & 0x1F0000))
 #define RS(i) (((i) & 0x3E00000))
 
+#define CO(i) ((i) & 0x02000000)
+#define COFUN(i) ((i) & 0x01FFFFFF)
+
 enum opcodes {
 	SPECIAL,
 	REGIMM,
@@ -478,4 +481,8 @@ enum cop2_rs {
 	COP2RS_IGN6,
 	COP2RS_IGN7,
 	COP2RS_IGN8,
+};
+
+enum cofun2 {
+	MEMSZ,
 };
