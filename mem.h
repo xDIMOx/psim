@@ -48,4 +48,4 @@ int             Mem_sw(Mem *mem, size_t addr, uint32_t data);
 int64_t         Mem_lb(Mem *mem, size_t addr);
 int             Mem_sb(Mem *mem, size_t addr, uint8_t data);
 
-const char     *Mem_strerror(int errno);
+const char     *Mem_strerror(int code);
