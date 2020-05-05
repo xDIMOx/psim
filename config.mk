@@ -7,4 +7,4 @@ CFLAGS  = -std=c99 -Wall -Wpedantic -pedantic-errors -Wextra -Wfatal-errors \
           -Wpadded -Wredundant-decls -Wcast-qual -Wcast-align \
           -Wstrict-overflow=5 -Wno-redundant-decls -fno-builtin \
           -Os -D_XOPEN_SOURCE=700
-LDFLAGS = -s -static
+LDFLAGS = -s -static -lpthread

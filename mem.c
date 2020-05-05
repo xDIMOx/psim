@@ -5,6 +5,9 @@
  */
 
 #include <elf.h>
+#include <err.h>
+#include <errno.h>
+#include <pthread.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,8 +21,21 @@ static const char *Mem_errlist[] = {
 };
 #undef X
 
-Mem            *Mem_create(size_t size);
+static int      shared;
+
+static struct {
+	long            used;	/* memory controller was used in the cycle */
+	size_t          nshr;	/* no. of processors sharing the bus */
+	ssize_t        *resaddr;/* reserved addresses */
+	pthread_mutex_t lock;
+}               memctl;
+
+
+Mem            *Mem_create(size_t size, size_t shr);
 void            Mem_destroy(Mem *mem);
+
+int             Mem_busacc(void);
+void            Mem_busclr(void);
 
 int             Mem_progld(Mem *mem, unsigned char *elf);
 
@@ -35,15 +51,27 @@ const char     *Mem_strerror(int errno);
  * Mem_create: create memory object
  *
  * size: memory size in bytes
+ * nshr: number of processors sharing the memory
  *
  * Returns a pointer to the newly allocated memory, NULL if failure
  */
 Mem            *
-Mem_create(size_t size)
+Mem_create(size_t size, size_t nshr)
 {
 	Mem            *mem;
 
 	Mem_errno = MEMERR_SUCC;
+
+	if (nshr > 1) {
+		shared = 1;
+		memctl.used = 0;
+		memctl.nshr = nshr;
+		if (!(memctl.resaddr = malloc(sizeof(ssize_t) * nshr)) ||
+		    pthread_mutex_init(&memctl.lock, NULL)) {
+			Mem_errno = MEMERR_ALLOC;
+			return NULL;
+		}
+	}
 
 	if (!(mem = malloc(sizeof(Mem))) ||
 	    !(mem->data.b = malloc(size * sizeof(uint8_t)))) {
@@ -62,7 +90,48 @@ Mem_create(size_t size)
 void
 Mem_destroy(Mem *mem)
 {
+	if (shared) {
+		pthread_mutex_destroy(&memctl.lock);
+		free(memctl.resaddr);
+	}
+
 	free(mem);
+}
+
+/*
+ * busacc: try to access the memory bus, setting the state of the memory
+ *         controller
+ *
+ * Returns 0 if successfully acquired the bus, an error number otherwise
+ */
+int
+Mem_busacc(void)
+{
+	int             errcode;
+
+	errcode = 0;
+	if (shared) {
+		if ((errcode = pthread_mutex_trylock(&memctl.lock)) &&
+		    (errcode != EBUSY)) {
+			warnx("Mem_busacc -- pthread_mutex_trylock: %s",
+			      strerror(errcode));
+		} else if (memctl.used) {
+			errcode = EBUSY;
+		} else
+			memctl.used = 1;
+		pthread_mutex_unlock(&memctl.lock);
+	}
+
+	return errcode;
+}
+
+/*
+ * Mem_busclr: clear the state on the memory controller
+ */
+void 
+Mem_busclr(void)
+{
+	memctl.used = 0;
 }
 
 /*

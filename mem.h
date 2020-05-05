@@ -34,8 +34,11 @@ typedef struct {
 	}               data;
 } Mem;
 
-Mem            *Mem_create(size_t size);
+Mem            *Mem_create(size_t size, size_t nshr);
 void            Mem_destroy(Mem *mem);
+
+int             Mem_busacc(void);
+void            Mem_busclr(void);
 
 int             Mem_progld(Mem *mem, unsigned char *elf);
 

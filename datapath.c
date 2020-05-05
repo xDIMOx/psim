@@ -73,6 +73,8 @@ decode(Decoder *dec)
 	dec->rt = RT(dec->raw) >> 16;
 	dec->sa = SA(dec->raw) >> 6;
 
+	dec->stall = 0;
+
 	dec->imm = IMM(dec->raw);
 
 	dec->isjump = 0;
@@ -204,6 +206,8 @@ execute(CPU *cpu, Mem *mem)
 
 	int64_t         data;
 
+	Datapath_errno = DATAPATHERR_SUCC;
+
 	addr = cpu->gpr[cpu->dec.rs] + cpu->dec.imm;
 
 	switch (cpu->dec.sign) {
@@ -268,6 +272,14 @@ execute(CPU *cpu, Mem *mem)
 		if (addr == IO_ADDR)
 			cpu->gpr[cpu->dec.rt] = (int32_t) getchar();
 		else {
+			if (Mem_busacc()) {
+				cpu->dec.stall = 1;
+#ifndef NDEBUG
+				warnx("cpu[%u] -- Mem_lb: stalled",
+				      cpu->gpr[K0]);
+#endif
+				return -1;
+			}
 			if ((data = Mem_lb(mem, addr)) < 0) {
 				warnx("cpu[%u] -- Mem_lb: %s",
 				      cpu->gpr[K0], Mem_strerror(Mem_errno));
@@ -279,6 +291,14 @@ execute(CPU *cpu, Mem *mem)
 		}
 		break;
 	case ((uint32_t) LW << 26):
+		if (Mem_busacc()) {
+			cpu->dec.stall = 1;
+#ifndef NDEBUG
+			warnx("cpu[%u] -- Mem_lw: stalled",
+			      cpu->gpr[K0]);
+#endif
+			return -1;
+		}
 		if ((data = Mem_lw(mem, addr)) < 0) {
 			warnx("cpu[%u] -- Mem_lw: %s",
 			      cpu->gpr[K0], Mem_strerror(Mem_errno));
@@ -289,7 +309,14 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) SB << 26):
 		if (addr == IO_ADDR)
 			putchar((int) cpu->gpr[cpu->dec.rt]);
-		else if (Mem_sb(mem, addr, (uint8_t) cpu->gpr[cpu->dec.rt])) {
+		else if (Mem_busacc()) {
+			cpu->dec.stall = 1;
+#ifndef NDEBUG
+			warnx("cpu[%u] -- Mem_lw: stalled",
+			      cpu->gpr[K0]);
+#endif
+			return -1;
+		} else if (Mem_sb(mem, addr, cpu->gpr[cpu->dec.rt])) {
 			warnx("cpu[%u] -- Mem_sb: %s",
 			      cpu->gpr[K0], Mem_strerror(Mem_errno));
 			return -1;
@@ -298,7 +325,14 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) SW << 26):
 		if (addr == IO_ADDR)
 			printf("%08x\n", cpu->gpr[cpu->dec.rt]);
-		else if (Mem_sw(mem, addr, cpu->gpr[cpu->dec.rt])) {
+		else if (Mem_busacc()) {
+			cpu->dec.stall = 1;
+#ifndef NDEBUG
+			warnx("cpu[%u] -- Mem_lw: stalled",
+			      cpu->gpr[K0]);
+#endif
+			return -1;
+		} else if (Mem_sw(mem, addr, cpu->gpr[cpu->dec.rt])) {
 			warnx("cpu[%u] -- Mem_sw: %s",
 			      cpu->gpr[K0], Mem_strerror(Mem_errno));
 			return -1;
@@ -340,12 +374,12 @@ Datapath_execute(CPU *cpu, Mem *mem)
 	if (decode(&cpu->dec))
 		return -1;
 
-	if (execute(cpu, mem))
+	if (execute(cpu, mem) && !cpu->dec.stall)
 		return -1;
 
 	if (cpu->dec.isjump)
 		cpu->pc = cpu->dec.npc;
-	else
+	else if (!cpu->dec.stall)
 		cpu->pc += 4;
 
 	return 0;

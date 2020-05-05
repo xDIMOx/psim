@@ -111,7 +111,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (!(mem = Mem_create(memsz)))
+	if (!(mem = Mem_create(memsz, ncpu)))
 		errx(EXIT_FAILURE, "Mem_create: %s", Mem_strerror(Mem_errno));
 
 	/*
@@ -133,8 +133,10 @@ main(int argc, char *argv[])
 	 * Program execution
 	 */
 	for (i = 0; !Datapath_execute(cpus[i], mem); i = (i + 1) % ncpu) {
-		if (i == (ncpu - 1))
+		if (i == (ncpu - 1)) {
+			Mem_busclr();
 			fflush(stdout);
+		}
 	}
 
 	if (Datapath_errno != DATAPATHERR_SUCC) {
