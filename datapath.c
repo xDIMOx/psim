@@ -102,6 +102,26 @@ decode(Decoder *dec)
 		return 0;
 	case REGIMM:
 		dec->sign |= RT(dec->raw);
+		switch (dec->rt) {
+		case BLTZ:
+		case BGEZ:
+		case BLTZL:
+		case BGEZL:
+		case TGEI:
+		case TGEIU:
+		case TLTI:
+		case TLTIU:
+		case TEQI:
+		case TNEI:
+		case BLTZAL:
+		case BGEZAL:
+		case BLTZALL:
+		case BGEZALL:
+			dec->isjump = 1;
+			break;
+		case SYNCI:
+			break;
+		}
 		return 0;
 	case J:
 	case JAL:
@@ -220,6 +240,14 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) SPECIAL << 26) | OR:
 		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] |
 		    cpu->gpr[cpu->dec.rt];
+		break;
+	case ((uint32_t) REGIMM << 26) | (BLTZ << 16):
+		if (((int32_t) cpu->gpr[cpu->dec.rs]) < 0) {
+			ext = cpu->dec.imm;
+			off = ext << 2;
+			cpu->dec.npc = cpu->pc + 4 + off;
+		} else
+			cpu->dec.isjump = 0;
 		break;
 	case ((uint32_t) J << 26):
 		cpu->dec.npc = (cpu->pc & 0xF0000000) | cpu->dec.idx;
