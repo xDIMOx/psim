@@ -338,6 +338,22 @@ execute(CPU *cpu, Mem *mem)
 			return -1;
 		}
 		break;
+	case ((uint32_t) LL << 26):
+		if (Mem_busacc()) {
+			cpu->dec.stall = 1;
+#ifndef NDEBUG
+			warnx("cpu[%u] -- Mem_ll: stalled",
+			      cpu->gpr[K0]);
+#endif
+			return -1;
+		}
+		if ((data = Mem_ll(mem, cpu->gpr[K0], addr)) < 0) {
+			warnx("cpu[%u] -- Mem_ll: %s",
+			      cpu->gpr[K0], Mem_strerror(Mem_errno));
+			return -1;
+		}
+		cpu->gpr[cpu->dec.rt] = data;
+		break;
 	default:
 		Datapath_errno = DATAPATHERR_IMPL;
 		return -1;

@@ -12,7 +12,8 @@
 X(MEMERR_SUCC, "Success")                    \
 X(MEMERR_ALLOC, "Could not allocate memory") \
 X(MEMERR_BND, "Address is out of bounds")    \
-X(MEMERR_ALIGN, "Misaligned address")
+X(MEMERR_ALIGN, "Misaligned address")        \
+X(MEMERR_SHR, "Processor can not used shared memory")
 
 #define X(a, b) a,
 enum MemErrNo {
@@ -44,6 +45,8 @@ int             Mem_progld(Mem *mem, unsigned char *elf);
 
 int64_t         Mem_lw(Mem *mem, size_t addr);
 int             Mem_sw(Mem *mem, size_t addr, uint32_t data);
+
+int64_t         Mem_ll(Mem *mem, uint32_t prid, size_t addr);
 
 int64_t         Mem_lb(Mem *mem, size_t addr);
 int             Mem_sb(Mem *mem, size_t addr, uint8_t data);
