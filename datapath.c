@@ -361,7 +361,7 @@ execute(CPU *cpu, Mem *mem)
 		else if (Mem_busacc()) {
 			cpu->dec.stall = 1;
 #ifndef NDEBUG
-			warnx("cpu[%u] -- Mem_lw: stalled",
+			warnx("cpu[%u] -- Mem_sb: stalled",
 			      cpu->gpr[K0]);
 #endif
 			return -1;
@@ -377,7 +377,7 @@ execute(CPU *cpu, Mem *mem)
 		else if (Mem_busacc()) {
 			cpu->dec.stall = 1;
 #ifndef NDEBUG
-			warnx("cpu[%u] -- Mem_lw: stalled",
+			warnx("cpu[%u] -- Mem_sw: stalled",
 			      cpu->gpr[K0]);
 #endif
 			return -1;
@@ -407,7 +407,7 @@ execute(CPU *cpu, Mem *mem)
 		if (Mem_busacc()) {
 			cpu->dec.stall = 1;
 #ifndef NDEBUG
-			warnx("cpu[%u] -- Mem_lw: stalled",
+			warnx("cpu[%u] -- Mem_sc: stalled",
 			      cpu->gpr[K0]);
 #endif
 			return -1;
