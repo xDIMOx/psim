@@ -237,6 +237,11 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) SPECIAL << 26) | JR:
 		cpu->dec.npc = cpu->gpr[cpu->dec.rs];
 		break;
+	case ((uint32_t) SPECIAL << 26) | ADD:
+	case ((uint32_t) SPECIAL << 26) | ADDU:
+		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] +
+		    cpu->gpr[cpu->dec.rt];
+		break;
 	case ((uint32_t) SPECIAL << 26) | OR:
 		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] |
 		    cpu->gpr[cpu->dec.rt];
