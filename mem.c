@@ -165,8 +165,9 @@ Mem_progld(Mem *mem, unsigned char *elf)
 			continue;
 
 		switch (ph->p_flags) {
-		case PF_R + PF_X:
-		case PF_R + PF_W + PF_X:
+		case PF_R | PF_X:
+		case PF_R | PF_W:
+		case PF_R | PF_W | PF_X:
 			if (ph->p_paddr >= mem->size) {
 				Mem_errno = MEMERR_BND;
 				return -1;
