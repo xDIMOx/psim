@@ -43,6 +43,7 @@ int64_t         Mem_lw(Mem *mem, size_t addr);
 int             Mem_sw(Mem *mem, size_t addr, uint32_t data);
 
 int64_t         Mem_ll(Mem *mem, uint32_t prid, size_t addr);
+int             Mem_sc(Mem *mem, uint32_t prid, size_t addr, uint32_t data);
 
 int64_t         Mem_lb(Mem *mem, size_t addr);
 int             Mem_sb(Mem *mem, size_t addr, uint8_t data);
@@ -260,6 +261,51 @@ Mem_ll(Mem *mem, uint32_t prid, size_t addr)
 		return -1;
 	}
 	return mem->data.w[addr >> 2];
+}
+
+/*
+ * Mem_sw: store word
+ *
+ * mem: Pointer to memory
+ * prid: id of the processor doing the operation
+ * addr: Address where the data is;
+ * data: Data to be stored
+ *
+ * Returns 0 if successful, -1 otherwise, Mem_errno indicates the error
+ */
+int
+Mem_sc(Mem *mem, uint32_t prid, size_t addr, uint32_t data)
+{
+	uint32_t        i;
+
+	Mem_errno = MEMERR_SUCC;
+
+	if (shared) {
+		if (prid >= memctl.nshr) {
+			Mem_errno = MEMERR_SHR;
+			return -1;
+		}
+		if (memctl.resaddr[prid] != (ssize_t) addr) {
+			Mem_errno = MEMERR_SC;
+			return -1;
+		}
+		for (i = 0; i < memctl.nshr; ++i) {
+			if (memctl.resaddr[i] == (ssize_t) addr)
+				memctl.resaddr[i] = -1;
+		}
+	}
+
+	if (addr >= mem->size) {
+		Mem_errno = MEMERR_BND;
+		return -1;
+	}
+	if (addr & 3) {
+		Mem_errno = MEMERR_ALIGN;
+		return -1;
+	}
+	mem->data.w[addr >> 2] = data;
+
+	return 0;
 }
 
 /*
