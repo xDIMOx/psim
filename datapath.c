@@ -285,6 +285,14 @@ execute(CPU *cpu, Mem *mem)
 		} else
 			cpu->dec.isjump = 0;
 		break;
+	case ((uint32_t) BGTZ << 26):
+		if (cpu->gpr[cpu->dec.rs] > 0) {
+			ext = cpu->dec.imm;
+			off = ext << 2;
+			cpu->dec.npc = cpu->pc + 4 + off;
+		} else
+			cpu->dec.isjump = 0;
+		break;
 	case ((uint32_t) ADDI << 26):
 	case ((uint32_t) ADDIU << 26):
 		cpu->gpr[cpu->dec.rt] = cpu->gpr[cpu->dec.rs] + cpu->dec.imm;
