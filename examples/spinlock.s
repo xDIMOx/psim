@@ -7,7 +7,7 @@
 	.ent Spin_lock
 Spin_lock:
 	ll $t0, 0($a0)
-	addi $t0, $t0, -1
+	addiu $t0, $t0, -1
 	bltz $t0, Spin_lock
 	nop
 	sc $t0, 0($a0)
