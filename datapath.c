@@ -315,6 +315,10 @@ execute(CPU *cpu, Mem *mem)
 			return -1;
 		}
 		break;
+	case ((uint32_t) SPECIAL2 << 26) | MUL:
+		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] *
+		    cpu->gpr[cpu->dec.rt];
+		break;
 	case ((uint32_t) LB << 26):
 		if (addr == IO_ADDR)
 			cpu->gpr[cpu->dec.rt] = (int32_t) getchar();
