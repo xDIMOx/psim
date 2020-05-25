@@ -237,7 +237,6 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) SPECIAL << 26) | JR:
 		cpu->dec.npc = cpu->gpr[cpu->dec.rs];
 		break;
-	case ((uint32_t) SPECIAL << 26) | ADD:
 	case ((uint32_t) SPECIAL << 26) | ADDU:
 		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] +
 		    cpu->gpr[cpu->dec.rt];
@@ -293,7 +292,6 @@ execute(CPU *cpu, Mem *mem)
 		} else
 			cpu->dec.isjump = 0;
 		break;
-	case ((uint32_t) ADDI << 26):
 	case ((uint32_t) ADDIU << 26):
 		cpu->gpr[cpu->dec.rt] = cpu->gpr[cpu->dec.rs] + cpu->dec.imm;
 		break;
