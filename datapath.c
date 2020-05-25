@@ -382,6 +382,25 @@ execute(CPU *cpu, Mem *mem)
 		}
 		cpu->gpr[cpu->dec.rt] = data;
 		break;
+	case ((uint32_t) SC << 26):
+		if (Mem_busacc()) {
+			cpu->dec.stall = 1;
+#ifndef NDEBUG
+			warnx("cpu[%u] -- Mem_lw: stalled",
+			      cpu->gpr[K0]);
+#endif
+			return -1;
+		}
+		Mem_sc(mem, cpu->gpr[K0], addr, cpu->gpr[cpu->dec.rt]);
+		if (Mem_errno == MEMERR_SC)	/* SC failed */
+			cpu->gpr[cpu->dec.rt] = 0;
+		else if (Mem_errno != MEMERR_SUCC) {	/* other errrors */
+			warnx("cpu[%u] -- Mem_sc: %s",
+			      cpu->gpr[K0], Mem_strerror(Mem_errno));
+			return -1;
+		} else		/* SC successful */
+			cpu->gpr[cpu->dec.rt] = 1;
+		break;
 	default:
 		Datapath_errno = DATAPATHERR_IMPL;
 		return -1;
