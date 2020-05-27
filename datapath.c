@@ -299,6 +299,10 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) ADDIU << 26):
 		cpu->gpr[cpu->dec.rt] = cpu->gpr[cpu->dec.rs] + cpu->dec.imm;
 		break;
+	case ((uint32_t) SLTI << 26):
+		cpu->gpr[cpu->dec.rt] = ((int32_t) cpu->gpr[cpu->dec.rs]) <
+		    cpu->dec.imm;
+		break;
 	case ((uint32_t) ORI << 26):
 		cpu->gpr[cpu->dec.rt] = cpu->gpr[cpu->dec.rs] |
 		    (uint16_t) cpu->dec.imm;
