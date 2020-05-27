@@ -307,6 +307,9 @@ execute(CPU *cpu, Mem *mem)
 		cpu->gpr[cpu->dec.rt] = ((int32_t) cpu->gpr[cpu->dec.rs]) <
 		    cpu->dec.imm;
 		break;
+	case ((uint32_t) ANDI << 26):
+		cpu->gpr[cpu->dec.rt] = cpu->gpr[cpu->dec.rs] & cpu->dec.imm;
+		break;
 	case ((uint32_t) ORI << 26):
 		cpu->gpr[cpu->dec.rt] = cpu->gpr[cpu->dec.rs] |
 		    (uint16_t) cpu->dec.imm;
