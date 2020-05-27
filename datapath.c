@@ -26,7 +26,7 @@ static const char *Datapath_errlist[] = {
 };
 #undef X
 
-#define IO_ADDR 0xFFFF
+#define IO_ADDR 0xFFFC
 
 static int64_t  fetch(CPU *cpu, Mem *mem);
 static int      decode(Decoder *dec);

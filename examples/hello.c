@@ -13,7 +13,7 @@ main(void)
 
 	volatile char  *stdout;
 
-	stdout = (char *) 0xFFFF;
+	stdout = (char *) 0xFFFC;
 
 	str = "hello, world\n";
 	for (i = 0; str[i]; ++i)
