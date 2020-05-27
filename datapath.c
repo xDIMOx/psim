@@ -281,7 +281,7 @@ execute(CPU *cpu, Mem *mem)
 			cpu->dec.isjump = 0;
 		break;
 	case ((uint32_t) BLEZ << 26):
-		if (cpu->gpr[cpu->dec.rs] <= 0) {
+		if (((int32_t) cpu->gpr[cpu->dec.rs]) <= 0) {
 			ext = cpu->dec.imm;
 			off = ext << 2;
 			cpu->dec.npc = cpu->pc + 4 + off;
@@ -289,7 +289,7 @@ execute(CPU *cpu, Mem *mem)
 			cpu->dec.isjump = 0;
 		break;
 	case ((uint32_t) BGTZ << 26):
-		if (cpu->gpr[cpu->dec.rs] > 0) {
+		if (((int32_t) cpu->gpr[cpu->dec.rs]) > 0) {
 			ext = cpu->dec.imm;
 			off = ext << 2;
 			cpu->dec.npc = cpu->pc + 4 + off;
