@@ -216,7 +216,16 @@ Mem_lw(Mem *mem, size_t addr)
 int
 Mem_sw(Mem *mem, size_t addr, uint32_t data)
 {
+	uint32_t        i;
+
 	Mem_errno = MEMERR_SUCC;
+
+	if (shared) {
+		for (i = 0; i < memctl.nshr; ++i) {
+			if (memctl.resaddr[i] == (ssize_t) addr)
+				memctl.resaddr[i] = -1;
+		}
+	}
 
 	if (addr >= mem->size) {
 		Mem_errno = MEMERR_BND;
