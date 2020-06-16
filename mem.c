@@ -32,6 +32,7 @@ static struct {
 		size_t          ct;
 		ssize_t        *arr;
 	}               queue;
+	size_t          util;
 	pthread_mutex_t lock;
 }               memctl;
 
@@ -41,6 +42,7 @@ void            Mem_destroy(Mem *mem);
 
 int             Mem_busacc(uint32_t prid);
 void            Mem_busclr(void);
+size_t          Mem_busutil(void);
 
 int             Mem_progld(Mem *mem, unsigned char *elf);
 
@@ -83,6 +85,7 @@ Mem_create(size_t size, size_t nshr)
 			return NULL;
 		}
 		memctl.queue.hd = memctl.queue.tl = memctl.queue.ct = 0;
+		memctl.util = 0;
 		for (i = 0; i < memctl.nshr; ++i)
 			memctl.queue.arr[i] = -1;
 	}
@@ -150,6 +153,7 @@ Mem_busacc(uint32_t prid)
 			memctl.queue.arr[memctl.queue.hd] = -1;
 			memctl.queue.hd = (memctl.queue.hd + 1) % memctl.nshr;
 			memctl.used = 1;
+			++memctl.util;
 		} else
 			errcode = -1;
 		pthread_mutex_unlock(&memctl.lock);
@@ -165,6 +169,15 @@ void
 Mem_busclr(void)
 {
 	memctl.used = 0;
+}
+
+/*
+ * Mem_busutil: returns bus utilization
+ */
+size_t
+Mem_busutil(void)
+{
+	return memctl.util;
 }
 
 /*

@@ -41,6 +41,7 @@ void            Mem_destroy(Mem *mem);
 
 int             Mem_busacc(uint32_t prid);
 void            Mem_busclr(void);
+size_t          Mem_busutil(void);
 
 int             Mem_progld(Mem *mem, unsigned char *elf);
 
