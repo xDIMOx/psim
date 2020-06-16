@@ -338,7 +338,7 @@ execute(CPU *cpu, Mem *mem)
 		if (addr == IO_ADDR)
 			cpu->gpr[cpu->dec.rt] = (int32_t) getchar();
 		else {
-			if (Mem_busacc()) {
+			if (Mem_busacc(cpu->gpr[K0])) {
 				cpu->dec.stall = 1;
 #ifndef NDEBUG
 				warnx("cpu[%u] -- Mem_lb: stalled",
@@ -357,7 +357,7 @@ execute(CPU *cpu, Mem *mem)
 		}
 		break;
 	case ((uint32_t) LW << 26):
-		if (Mem_busacc()) {
+		if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
 #ifndef NDEBUG
 			warnx("cpu[%u] -- Mem_lw: stalled",
@@ -375,7 +375,7 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) SB << 26):
 		if (addr == IO_ADDR)
 			putchar((int) cpu->gpr[cpu->dec.rt]);
-		else if (Mem_busacc()) {
+		else if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
 #ifndef NDEBUG
 			warnx("cpu[%u] -- Mem_sb: stalled",
@@ -391,7 +391,7 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) SW << 26):
 		if (addr == IO_ADDR)
 			printf("%08x\n", cpu->gpr[cpu->dec.rt]);
-		else if (Mem_busacc()) {
+		else if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
 #ifndef NDEBUG
 			warnx("cpu[%u] -- Mem_sw: stalled",
@@ -405,7 +405,7 @@ execute(CPU *cpu, Mem *mem)
 		}
 		break;
 	case ((uint32_t) LL << 26):
-		if (Mem_busacc()) {
+		if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
 #ifndef NDEBUG
 			warnx("cpu[%u] -- Mem_ll: stalled",
@@ -421,7 +421,7 @@ execute(CPU *cpu, Mem *mem)
 		cpu->gpr[cpu->dec.rt] = data;
 		break;
 	case ((uint32_t) SC << 26):
-		if (Mem_busacc()) {
+		if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
 #ifndef NDEBUG
 			warnx("cpu[%u] -- Mem_sc: stalled",

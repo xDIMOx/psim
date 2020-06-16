@@ -27,6 +27,11 @@ static struct {
 	long            used;	/* memory controller was used in the cycle */
 	size_t          nshr;	/* no. of processors sharing the bus */
 	ssize_t        *resaddr;/* reserved addresses */
+	struct {
+		size_t          hd, tl;
+		size_t          ct;
+		ssize_t        *arr;
+	}               queue;
 	pthread_mutex_t lock;
 }               memctl;
 
@@ -34,7 +39,7 @@ static struct {
 Mem            *Mem_create(size_t size, size_t shr);
 void            Mem_destroy(Mem *mem);
 
-int             Mem_busacc(void);
+int             Mem_busacc(uint32_t prid);
 void            Mem_busclr(void);
 
 int             Mem_progld(Mem *mem, unsigned char *elf);
@@ -61,6 +66,8 @@ const char     *Mem_strerror(int code);
 Mem            *
 Mem_create(size_t size, size_t nshr)
 {
+	size_t          i;
+
 	Mem            *mem;
 
 	Mem_errno = MEMERR_SUCC;
@@ -70,10 +77,14 @@ Mem_create(size_t size, size_t nshr)
 		memctl.used = 0;
 		memctl.nshr = nshr;
 		if (!(memctl.resaddr = malloc(sizeof(ssize_t) * nshr)) ||
+		    !(memctl.queue.arr = malloc(sizeof(ssize_t) * nshr)) ||
 		    pthread_mutex_init(&memctl.lock, NULL)) {
 			Mem_errno = MEMERR_ALLOC;
 			return NULL;
 		}
+		memctl.queue.hd = memctl.queue.tl = memctl.queue.ct = 0;
+		for (i = 0; i < memctl.nshr; ++i)
+			memctl.queue.arr[i] = -1;
 	}
 
 	if (!(mem = malloc(sizeof(Mem))) ||
@@ -102,26 +113,45 @@ Mem_destroy(Mem *mem)
 }
 
 /*
- * busacc: try to access the memory bus, setting the state of the memory
- *         controller
+ * Mem_busacc: try to access the memory bus, setting the state of the memory
+ *             controller
  *
  * Returns 0 if successfully acquired the bus, an error number otherwise
  */
 int
-Mem_busacc(void)
+Mem_busacc(uint32_t prid)
 {
 	int             errcode;
+	int             found;
+
+	size_t          i;
 
 	errcode = 0;
 	if (shared) {
-		if ((errcode = pthread_mutex_trylock(&memctl.lock)) &&
-		    (errcode != EBUSY)) {
-			warnx("Mem_busacc -- pthread_mutex_trylock: %s",
-			      strerror(errcode));
-		} else if (memctl.used) {
-			errcode = EBUSY;
-		} else
+		if ((errcode = pthread_mutex_lock(&memctl.lock))) {
+			warnx("Mem_busacc cpu[%u] -- "
+			      "pthread_mutex_lock: %s",
+			      prid, strerror(errcode));
+			return errcode;
+		}
+		/* checks if processor is already waiting to use the memory */
+		for (found = i = 0; !found && i < memctl.nshr; ++i) {
+			if (memctl.queue.arr[i] == prid)
+				found = 1;
+		}
+		/* enqueue if not present */
+		if (!found) {
+			memctl.queue.arr[memctl.queue.tl] = prid;
+			memctl.queue.tl = (memctl.queue.tl + 1) % memctl.nshr;
+		}
+		/* dequeue if calling processor is in the queue's head */
+		if (!memctl.used &&
+		    memctl.queue.arr[memctl.queue.hd] == prid) {
+			memctl.queue.arr[memctl.queue.hd] = -1;
+			memctl.queue.hd = (memctl.queue.hd + 1) % memctl.nshr;
 			memctl.used = 1;
+		} else
+			errcode = -1;
 		pthread_mutex_unlock(&memctl.lock);
 	}
 
