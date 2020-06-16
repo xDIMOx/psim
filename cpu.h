@@ -83,6 +83,13 @@ typedef struct {
 	uint32_t        gpr[N_GPR];	/* General purpose registers */
 	Decoder         dec;	/* instruction decoder */
 
+	size_t          cycle;
+	size_t          ld;
+	size_t          st;
+	size_t          memfail;
+	size_t          ll;
+	size_t          sc;
+	size_t          rmwfail;
 #ifndef NDEBUG
 	struct {
 		int             fd;

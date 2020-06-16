@@ -49,6 +49,9 @@ CPU_create(uint32_t id)
 		return NULL;
 	}
 	cpu->gpr[K0] = id;
+	cpu->cycle = 0;
+	cpu->ld = cpu->st = cpu->memfail = 0;
+	cpu->ll = cpu->sc = cpu->rmwfail = 0;
 
 #ifndef NDEBUG
 	snprintf(cpu->debug.fname, 20, "cpu%04d_instrdump", id);
