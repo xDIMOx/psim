@@ -36,7 +36,10 @@ common.o: common.s
 spinlock.o: spinlock.s
 null.o: null.c
 hello.o: hello.c
+
 producer-consumer.o: producer-consumer.c
+	@echo CC -c $<
+	@${CC} ${CFLAGS} ${PRODCON_CFLAGS} -c $<
 
 null: ${NULL_PREREQ}
 	@echo LD -o $@

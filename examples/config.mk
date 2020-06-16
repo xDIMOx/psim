@@ -11,3 +11,6 @@ CFLAGS = -O1 -nostartfiles -mips32r2 -msoft-float -fno-builtin -mno-memcpy \
 
 LD      = mipsel-elf-ld
 LDFLAGS = -static
+
+# definitions for producer-consumer program
+PRODCON_CFLAGS = -DNCONSUMERS=1 -DMAXELEM=16 -DMAXVAL=1024

@@ -7,11 +7,19 @@
 #include "common.h"
 #include "spinlock.h"
 
-#define MAXELEM 1		/* has to be a power of 2, to simplify the
-				 * modulo operation */
-#define MAXVAL MAXELEM		/* maximum value to be produced */
+#ifndef MAXELEM
+#error "You need to define MAXELEM"
+#elif MAXELEM & 2 != 0
+#error "MAXELEM has to be a power of 2"	/* to simplify the modulo operation */
+#endif
 
-#define NCONSUMERS 1
+#ifndef MAXVAL
+#error "You need to define MAXVAL"
+#endif
+
+#ifndef NCONSUMERS
+#error "You need to define NCONSUMERS"
+#endif
 
 enum flag {
 	SUCCESS,
@@ -20,12 +28,13 @@ enum flag {
 	END,
 };
 
-static int      ct;
+static int      ct = 0;
 static int      hd;		/* queue's head */
 static int      tl;		/* queue's tail */
 static int      buf[MAXELEM];
 static int      nconsumers = NCONSUMERS;
-static int      producing;
+static int      nempty;
+static int      producing = 1;
 static int      lock = 1;
 static int      full = 0;
 static int      empty = 0;
@@ -56,19 +65,15 @@ producer(void)
 	int             i;
 	int             flag;
 
-	Spin_lock(&lock);
-	ct = 0;
-	producing = 1;
-	Spin_unlock(&lock);
-
 	for (i = 0; i < MAXVAL; ++i) {
 		Spin_lock(&lock);
 		if (ct < MAXELEM) {
-			if (ct == 0)
-				flag = EMPTY;
-			else
-				flag = SUCCESS;
 			enqueue(i);
+			if (nempty > 0) {
+				flag = EMPTY;
+				--nempty;
+			} else
+				flag = SUCCESS;
 		} else
 			flag = FULL;
 		Spin_unlock(&lock);
@@ -87,10 +92,18 @@ producer(void)
 		}
 	}
 
+	Spin_lock(&lock);
+	producing = 0;
+	Spin_unlock(&lock);
+
 	while (flag != END) {
 		Spin_lock(&lock);
 		if (!nconsumers)
 			flag = END;
+		else if (nempty > 0) {
+			--nempty;
+			Spin_unlock(&empty);
+		}
 		Spin_unlock(&lock);
 	}
 }
@@ -101,8 +114,7 @@ consumer(void)
 	int             item;
 	int             flag;
 
-	Spin_lock(&empty);
-
+	flag = SUCCESS;
 	while (flag != END) {
 		Spin_lock(&lock);
 		if (ct > 0) {
@@ -112,19 +124,19 @@ consumer(void)
 				flag = SUCCESS;
 			item = dequeue();
 		} else if (!producing) {
+			--nconsumers;
 			item = -1;
 			flag = END;
-		} else
+		} else {
+			++nempty;
 			flag = EMPTY;
+		}
 		Spin_unlock(&lock);
 		switch (flag) {
 		case SUCCESS:
 			break;
 		case EMPTY:
 			Spin_lock(&empty);
-			Spin_lock(&lock);
-			item = dequeue();
-			Spin_unlock(&lock);
 			break;
 		case FULL:
 			Spin_unlock(&full);
@@ -132,10 +144,6 @@ consumer(void)
 		}
 		while (item-- > 0);	/* consume the data */
 	}
-
-	Spin_lock(&lock);
-	--nconsumers;
-	Spin_unlock(&lock);
 }
 
 int
