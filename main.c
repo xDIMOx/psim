@@ -139,15 +139,22 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (Datapath_errno != DATAPATHERR_SUCC) {
+	if (Datapath_errno != DATAPATHERR_EXIT) {
 		errx(EXIT_FAILURE, "cpu[%lu] -- Datapath_execute %s",
 		     i, Datapath_strerror(Datapath_errno));
 	}
 
 	Mem_destroy(mem);
 
-	for (i = 0; i < ncpu; ++i)
+	puts("#id,cycles,loads,stores,memfail,ll,sc,rmwfail,utilization");
+	printf("bus,,,,,,,,%lu\n", Mem_busutil());
+	for (i = 0; i < ncpu; ++i) {
+		printf("%u,%lu,%lu,%lu,%lu,%lu,%lu,%lu,\n",
+		      cpus[i]->gpr[K0], cpus[i]->cycle,
+		      cpus[i]->ld, cpus[i]->st, cpus[i]->memfail,
+		      cpus[i]->ll, cpus[i]->sc, cpus[i]->rmwfail);
 		CPU_destroy(cpus[i]);
+	}
 
 	return EXIT_SUCCESS;
 }
