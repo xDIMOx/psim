@@ -5,3 +5,5 @@
  */
 
 int             thread_id(void);
+void            putchar(char ch);
+void            printhex(int w);

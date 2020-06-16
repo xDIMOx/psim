@@ -11,3 +11,32 @@ thread_id:
 	nop
 
 	.end thread_id
+
+	.text
+	.align 0
+	.set noreorder
+	.global putchar
+	.ent putchar
+putchar:
+	sb $a0, STDOUT($zero)
+	jr $ra
+	nop
+
+	.end putchar
+
+	.text
+	.align 0
+	.set noreorder
+	.global printhex
+	.ent printhex
+printhex:
+	sw $a0, STDOUT($zero)
+	jr $ra
+	nop
+
+	.end printhex
+
+	.bss
+	.align 0
+
+	.equ STDOUT,0xFFFC
