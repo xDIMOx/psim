@@ -20,6 +20,7 @@ EXE = ${CSRC:.c=}
 NULL_PREREQ  = start.o null.o
 HELLO_PREREQ = start.o hello.o
 PRODCON_PREREQ = start.o common.o spinlock.o producer-consumer.o
+PRODCONV2_PREREQ = start.o common.o spinlock.o producer-consumerv2.o
 
 all: ${EXE}
 
@@ -41,6 +42,10 @@ producer-consumer.o: producer-consumer.c
 	@echo CC -c $<
 	@${CC} ${CFLAGS} ${PRODCON_CFLAGS} -c $<
 
+producer-consumerv2.o: producer-consumerv2.c
+	@echo CC -c $<
+	@${CC} ${CFLAGS} ${PRODCONV2_CFLAGS} -c $<
+
 null: ${NULL_PREREQ}
 	@echo LD -o $@
 	@${LD} ${LDFLAGS} ${NULL_PREREQ} -o $@
@@ -52,6 +57,10 @@ hello: ${HELLO_PREREQ}
 producer-consumer: ${PRODCON_PREREQ}
 	@echo LD -o $@
 	@${LD} ${LDFLAGS} ${PRODCON_PREREQ} -o $@
+
+producer-consumerv2: ${PRODCONV2_PREREQ}
+	@echo LD -o $@
+	@${LD} ${LDFLAGS} ${PRODCONV2_PREREQ} -o $@
 
 clean:
 	@echo cleaning
