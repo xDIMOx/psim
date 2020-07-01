@@ -34,7 +34,8 @@ static int      tl;		/* queue's tail */
 static int      buf[MAXELEM];
 static int      nconsumers = NCONSUMERS;
 static int      nempty;
-static int      producing = 1;
+static int      nfull;
+static int      producing[2] = { 1 };
 static int      lock = 1;
 static int      full = 0;
 static int      empty = 0;
@@ -63,18 +64,15 @@ void
 producer(void)
 {
 	int             val;
-	int             i;
 	int             flag;
 	int             ct;
 
 	switch(thread_id()) {
 	case 0:
 		val = 0;
-		i = 2;
 		break;
 	case 3:
 		val = 1;
-		i = 1;
 		break;
 	}
 
@@ -88,8 +86,10 @@ producer(void)
 				--nempty;
 			} else
 				flag = SUCCESS;
-		} else
+		} else {
+			++nfull;
 			flag = FULL;
+		}
 		Spin_unlock(&lock);
 		switch (flag) {
 		case SUCCESS:
@@ -104,12 +104,18 @@ producer(void)
 			Spin_unlock(&lock);
 			break;
 		}
-		val += i;
+		val += 2;
 	}
 
 	Spin_lock(&lock);
-	producing = 0;
+	if (thread_id() > 0)
+		producing[1] = 0;
+	else
+		producing[0] = 0;
 	Spin_unlock(&lock);
+
+	if (thread_id() > 0)
+		return;
 
 	while (flag != END) {
 		Spin_lock(&lock);
@@ -133,12 +139,13 @@ consumer(void)
 	while (flag != END) {
 		Spin_lock(&lock);
 		if (ct > 0) {
-			if (ct == MAXELEM)
+			if (ct == MAXELEM) {
+				--nfull;
 				flag = FULL;
-			else
+			} else
 				flag = SUCCESS;
 			item = dequeue();
-		} else if (!producing) {
+		} else if (!producing[0] && !producing[1]) {
 			--nconsumers;
 			item = -1;
 			flag = END;
