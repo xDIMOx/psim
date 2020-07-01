@@ -150,13 +150,21 @@ main(int argc, char *argv[])
 		       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0)
 		err(EXIT_FAILURE, "open: %s", "./perfct");
 
-	dprintf(fd, "#id,cycles,loads,stores,memfail,ll,sc,rmwfail\n");
-	dprintf(fd,"bus,%lu,,,,,,\n", Mem_busutil());
+	dprintf(fd, "#id,cycles,"
+		"loads,ld defer,"
+		"stores,st defer,"
+		"ll,ll defer,"
+		"sc,sc defer,"
+		"rmwfail\n");
+	dprintf(fd,"bus,%lu,,,,,,,,,\n", Mem_busutil());
 	for (i = 0; i < ncpu; ++i) {
-		dprintf(fd,"%u,%lu,%lu,%lu,%lu,%lu,%lu,%lu,\n",
-		      cpus[i]->gpr[K0], cpus[i]->cycle,
-		      cpus[i]->ld, cpus[i]->st, cpus[i]->memfail,
-		      cpus[i]->ll, cpus[i]->sc, cpus[i]->rmwfail);
+		dprintf(fd,"%u,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n",
+		      cpus[i]->gpr[K0], cpus[i]->perfct.cycle,
+		      cpus[i]->perfct.ld, cpus[i]->perfct.lddefer,
+		      cpus[i]->perfct.st, cpus[i]->perfct.stdefer,
+		      cpus[i]->perfct.ll, cpus[i]->perfct.lldefer,
+		      cpus[i]->perfct.sc, cpus[i]->perfct.scdefer,
+		      cpus[i]->perfct.rmwfail);
 		CPU_destroy(cpus[i]);
 	}
 

@@ -83,13 +83,19 @@ typedef struct {
 	uint32_t        gpr[N_GPR];	/* General purpose registers */
 	Decoder         dec;	/* instruction decoder */
 
-	size_t          cycle;
-	size_t          ld;
-	size_t          st;
-	size_t          memfail;
-	size_t          ll;
-	size_t          sc;
-	size_t          rmwfail;
+	struct {
+		size_t          cycle;	/* cycles executed */
+		size_t          ld;	/* no. of loads */
+		size_t          lddefer;	/* no. of deferred loads */
+		size_t          st;	/* no. of stores */
+		size_t          stdefer;	/* no. of deferred stores */
+		size_t          ll;	/* no. of load linked instructions */
+		size_t          lldefer;	/* no. of deferred ll's */
+		size_t          sc;	/* no. of store-conditional
+					 * instructions */
+		size_t          scdefer;	/* no. of deferred sc's */
+		size_t          rmwfail;	/* no. of RMW failures */
+	}               perfct;	/* performance counters */
 #ifndef NDEBUG
 	struct {
 		int             fd;

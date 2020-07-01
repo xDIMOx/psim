@@ -49,9 +49,12 @@ CPU_create(uint32_t id)
 		return NULL;
 	}
 	cpu->gpr[K0] = id;
-	cpu->cycle = 0;
-	cpu->ld = cpu->st = cpu->memfail = 0;
-	cpu->ll = cpu->sc = cpu->rmwfail = 0;
+	cpu->perfct.cycle = 0;
+	cpu->perfct.ld = cpu->perfct.lddefer = 0;
+	cpu->perfct.st = cpu->perfct.stdefer = 0;
+	cpu->perfct.ll = cpu->perfct.lldefer = 0;
+	cpu->perfct.sc = cpu->perfct.scdefer = 0;
+	cpu->perfct.rmwfail = 0;
 
 #ifndef NDEBUG
 	snprintf(cpu->debug.fname, 20, "cpu%04d_instrdump", id);

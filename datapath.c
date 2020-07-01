@@ -335,15 +335,15 @@ execute(CPU *cpu, Mem *mem)
 		    cpu->gpr[cpu->dec.rt];
 		break;
 	case ((uint32_t) LB << 26):
-		++cpu->ld;
+		++cpu->perfct.ld;
 		if (addr == IO_ADDR)
 			cpu->gpr[cpu->dec.rt] = (int32_t) getchar();
 		else {
 			if (Mem_busacc(cpu->gpr[K0])) {
 				cpu->dec.stall = 1;
-				++cpu->memfail;
+				++cpu->perfct.lddefer;
 #ifndef NDEBUG
-				warnx("cpu[%u] -- Mem_lb: stalled",
+				warnx("cpu[%u] -- Mem_lb: deferred",
 				      cpu->gpr[K0]);
 #endif
 				return -1;
@@ -359,12 +359,12 @@ execute(CPU *cpu, Mem *mem)
 		}
 		break;
 	case ((uint32_t) LW << 26):
-		++cpu->ld;
+		++cpu->perfct.ld;
 		if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
-			++cpu->memfail;
+			++cpu->perfct.lddefer;
 #ifndef NDEBUG
-			warnx("cpu[%u] -- Mem_lw: stalled",
+			warnx("cpu[%u] -- Mem_lw: deferred",
 			      cpu->gpr[K0]);
 #endif
 			return -1;
@@ -377,14 +377,14 @@ execute(CPU *cpu, Mem *mem)
 		cpu->gpr[cpu->dec.rt] = data;
 		break;
 	case ((uint32_t) SB << 26):
-		++cpu->st;
+		++cpu->perfct.st;
 		if (addr == IO_ADDR)
 			putchar((int) cpu->gpr[cpu->dec.rt]);
 		else if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
-			++cpu->memfail;
+			++cpu->perfct.stdefer;
 #ifndef NDEBUG
-			warnx("cpu[%u] -- Mem_sb: stalled",
+			warnx("cpu[%u] -- Mem_sb: deferred",
 			      cpu->gpr[K0]);
 #endif
 			return -1;
@@ -395,14 +395,14 @@ execute(CPU *cpu, Mem *mem)
 		}
 		break;
 	case ((uint32_t) SW << 26):
-		++cpu->st;
+		++cpu->perfct.st;
 		if (addr == IO_ADDR)
 			printf("%08x\n", cpu->gpr[cpu->dec.rt]);
 		else if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
-			++cpu->memfail;
+			++cpu->perfct.stdefer;
 #ifndef NDEBUG
-			warnx("cpu[%u] -- Mem_sw: stalled",
+			warnx("cpu[%u] -- Mem_sw: deferred",
 			      cpu->gpr[K0]);
 #endif
 			return -1;
@@ -413,13 +413,12 @@ execute(CPU *cpu, Mem *mem)
 		}
 		break;
 	case ((uint32_t) LL << 26):
-		++cpu->ld;
-		++cpu->ll;
+		++cpu->perfct.ll;
 		if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
-			++cpu->memfail;
+			++cpu->perfct.lldefer;
 #ifndef NDEBUG
-			warnx("cpu[%u] -- Mem_ll: stalled",
+			warnx("cpu[%u] -- Mem_ll: deferred",
 			      cpu->gpr[K0]);
 #endif
 			return -1;
@@ -432,13 +431,12 @@ execute(CPU *cpu, Mem *mem)
 		cpu->gpr[cpu->dec.rt] = data;
 		break;
 	case ((uint32_t) SC << 26):
-		++cpu->st;
-		++cpu->sc;
+		++cpu->perfct.sc;
 		if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
-			++cpu->memfail;
+			++cpu->perfct.scdefer;
 #ifndef NDEBUG
-			warnx("cpu[%u] -- Mem_sc: stalled",
+			warnx("cpu[%u] -- Mem_sc: deferred",
 			      cpu->gpr[K0]);
 #endif
 			return -1;
@@ -446,8 +444,8 @@ execute(CPU *cpu, Mem *mem)
 		Mem_sc(mem, cpu->gpr[K0], addr, cpu->gpr[cpu->dec.rt]);
 		if (Mem_errno == MEMERR_SC) {	/* SC failed */
 			cpu->gpr[cpu->dec.rt] = 0;
-			++cpu->rmwfail;
-		} else if (Mem_errno != MEMERR_SUCC) {	/* other errrors */
+			++cpu->perfct.rmwfail;
+		} else if (Mem_errno != MEMERR_SUCC) {	/* other errors */
 			warnx("cpu[%u] -- Mem_sc: %s",
 			      cpu->gpr[K0], Mem_strerror(Mem_errno));
 			return -1;
@@ -498,7 +496,7 @@ Datapath_execute(CPU *cpu, Mem *mem)
 	else if (!cpu->dec.stall)
 		cpu->pc += 4;
 
-	++cpu->cycle;
+	++cpu->perfct.cycle;
 	return 0;
 }
 
