@@ -325,6 +325,15 @@ execute(CPU *cpu, Mem *mem)
 		case MEMSZ:
 			cpu->gpr[K1] = mem->size;
 			break;
+		case CT0:
+			cpu->perfct.enct0 = !cpu->perfct.enct0;
+			break;
+		case CT1:
+			cpu->perfct.enct1 = !cpu->perfct.enct1;
+			break;
+		case CT2:
+			cpu->perfct.enct2 = !cpu->perfct.enct2;
+			break;
 		default:
 			Datapath_errno = DATAPATHERR_IMPL;
 			return -1;
@@ -497,6 +506,13 @@ Datapath_execute(CPU *cpu, Mem *mem)
 		cpu->pc += 4;
 
 	++cpu->perfct.cycle;
+	if (cpu->perfct.enct0)
+		++cpu->perfct.ct0;
+	if (cpu->perfct.enct1)
+		++cpu->perfct.ct1;
+	if (cpu->perfct.enct2)
+		++cpu->perfct.ct2;
+
 	return 0;
 }
 

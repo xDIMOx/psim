@@ -55,6 +55,9 @@ CPU_create(uint32_t id)
 	cpu->perfct.ll = cpu->perfct.lldefer = 0;
 	cpu->perfct.sc = cpu->perfct.scdefer = 0;
 	cpu->perfct.rmwfail = 0;
+	cpu->perfct.enct0 = cpu->perfct.ct0 = 0;
+	cpu->perfct.enct1 = cpu->perfct.ct1 = 0;
+	cpu->perfct.enct2 = cpu->perfct.ct2 = 0;
 
 #ifndef NDEBUG
 	snprintf(cpu->debug.fname, 20, "cpu%04d_instrdump", id);

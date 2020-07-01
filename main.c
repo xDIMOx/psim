@@ -155,16 +155,19 @@ main(int argc, char *argv[])
 		"stores,st defer,"
 		"ll,ll defer,"
 		"sc,sc defer,"
-		"rmwfail\n");
-	dprintf(fd,"bus,%lu,,,,,,,,,\n", Mem_busutil());
+		"rmwfail,"
+		"ct0,ct1,ct2\n");
+	dprintf(fd,"bus,%lu,,,,,,,,,,,,\n", Mem_busutil());
 	for (i = 0; i < ncpu; ++i) {
-		dprintf(fd,"%u,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n",
+		dprintf(fd,"%u,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n",
 		      cpus[i]->gpr[K0], cpus[i]->perfct.cycle,
 		      cpus[i]->perfct.ld, cpus[i]->perfct.lddefer,
 		      cpus[i]->perfct.st, cpus[i]->perfct.stdefer,
 		      cpus[i]->perfct.ll, cpus[i]->perfct.lldefer,
 		      cpus[i]->perfct.sc, cpus[i]->perfct.scdefer,
-		      cpus[i]->perfct.rmwfail);
+		      cpus[i]->perfct.rmwfail,
+		      cpus[i]->perfct.ct0, cpus[i]->perfct.ct1,
+		      cpus[i]->perfct.ct2);
 		CPU_destroy(cpus[i]);
 	}
 
