@@ -64,8 +64,10 @@ producer(void)
 {
 	int             i;
 	int             flag;
+	int             ct;
 
 	for (i = 0; i < MAXVAL; ++i) {
+		for (ct = i; ct > 0; --ct);	/* producing */
 		Spin_lock(&lock);
 		if (ct < MAXELEM) {
 			enqueue(i);

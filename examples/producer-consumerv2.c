@@ -65,6 +65,7 @@ producer(void)
 	int             val;
 	int             i;
 	int             flag;
+	int             ct;
 
 	switch(thread_id()) {
 	case 0:
@@ -78,6 +79,7 @@ producer(void)
 	}
 
 	while (val < MAXVAL) {
+		for (ct = val; ct > 0; --ct);	/* producing */
 		Spin_lock(&lock);
 		if (ct < MAXELEM) {
 			enqueue(val);
