@@ -146,15 +146,22 @@ main(int argc, char *argv[])
 
 	Mem_destroy(mem);
 
-	puts("#id,cycles,loads,stores,memfail,ll,sc,rmwfail,utilization");
-	printf("bus,,,,,,,,%lu\n", Mem_busutil());
+	if ((fd = open("./perfct", O_WRONLY | O_CREAT,
+		       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0)
+		err(EXIT_FAILURE, "open: %s", "./perfct");
+
+	dprintf(fd, "#id,cycles,loads,stores,memfail,ll,sc,rmwfail\n");
+	dprintf(fd,"bus,%lu,,,,,,\n", Mem_busutil());
 	for (i = 0; i < ncpu; ++i) {
-		printf("%u,%lu,%lu,%lu,%lu,%lu,%lu,%lu,\n",
+		dprintf(fd,"%u,%lu,%lu,%lu,%lu,%lu,%lu,%lu,\n",
 		      cpus[i]->gpr[K0], cpus[i]->cycle,
 		      cpus[i]->ld, cpus[i]->st, cpus[i]->memfail,
 		      cpus[i]->ll, cpus[i]->sc, cpus[i]->rmwfail);
 		CPU_destroy(cpus[i]);
 	}
+
+	if (close(fd) < 0)
+		err(EXIT_FAILURE, "close");
 
 	return EXIT_SUCCESS;
 }
