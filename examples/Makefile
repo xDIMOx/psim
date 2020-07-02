@@ -8,7 +8,7 @@ include config.mk
 ASRC = start.s common.s spinlock.s
 
 # C source files
-CSRC = null.c hello.c producer-consumer.c
+CSRC = null.c hello.c producer-consumer.c producer-consumerv2.c
 
 # Object files
 OBJ = ${ASRC:.s=.o} ${CSRC:.c=.o}
