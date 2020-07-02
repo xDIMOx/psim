@@ -35,7 +35,7 @@ static int      buf[MAXELEM];
 static int      nconsumers = NCONSUMERS;
 static int      nempty;
 static int      nfull;
-static int      producing[2] = { 1 };
+static int      producing[2] = {1, 1};
 static int      lock = 1;
 static int      full = 0;
 static int      empty = 0;
@@ -70,9 +70,11 @@ producer(void)
 	switch(thread_id()) {
 	case 0:
 		val = 0;
+		printhex(producing[0]);
 		break;
 	case 3:
 		val = 1;
+		printhex(producing[1]);
 		break;
 	}
 
