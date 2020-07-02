@@ -65,21 +65,15 @@ producer(void)
 {
 	int             val;
 	int             flag;
-	int             ct;
+	volatile int    busy;
 
-	switch(thread_id()) {
-	case 0:
-		val = 0;
-		printhex(producing[0]);
-		break;
-	case 3:
+	if (thread_id() & 1)
 		val = 1;
-		printhex(producing[1]);
-		break;
-	}
+	else
+		val = 0;
 
 	while (val < MAXVAL) {
-		for (ct = val; ct > 0; --ct);	/* producing */
+		for (busy = 16 + (val & 15); busy > 0; --busy);	/* producing */
 		Spin_lock(&lock);
 		if (ct < MAXELEM) {
 			enqueue(val);
@@ -136,6 +130,7 @@ consumer(void)
 {
 	int             item;
 	int             flag;
+	volatile int    busy;
 
 	flag = SUCCESS;
 	while (flag != END) {
@@ -166,7 +161,9 @@ consumer(void)
 			Spin_unlock(&full);
 			break;
 		}
-		while (item-- > 0);	/* consume the data */
+		/* consuming */
+		if (item > 0)
+			for (busy = 16 + (item & 15); busy > 0; --busy);
 	}
 }
 
