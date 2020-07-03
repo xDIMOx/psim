@@ -351,6 +351,11 @@ execute(CPU *cpu, Mem *mem)
 		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] *
 		    cpu->gpr[cpu->dec.rt];
 		break;
+	case ((uint32_t) SPECIAL3 << 26) | EXT:
+		cpu->gpr[cpu->dec.rt] =
+		    (cpu->gpr[cpu->dec.rs] >> LSB(cpu->dec.raw)) &
+		    (0xFFFFFFFF >> (31 - MSBD(cpu->dec.raw)));
+		break;
 	case ((uint32_t) LB << 26):
 		++cpu->perfct.ld;
 		if (addr == IO_ADDR)

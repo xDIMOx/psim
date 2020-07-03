@@ -24,6 +24,9 @@
 #define CO(i) ((i) & 0x02000000)
 #define COFUN(i) ((i) & 0x01FFFFFF)
 
+#define LSB(i) (((i) >> 6) & 0x3F)
+#define MSBD(i) (((i) >> 11) & 0x3F)
+
 enum opcodes {
 	SPECIAL,
 	REGIMM,
