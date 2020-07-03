@@ -21,10 +21,12 @@
 #include "mem.h"
 #include "datapath.h"
 
+#ifndef IS_ELF
 #define IS_ELF(eh) ((eh).e_ident[EI_MAG0] == ELFMAG0 && \
                     (eh).e_ident[EI_MAG1] == ELFMAG1 && \
                     (eh).e_ident[EI_MAG2] == ELFMAG2 && \
                     (eh).e_ident[EI_MAG3] == ELFMAG3)
+#endif
 
 int
 main(int argc, char *argv[])
