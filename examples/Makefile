@@ -8,7 +8,8 @@ include config.mk
 ASRC = start.s common.s spinlock.s
 
 # C source files
-CSRC = null.c hello.c producer-consumer.c producer-consumerv2.c
+CSRC = null.c hello.c producer-consumer.c producer-consumerv2.c \
+       dining-philosophers.c
 
 # Object files
 OBJ = ${ASRC:.s=.o} ${CSRC:.c=.o}
@@ -21,6 +22,7 @@ NULL_PREREQ  = start.o null.o
 HELLO_PREREQ = start.o hello.o
 PRODCON_PREREQ = start.o common.o spinlock.o producer-consumer.o
 PRODCONV2_PREREQ = start.o common.o spinlock.o producer-consumerv2.o
+DININGPHIL_PREREQ = start.o common.o spinlock.o dining-philosophers.o
 
 all: ${EXE}
 
@@ -46,6 +48,10 @@ producer-consumerv2.o: producer-consumerv2.c
 	@echo CC -c $<
 	@${CC} ${CFLAGS} ${PRODCONV2_CFLAGS} -c $<
 
+dining-philosophers.o: dining-philosophers.c
+	@echo CC -c $<
+	@${CC} ${CFLAGS} ${DINPHIL_CFLAGS} -c $<
+
 null: ${NULL_PREREQ}
 	@echo LD -o $@
 	@${LD} ${LDFLAGS} ${NULL_PREREQ} -o $@
@@ -61,6 +67,10 @@ producer-consumer: ${PRODCON_PREREQ}
 producer-consumerv2: ${PRODCONV2_PREREQ}
 	@echo LD -o $@
 	@${LD} ${LDFLAGS} ${PRODCONV2_PREREQ} -o $@
+
+dining-philosophers: ${DININGPHIL_PREREQ}
+	@echo LD -o $@
+	@${LD} ${LDFLAGS} ${DININGPHIL_PREREQ} -o $@
 
 clean:
 	@echo cleaning

@@ -17,3 +17,6 @@ PRODCON_CFLAGS = -DNCONSUMERS=1 -DMAXELEM=16 -DMAXVAL=1024
 
 # definitions for producer-consumer (v2) program
 PRODCONV2_CFLAGS = -DNCONSUMERS=2 -DMAXELEM=16 -DMAXVAL=1024
+
+# definitions for dining philosophers program
+DINPHIL_CFLAGS = -DIDEAS=10
