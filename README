@@ -45,8 +45,8 @@ cpuXXXX_instrdump will be created when the program is executed. To check
 these files a MIPSEL capable objdump(1) is needed:
 	- objdump -b binary -m mips -EL -Mno-aliases -D cpuXXXX_instrdump
 
-At the end of the simulation, a file called perfct will be created at the
-current directory, containing a number of performance counters.
+At the end of the simulation, a file called perfct_PROGRAM_NAME will be
+created at the current directory, containing a number of performance counters.
 
 Although it can simulate multiple processors, the simulator itself runs on
 a single thread. This makes easier to debug the examples (the simulation is

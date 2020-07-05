@@ -11,6 +11,8 @@
 #include <elf.h>
 #include <err.h>
 #include <fcntl.h>
+#include <libgen.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +40,8 @@ main(int argc, char *argv[])
 	size_t          memsz;
 	size_t          ncpu;
 
+	char           *prog;
+
 	unsigned char  *elf;
 
 	Elf32_Ehdr     *eh;
@@ -47,6 +51,8 @@ main(int argc, char *argv[])
 	Mem            *mem;
 
 	struct stat     stat;
+
+	char            perfct[NAME_MAX];
 
 	/*
 	 * Default options
@@ -76,14 +82,16 @@ main(int argc, char *argv[])
 		}
 	}
 
+	prog = argv[optind];
+
 	/*
 	 * Read file
 	 */
-	if (!(argv[optind]))
+	if (!prog)
 		errx(EXIT_FAILURE, "usage: %s /path/to/objfile", argv[0]);
 
-	if ((fd = open(argv[optind], O_RDONLY)) < 0)
-		err(EXIT_FAILURE, "open: %s", argv[optind]);
+	if ((fd = open(prog, O_RDONLY)) < 0)
+		err(EXIT_FAILURE, "open: %s", prog);
 
 	if (fstat(fd, &stat) < 0)
 		err(EXIT_FAILURE, "fstat");
@@ -97,8 +105,7 @@ main(int argc, char *argv[])
 	if (!IS_ELF(*eh) || eh->e_ident[EI_CLASS] != ELFCLASS32 ||
 	    eh->e_ident[EI_DATA] != ELFDATA2LSB || eh->e_type != ET_EXEC ||
 	    eh->e_machine != EM_MIPS)
-		errx(EXIT_FAILURE, "%s is not a MIPS32 EL executable",
-		     argv[optind]);
+		errx(EXIT_FAILURE, "%s is not a MIPS32 EL executable", prog);
 
 	/*
 	 * Component creation
@@ -148,9 +155,10 @@ main(int argc, char *argv[])
 
 	Mem_destroy(mem);
 
-	if ((fd = open("./perfct", O_WRONLY | O_CREAT,
+	sprintf(perfct, "./perfct_%s", basename(prog));
+	if ((fd = open(perfct, O_WRONLY | O_CREAT | O_TRUNC,
 		       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0)
-		err(EXIT_FAILURE, "open: %s", "./perfct");
+		err(EXIT_FAILURE, "open: %s", perfct);
 
 	dprintf(fd, "#id,cycles,"
 		"loads,ld defer,"
