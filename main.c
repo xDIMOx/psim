@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 	if (fstat(fd, &stat) < 0)
 		err(EXIT_FAILURE, "fstat");
 
-	if ((elf = mmap(NULL, stat.st_size * sizeof(unsigned char), PROT_READ,
+	if ((elf = mmap(NULL, stat.st_size, PROT_READ,
 			MAP_PRIVATE, fd, 0)) == MAP_FAILED)
 		err(EXIT_FAILURE, "mmap");
 
@@ -132,7 +132,7 @@ main(int argc, char *argv[])
 	for (i = 0; i < ncpu; ++i)
 		cpus[i]->pc = eh->e_entry;
 
-	if (munmap(elf, stat.st_size * sizeof(unsigned char)) < 0)
+	if (munmap(elf, stat.st_size) < 0)
 		err(EXIT_FAILURE, "munmap");
 
 	if (close(fd) < 0)
