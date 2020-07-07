@@ -113,6 +113,20 @@ tog_lockperf5:
 
 	.end tog_lockperf5
 
+	.text
+	.align 0
+	.set noreorder
+	.global busywait
+	.ent busywait
+busywait:
+	addiu $a0, $a0, -1
+	bgtz $a0, busywait
+	nop
+	jr $ra
+	nop
+
+	.end busywait
+
 	.bss
 	.align 0
 

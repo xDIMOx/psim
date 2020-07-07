@@ -64,10 +64,9 @@ producer(void)
 {
 	int             i;
 	int             flag;
-	volatile int    busy;
 
 	for (i = 0; i < MAXVAL; ++i) {
-		for (busy = 16 + (i & 15); busy > 0; --busy);	/* producing */
+		busywait(i);
 		Spin_lock(&lock);
 		if (ct < MAXELEM) {
 			enqueue(i);
@@ -115,7 +114,6 @@ consumer(void)
 {
 	int             item;
 	int             flag;
-	volatile int    busy;
 
 	flag = SUCCESS;
 	while (flag != END) {
@@ -145,9 +143,8 @@ consumer(void)
 			Spin_unlock(&full);
 			break;
 		}
-		/* consuming */
 		if (item > 0)
-			for (busy = 16 + (item & 15); busy > 0; --busy);
+			busywait(item);
 	}
 }
 

@@ -13,3 +13,4 @@ void            tog_lockperf2(void);
 void            tog_lockperf3(void);
 void            tog_lockperf4(void);
 void            tog_lockperf5(void);
+void            busywait(int nloops);
