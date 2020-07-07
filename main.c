@@ -160,24 +160,51 @@ main(int argc, char *argv[])
 		       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0)
 		err(EXIT_FAILURE, "open: %s", perfct);
 
-	dprintf(fd, "#id,cycles,"
+	dprintf(fd, "id,cycles,"
 		"loads,ld defer,"
 		"stores,st defer,"
 		"ll,ll defer,"
 		"sc,sc defer,"
 		"rmwfail,"
-		"ct0,ct1,ct2\n");
-	dprintf(fd,"bus,%lu,,,,,,,,,,,,\n", Mem_busutil());
+		"lockperf0_cycles,lockperf0_acc,"
+		"lockperf1_cycles,lockperf1_acc,"
+		"lockperf2_cycles,lockperf2_acc,"
+		"lockperf3_cycles,lockperf3_acc,"
+		"lockperf4_cycles,lockperf4_acc,"
+		"lockperf5_cycles,lockperf5_acc\n");
+	dprintf(fd,"bus,%lu\n", Mem_busutil());
 	for (i = 0; i < ncpu; ++i) {
-		dprintf(fd,"%u,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n",
-		      cpus[i]->gpr[K0], cpus[i]->perfct.cycle,
-		      cpus[i]->perfct.ld, cpus[i]->perfct.lddefer,
-		      cpus[i]->perfct.st, cpus[i]->perfct.stdefer,
-		      cpus[i]->perfct.ll, cpus[i]->perfct.lldefer,
-		      cpus[i]->perfct.sc, cpus[i]->perfct.scdefer,
-		      cpus[i]->perfct.rmwfail,
-		      cpus[i]->perfct.ct0, cpus[i]->perfct.ct1,
-		      cpus[i]->perfct.ct2);
+		dprintf(fd, "%u," /* id */
+			"%lu,"	/* cycles */
+			"%lu,%lu,"	/* loads,ld defer */
+			"%lu,%lu,"	/* stores, st defer */
+			"%lu,%lu,"	/* ll, ll defer */
+			"%lu,%lu,"	/* sc, sc defer */
+			"%lu,"	/* rmwfail */
+			"%lu,%lu,"	/* lockperf0_cycles, lockperf0_acc */
+			"%lu,%lu,"	/* lockperf1_cycles, lockperf1_acc */
+			"%lu,%lu,"	/* lockperf2_cycles, lockperf2_acc */
+			"%lu,%lu,"	/* lockperf3_cycles, lockperf3_acc */
+			"%lu,%lu,"	/* lockperf4_cycles, lockperf4_acc */
+			"%lu,%lu\n",	/* lockperf5_cycles, lockperf5_acc */
+			cpus[i]->gpr[K0], cpus[i]->perfct.cycle,
+			cpus[i]->perfct.ld, cpus[i]->perfct.lddefer,
+			cpus[i]->perfct.st, cpus[i]->perfct.stdefer,
+			cpus[i]->perfct.ll, cpus[i]->perfct.lldefer,
+			cpus[i]->perfct.sc, cpus[i]->perfct.scdefer,
+			cpus[i]->perfct.rmwfail,
+			cpus[i]->perfct.lockperf[0].cycle,
+			cpus[i]->perfct.lockperf[0].acc,
+			cpus[i]->perfct.lockperf[1].cycle,
+			cpus[i]->perfct.lockperf[1].acc,
+			cpus[i]->perfct.lockperf[2].cycle,
+			cpus[i]->perfct.lockperf[2].acc,
+			cpus[i]->perfct.lockperf[3].cycle,
+			cpus[i]->perfct.lockperf[3].acc,
+			cpus[i]->perfct.lockperf[4].cycle,
+			cpus[i]->perfct.lockperf[4].acc,
+			cpus[i]->perfct.lockperf[5].cycle,
+			cpus[i]->perfct.lockperf[5].acc);
 		CPU_destroy(cpus[i]);
 	}
 

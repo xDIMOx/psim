@@ -10,6 +10,8 @@
  * Error handling
  */
 
+#define NLOCKPERF 6
+
 #define CPUErrList                        \
 X(CPUERR_SUCC, "Success")                 \
 X(CPUERR_ALLOC, "Could not allocate CPU") \
@@ -95,12 +97,12 @@ typedef struct {
 					 * instructions */
 		size_t          scdefer;	/* no. of deferred sc's */
 		size_t          rmwfail;	/* no. of RMW failures */
-		size_t          enct0;	/* enable ct0 */
-		size_t          ct0;
-		size_t          enct1;	/* enable ct1 */
-		size_t          ct1;
-		size_t          enct2;	/* enable ct2 */
-		size_t          ct2;
+		struct {
+			size_t          en;	/* enabled */
+			size_t          cycle;	/* cycles counted */
+			size_t          acc;	/* no. of accesses */
+		}               lockperf[NLOCKPERF];	/* locks performance
+							 * counters */
 	}               perfct;	/* performance counters */
 #ifndef NDEBUG
 	struct {

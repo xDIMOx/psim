@@ -488,7 +488,10 @@ enum cop2_rs {
 
 enum cofun2 {
 	MEMSZ,			/* memory size */
-	CT0,			/* counter */
-	CT1,			/* counter */
-	CT2,			/* counter */
+	LOCKPERF0,
+	LOCKPERF1,
+	LOCKPERF2,
+	LOCKPERF3,
+	LOCKPERF4,
+	LOCKPERF5,
 };
