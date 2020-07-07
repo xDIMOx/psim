@@ -61,6 +61,8 @@ CPU_create(uint32_t id)
 		cpu->perfct.lockperf[i].en = cpu->perfct.lockperf[i].cycle =
 		    cpu->perfct.lockperf[i].acc = 0;
 	}
+	for (i = 0; i < NCOUNTERS; ++i)
+		cpu->perfct.ct[i].en = cpu->perfct.ct[i].ct = 0;
 
 #ifndef NDEBUG
 	snprintf(cpu->debug.fname, 20, "cpu%04d_instrdump", id);

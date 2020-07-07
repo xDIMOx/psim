@@ -166,6 +166,7 @@ main(int argc, char *argv[])
 		"ll,ll defer,"
 		"sc,sc defer,"
 		"rmwfail,"
+		"ct0,"
 		"lockperf0_cycles,lockperf0_acc,"
 		"lockperf1_cycles,lockperf1_acc,"
 		"lockperf2_cycles,lockperf2_acc,"
@@ -181,6 +182,7 @@ main(int argc, char *argv[])
 			"%lu,%lu,"	/* ll, ll defer */
 			"%lu,%lu,"	/* sc, sc defer */
 			"%lu,"	/* rmwfail */
+			"%lu,"	/* ct0 */
 			"%lu,%lu,"	/* lockperf0_cycles, lockperf0_acc */
 			"%lu,%lu,"	/* lockperf1_cycles, lockperf1_acc */
 			"%lu,%lu,"	/* lockperf2_cycles, lockperf2_acc */
@@ -193,6 +195,7 @@ main(int argc, char *argv[])
 			cpus[i]->perfct.ll, cpus[i]->perfct.lldefer,
 			cpus[i]->perfct.sc, cpus[i]->perfct.scdefer,
 			cpus[i]->perfct.rmwfail,
+			cpus[i]->perfct.ct[0].ct,
 			cpus[i]->perfct.lockperf[0].cycle,
 			cpus[i]->perfct.lockperf[0].acc,
 			cpus[i]->perfct.lockperf[1].cycle,

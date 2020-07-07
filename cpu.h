@@ -11,6 +11,7 @@
  */
 
 #define NLOCKPERF 6
+#define NCOUNTERS 1
 
 #define CPUErrList                        \
 X(CPUERR_SUCC, "Success")                 \
@@ -97,6 +98,10 @@ typedef struct {
 					 * instructions */
 		size_t          scdefer;	/* no. of deferred sc's */
 		size_t          rmwfail;	/* no. of RMW failures */
+		struct {
+			size_t          en;	/* enable */
+			size_t          ct;	/* cycles counted */
+		}               ct[NCOUNTERS];
 		struct {
 			size_t          en;	/* enabled */
 			size_t          cycle;	/* cycles counted */

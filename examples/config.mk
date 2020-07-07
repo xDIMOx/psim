@@ -13,10 +13,12 @@ LD      = mipsel-elf-ld
 LDFLAGS = -static
 
 # definitions for producer-consumer program
-PRODCON_CFLAGS = -DNCONSUMERS=1 -DMAXELEM=16 -DMAXVAL=1024
+PRODCON_CFLAGS = -DNCONSUMERS=1 -DMAXELEM=16 -DMAXVAL=1024 -DPRODUCER_WAIT=0 \
+                 -DCONSUMER_WAIT=item
 
 # definitions for producer-consumer (v2) program
-PRODCONV2_CFLAGS = -DNCONSUMERS=2 -DMAXELEM=16 -DMAXVAL=1024
+PRODCONV2_CFLAGS = -DNCONSUMERS=2 -DMAXELEM=16 -DMAXVAL=1024 \
+                   -DPRODUCER_WAIT=0 -DCONSUMER_WAIT=item
 
 # definitions for dining philosophers program
 DINPHIL_CFLAGS = -DIDEAS=10

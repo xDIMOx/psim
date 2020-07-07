@@ -333,6 +333,9 @@ execute(CPU *cpu, Mem *mem)
 		case MEMSZ:
 			cpu->gpr[K1] = mem->size;
 			break;
+		case CT0:
+				cpu->perfct.ct[0].en = !cpu->perfct.ct[0].en;
+				break;
 		case LOCKPERF0:
 				if (!cpu->perfct.lockperf[0].en)
 					++cpu->perfct.lockperf[0].acc;
@@ -551,6 +554,10 @@ Datapath_execute(CPU *cpu, Mem *mem)
 	for (i = 0; i < NLOCKPERF; ++i) {
 		if (cpu->perfct.lockperf[i].en)
 			++cpu->perfct.lockperf[i].cycle;
+	}
+	for (i = 0; i < NCOUNTERS; ++i) {
+		if (cpu->perfct.ct[i].en)
+			++cpu->perfct.ct[i].ct;
 	}
 
 	return 0;
