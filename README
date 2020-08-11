@@ -35,6 +35,10 @@ If your program needs more memory:
 	- ./psim -m MEMSZ_IN_BYTES /path/to/program
 By default MEMSZ_IN_BYTES is 16777216 bytes (16 Mib).
 
+Alternatively, there is a script (examples/run_exp.sh) that will execute the
+examples. Its execution generates some data for ploting, and there are some
+gnuplot scripts on the example directory.
+
 TODO:
 - Implement COP2 to have some transputer-like functionality.
 - Multi-threaded simulation
