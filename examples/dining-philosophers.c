@@ -2,9 +2,6 @@
 
 /*
  * Dining philosophers
- *
- * RANDU pseudorandom number generator from adapted from:
- * https://gist.github.com/skeeto/05c1dce49140fc4ca709f5e887ddb527
  */
 
 #include "common.h"
@@ -20,21 +17,6 @@ static int      footman = 4;
 static int      fork[5] = {1, 1, 1, 1, 1};
 static int      philos = 5;
 static int      lock = 1;
-static int      randulock = 1;
-
-static unsigned long randus = 1;
-
-static long
-randu(void)
-{
-	long            val;
-
-	Spin_lock(&randulock);
-	val = (randus *= 0x10003) & 0x7fffffff;
-	Spin_unlock(&randulock);
-
-	return val;
-}
 
 int
 main(void)

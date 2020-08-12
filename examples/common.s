@@ -128,6 +128,39 @@ busywait:
 
 	.end busywait
 
+	.text
+	.align 0
+	.set noreorder
+	.global randu
+	.extern Spin_lock
+	.extern Spin_unlock
+	.ent randu
+randu:
+	or $t7, $zero, $ra # save $ra
+	la $a0, randulock
+	jal Spin_lock
+	nop
+	la $t0, randuseed
+	lw $t1, 0($t0)
+	la $t2, 0x10003
+	mul $t1, $t1, $t2
+	sw $t1, 0($t0)
+	la $t2, 0x7fffffff
+	and $v0, $t1, $t2
+	jal Spin_unlock
+	nop
+	or $ra, $zero, $t7
+	jr $ra
+	nop
+
+	.end randu
+
+	.data
+	.align 0
+	.global randuseed
+randulock: .word 1
+randuseed: .word 1
+
 	.bss
 	.align 0
 
