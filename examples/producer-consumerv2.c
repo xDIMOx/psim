@@ -136,9 +136,9 @@ consumer(void)
 	while (flag != END) {
 		Spin_lock(&lock);
 		if (ct > 0) {
-			if (ct == MAXELEM) {
-				--nfull;
+			if (nfull > 0) {
 				flag = FULL;
+				--nfull;
 			} else
 				flag = SUCCESS;
 			item = dequeue();
