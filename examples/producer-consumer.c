@@ -21,6 +21,14 @@
 #error "You need to define NCONSUMERS"
 #endif
 
+#ifndef PRODUCER_WAIT
+#define PRODUCER_WAIT 0
+#endif
+
+#ifndef CONSUMER_WAIT
+#define CONSUMER_WAIT item
+#endif
+
 enum flag {
 	SUCCESS,
 	EMPTY,
@@ -66,7 +74,7 @@ producer(void)
 	int             flag;
 
 	for (i = 0; i < MAXVAL; ++i) {
-		busywait(i);
+		busywait(PRODUCER_WAIT);	/* "producing" */
 		Spin_lock(&lock);
 		if (ct < MAXELEM) {
 			enqueue(i);
@@ -135,6 +143,7 @@ consumer(void)
 		Spin_unlock(&lock);
 		switch (flag) {
 		case SUCCESS:
+			busywait(CONSUMER_WAIT);	/* "consuming" */
 			break;
 		case EMPTY:
 			Spin_lock(&empty);
@@ -143,8 +152,6 @@ consumer(void)
 			Spin_unlock(&full);
 			break;
 		}
-		if (item > 0)
-			busywait(item);
 	}
 }
 
