@@ -71,16 +71,12 @@ dequeue(void)
 void
 producer(void)
 {
+	int             tid;
 	int             val;
 	int             flag;
 
-	if (thread_id() & 1)
-		val = 1;
-	else
-		val = 0;
-
-	while (val < MAXVAL) {
-		for (busy = 16 + (val & 15); busy > 0; --busy);	/* producing */
+	tid = thread_id();
+	for (val = tid & 1; val < MAXVAL; val += 2) {
 		busywait(PRODUCER_WAIT);
 		Spin_lock(&lock);
 		if (ct < MAXELEM) {
@@ -103,22 +99,15 @@ producer(void)
 			break;
 		case FULL:
 			Spin_lock(&full);
-			Spin_lock(&lock);
-			enqueue(val);
-			Spin_unlock(&lock);
 			break;
 		}
-		val += 2;
 	}
 
 	Spin_lock(&lock);
-	if (thread_id() > 0)
-		producing[1] = 0;
-	else
-		producing[0] = 0;
+	producing[tid & 1] = 0;
 	Spin_unlock(&lock);
 
-	if (thread_id() > 0)
+	if (tid > 0)
 		return;
 
 	while (flag != END) {

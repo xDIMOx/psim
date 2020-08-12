@@ -94,9 +94,6 @@ producer(void)
 			break;
 		case FULL:
 			Spin_lock(&full);
-			Spin_lock(&lock);
-			enqueue(i);
-			Spin_unlock(&lock);
 			break;
 		}
 	}
