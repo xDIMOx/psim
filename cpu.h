@@ -67,6 +67,11 @@ enum CPURegNo {
 	RA
 };
 
+enum hilo {
+	LO,
+	HI,
+};
+
 typedef struct {
 	uint32_t        raw;
 	uint32_t        sign;
@@ -84,6 +89,13 @@ typedef struct {
 typedef struct {
 	uint32_t        pc;	/* Program counter */
 	uint32_t        gpr[N_GPR];	/* General purpose registers */
+	union {
+		int64_t s64;
+		int32_t s32[2];
+		uint64_t u64;
+		uint32_t u32[2];
+
+	} hilo; /* HI/LO */
 	Decoder         dec;	/* instruction decoder */
 
 	struct {
