@@ -256,6 +256,10 @@ execute(CPU *cpu, Mem *mem)
 		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] -
 		    cpu->gpr[cpu->dec.rt];
 		break;
+	case ((uint32_t) SPECIAL << 26) | AND:
+		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] &
+		    cpu->gpr[cpu->dec.rt];
+		break;
 	case ((uint32_t) SPECIAL << 26) | OR:
 		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] |
 		    cpu->gpr[cpu->dec.rt];
