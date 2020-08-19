@@ -255,6 +255,12 @@ execute(CPU *cpu, Mem *mem)
 		cpu->hilo.s64 = (int32_t) cpu->gpr[cpu->dec.rs] *
 		    (int32_t) cpu->gpr[cpu->dec.rt];
 		break;
+	case ((uint32_t) SPECIAL << 26) | DIV:
+		cpu->hilo.s32[LO] = ((int32_t) cpu->gpr[cpu->dec.rs] /
+		    (int32_t) cpu->gpr[cpu->dec.rt]);
+		cpu->hilo.s32[HI] = ((int32_t) cpu->gpr[cpu->dec.rs] %
+		    (int32_t) cpu->gpr[cpu->dec.rt]);
+		break;
 	case ((uint32_t) SPECIAL << 26) | ADDU:
 		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] +
 		    cpu->gpr[cpu->dec.rt];
