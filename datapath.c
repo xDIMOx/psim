@@ -245,6 +245,9 @@ execute(CPU *cpu, Mem *mem)
 		if (cpu->gpr[cpu->dec.rt] != 0)
 			cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs];
 		break;
+	case ((uint32_t) SPECIAL << 26) | MFHI:
+		cpu->gpr[cpu->dec.rd] = cpu->hilo.u32[HI];
+		break;
 	case ((uint32_t) SPECIAL << 26) | ADDU:
 		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] +
 		    cpu->gpr[cpu->dec.rt];
