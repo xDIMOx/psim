@@ -2,10 +2,11 @@ Yet another MIPS processor simulator.
 
 DESCRIPTION:
 This simulator runs a subset of the little endian MIPS32 (MIPSEL)
-specification.  Full compliance to the specification is a non-goal, in
-fact it only implements enough instructions to run the examples. It does
-not implement caches and any type of memory management. It does not have a
-delay slot. It does not implements interruptions of any kind.
+specification. Full compliance to the specification is a non-goal, in fact it
+only implements enough instructions to run the examples on the development
+machine (that uses gcc 10.2). It does not implement caches and any type of
+memory management. It does not have a delay slot. It does not implements
+interruptions of any kind.
 
 To build the simulator:
 	- Build dependencies: c99 compiler, POSIX compatible libc, elf.h
@@ -33,11 +34,16 @@ By default, NPROC is 1.
 
 If your program needs more memory:
 	- ./psim -m MEMSZ_IN_BYTES /path/to/program
-By default MEMSZ_IN_BYTES is 16777216 bytes (16 Mib).
+By default MEMSZ_IN_BYTES is 16777216 bytes (16 MiB).
 
-Alternatively, there is a script (examples/run_exp.sh) that will execute the
-examples. Its execution generates some data for ploting, and there are some
-gnuplot scripts on the example directory.
+Alternatively:
+	- cd examples
+	- ./run_exp PROGRAM_NAME
+		* This script assumes a POSIX environment
+		* This generates some data for plotting, so, after its
+		  execution a LOT of .csv files will be on the examples
+		  directory. Creating these plots needs gnuplot(1) and there
+		  are some .gp scripts already.
 
 TODO:
 - Implement COP2 to have some transputer-like functionality.
