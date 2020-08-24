@@ -99,12 +99,73 @@ exp_producerconsumerv2() {
 
 }
 
+exp_diningphilosophers() {
+	EXE="dining-philosophers"
+	IDEAS="10 ((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))"
+	THINK="((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5))) \
+	    ((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25)))"
+	EAT="((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5))) \
+	    ((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25)))"
+	#THINK="10 ((i&1)==0?9+(randu()%6):9-(randu()%6)) \
+	#    ((i&1)==0?i+((randu()&1023)>>2):i-((randu()&1023)>>2))    \
+	#    1+(randu()&1023)"
+	#EAT="13 ((item&1)==0?9+(randu()%6):9-(randu()%6))    \
+	#    ((item&1)==0?item+((randu()&1023)>>2):item-((randu()&1023)>>2)) \
+	#    1+(randu()&1023)"
+	PHILOS="5 8 10 16 20 32"
+
+	for ideas in ${IDEAS}; do
+		for th in ${THINK}; do
+			for eat in ${EAT}; do
+				# run experiment
+				for philos in ${PHILOS}; do
+					NEXE=${EXE}_${philos}_${ideas}
+					NEXE=${NEXE}_${th}_${eat}
+					make DINPHIL_CFLAGS="    \
+					    -DIDEAS=\"${ideas}\" \
+					    -DPHILOS=${philos}   \
+					    -DTHINK=\"${th}\"    \
+					    -DEAT=\"${eat}\"" \
+					    clean \
+					    dining-philosophers >/dev/null
+					mv ${EXE} ${NEXE}
+					${PSIM} -c ${philos} ${NEXE} &
+				done
+				wait
+				# extract data from performance counters
+				rm -f tmp*.csv
+				PERFCT="perfct_${EXE}_*_${ideas}_${th}_${eat}"
+				for perfct in ${PERFCT}; do
+					${CY} ${perfct} >>tmp0.csv
+					${BU} ${perfct} >>tmp1.csv
+					${MF} ${perfct} >>tmp2.csv
+					${LOCKCY} ${perfct} >>tmp3.csv
+					${LOCKF} ${perfct} >>tmp4.csv
+				done
+				sort -n -t',' -k1,1 tmp0.csv \
+				    >cycles_${ideas}_${th}_${eat}.csv
+				sort -n -t',' -k1,1 tmp1.csv \
+				    >busutil_${ideas}_${th}_${eat}.csv
+				sort -n -t',' -k1,1 tmp2.csv \
+				    >memfail_${ideas}_${th}_${eat}.csv
+				sort -n -t',' -k1,1 tmp3.csv \
+				    >lockcy_${ideas}_${th}_${eat}.csv
+				sort -n -t',' -k1,1 tmp4.csv \
+				    >lockfail_${ideas}_${th}_${eat}.csv
+			done
+		done
+	done
+
+}
+
 while [ $# -gt 0 ]; do
 	case $1 in
 	1|producer-consumer)
 		exp_producerconsumer ;;
 	2|producer-consumerv2)
 		exp_producerconsumerv2 ;;
+	3|dining-philosophers)
+		exp_diningphilosophers ;;
 	clean)
 		rm -f perfct* producer-consumer_[0-9]* *.csv ;;
 	*)
