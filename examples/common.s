@@ -136,7 +136,8 @@ busywait:
 	.extern Spin_unlock
 	.ent randu
 randu:
-	or $t7, $zero, $ra # save $ra
+	addiu $sp, $sp, -4
+	sw $ra, 0($sp)
 	la $a0, randulock
 	jal Spin_lock
 	nop
@@ -149,7 +150,8 @@ randu:
 	and $v0, $t1, $t2
 	jal Spin_unlock
 	nop
-	or $ra, $zero, $t7
+	lw $ra, 0($sp)
+	addiu $sp, $sp, 4
 	jr $ra
 	nop
 
