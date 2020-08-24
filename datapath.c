@@ -251,6 +251,9 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) SPECIAL << 26) | MFHI:
 		cpu->gpr[cpu->dec.rd] = cpu->hilo.u32[HI];
 		break;
+	case ((uint32_t) SPECIAL << 26) | MFLO:
+		cpu->gpr[cpu->dec.rd] = cpu->hilo.u32[LO];
+		break;
 	case ((uint32_t) SPECIAL << 26) | MULT:
 		cpu->hilo.s64 = (int32_t) cpu->gpr[cpu->dec.rs] *
 		    (int32_t) cpu->gpr[cpu->dec.rt];
