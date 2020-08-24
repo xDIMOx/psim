@@ -7,15 +7,27 @@
 #include "common.h"
 #include "spinlock.h"
 
-#ifndef IDEAS
-#define IDEAS 1
-#elif IDEAS <= 0
-#error "IDEAS has to be > 0"
+#ifndef PHILOS
+#define PHILOS 5
+#elif PHILOS <= 0
+#error "PHILOS has to be > 0"
 #endif
 
-static int      footman = 4;
-static int      fork[5] = {1, 1, 1, 1, 1};
-static int      philos = 5;
+#ifndef IDEAS
+#define IDEAS 1
+#endif
+
+#ifndef THINK
+#define THINK 1
+#endif
+
+#ifndef EAT
+#define EAT 1
+#endif
+
+static int      footman = PHILOS - 1;
+static int      fork[PHILOS];
+static int      philos = PHILOS;
 static int      lock = 1;
 
 int
@@ -24,22 +36,23 @@ main(void)
 	int             flag;
 
 	unsigned int    id;
+	unsigned int    fid;
 	unsigned int    ideas;
-
-	volatile long   eat;
-	volatile long   think;
+	unsigned int    t;
 
 	id = thread_id();
+	fork[id] = 1;
 
 	ideas = IDEAS;
+	fid = rem(id + 1, PHILOS);
 	for (;;) {
-		for (think = 32 + (randu() & 15); think > 0; --think);
+		busywait(THINK);
 		--ideas;
 		Spin_lock(&footman);
 		Spin_lock(&fork[id]);
-		Spin_lock(&fork[(id < 4) ? id + 1 : 0]);
-		for (eat = 32 + (randu() & 15); eat > 0; --eat);
-		Spin_unlock(&fork[(id < 4) ? id + 1 : 0]);
+		Spin_lock(&fork[fid]);
+		busywait(EAT);
+		Spin_unlock(&fork[fid]);
 		Spin_unlock(&fork[id]);
 		Spin_unlock(&footman);
 		if (!ideas) {
