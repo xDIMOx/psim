@@ -15,3 +15,4 @@ void            tog_lockperf4(void);
 void            tog_lockperf5(void);
 void            busywait(int nloops);
 long            randu(void);
+int             rem(int x, int y);

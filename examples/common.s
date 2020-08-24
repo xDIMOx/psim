@@ -157,6 +157,19 @@ randu:
 
 	.end randu
 
+	.text
+	.align 0
+	.set noreorder
+	.global rem
+	.ent rem
+rem:
+	div $zero, $a0, $a1
+	mfhi $v0
+	jr $ra
+	nop
+
+	.end rem
+
 	.data
 	.align 0
 	.global randuseed
