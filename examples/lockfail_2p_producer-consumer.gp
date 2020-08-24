@@ -20,7 +20,7 @@ set title "Locking failures"
 set ylabel "accesses"
 set xlabel "processors"
 
-system('./lockfail_helper.awk lockfail_10_13.csv lockfail_\(\(i\&1\)\=\=0\?9+\(randu\(\)%6\)\:9-\(randu\(\)%6\)\)_1+\(randu\(\)\&1023\).csv lockfail_1+\(randu\(\)\&1023\)_1+\(randu\(\)\&1023\).csv lockfail_1+\(randu\(\)\&1023\)_\(\(item\&1\)\=\=0\?9+\(randu\(\)%6\)\:9-\(randu\(\)%6\)\).csv')
+system('./lockfail_helper.awk "lockfail_10_13.csv" "lockfail_((i&1)==0?9+rem(randu(),7):9-rem(randu(),7))_1+(randu()&1023).csv" "lockfail_1+(randu()&1023)_1+(randu()&1023).csv" "lockfail_1+(randu()&1023)_((item&1)==0?9+rem(randu(),7):9-rem(randu(),7)).csv"')
 
 plot "lockfail_2p.dat" u (1):1
 

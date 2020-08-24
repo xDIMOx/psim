@@ -20,9 +20,9 @@ set ylabel "cycles"
 set xlabel "processors"
 
 plot "cycles_10_13.csv" u 1:2 w linesp title "static", \
-     "cycles_((i&1)==0?9+(randu()%6):9-(randu()%6))_1+(randu()&1023).csv" \
+     "cycles_((i&1)==0?9+rem(randu(),7):9-rem(randu(),7))_1+(randu()&1023).csv" \
          u 1:2 w linesp title "low", \
      "cycles_1+(randu()&1023)_1+(randu()&1023).csv" \
      u 1:2 w linesp title "high", \
-     "cycles_1+(randu()&1023)_((item&1)==0?9+(randu()%6):9-(randu()%6)).csv" \
+     "cycles_1+(randu()&1023)_((item&1)==0?9+rem(randu(),7):9-rem(randu(),7)).csv" \
      u 1:2 w linesp title "high 2", \

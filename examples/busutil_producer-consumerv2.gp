@@ -20,9 +20,9 @@ set ylabel "%"
 set xlabel "processors"
 
 plot "busutil_10_13.csv" u 1:2 w linesp title "static", \
-     "busutil_((val&1)==0?9+(randu()%6):9-(randu()%6))_1+(randu()&1023).csv" \
+     "busutil_((val&1)==0?9+rem(randu(),7):9-rem(randu(),7))_1+(randu()&1023).csv" \
          u 1:2 w linesp title "low", \
      "busutil_1+(randu()&1023)_1+(randu()&1023).csv" \
      u 1:2 w linesp title "high", \
-     "busutil_1+(randu()&1023)_((item&1)==0?9+(randu()%6):9-(randu()%6)).csv" \
+     "busutil_1+(randu()&1023)_((item&1)==0?9+rem(randu(),7):9-rem(randu(),7)).csv" \
      u 1:2 w linesp title "high 2", \

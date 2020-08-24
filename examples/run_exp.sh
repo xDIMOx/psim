@@ -14,10 +14,11 @@ set -e
 
 exp_producerconsumer() {
 	EXE="producer-consumer"
-	PRODUCER_SYNTHLOAD="10 ((i&1)==0?9+(randu()%6):9-(randu()%6)) \
-	    ((i&1)==0?i+((randu()&1023)>>2):i-((randu()&1023)>>2))    \
+	PRODUCER_SYNTHLOAD="10 ((i&1)==0?9+rem(randu(),7):9-rem(randu(),7)) \
+	    ((i&1)==0?i+((randu()&1023)>>2):i-((randu()&1023)>>2))          \
 	    1+(randu()&1023)"
-	CONSUMER_SYNTHLOAD="13 ((item&1)==0?9+(randu()%6):9-(randu()%6))    \
+	CONSUMER_SYNTHLOAD="13                                              \
+	    ((item&1)==0?9+rem(randu(),7):9-rem(randu(),7))                 \
 	    ((item&1)==0?item+((randu()&1023)>>2):item-((randu()&1023)>>2)) \
 	    1+(randu()&1023)"
 	NPROC="2 4 8 16 32 64"
@@ -57,10 +58,11 @@ exp_producerconsumer() {
 
 exp_producerconsumerv2() {
 	EXE="producer-consumerv2"
-	PRODUCER_SYNTHLOAD="10 ((val&1)==0?9+(randu()%6):9-(randu()%6)) \
-	    ((val&1)==0?val+((randu()&1023)>>2):val-((randu()&1023)>>2))    \
+	PRODUCER_SYNTHLOAD="10 ((val&1)==0?9+rem(randu(),7):9-rem(randu(),7)) \
+	    ((val&1)==0?val+((randu()&1023)>>2):val-((randu()&1023)>>2))      \
 	    1+(randu()&1023)"
-	CONSUMER_SYNTHLOAD="13 ((item&1)==0?9+(randu()%6):9-(randu()%6))    \
+	CONSUMER_SYNTHLOAD="13                                              \
+	    ((item&1)==0?9+rem(randu(),7):9-rem(randu(),7))                 \
 	    ((item&1)==0?item+((randu()&1023)>>2):item-((randu()&1023)>>2)) \
 	    1+(randu()&1023)"
 	NPROC="4 8 16 32 64"
@@ -106,12 +108,6 @@ exp_diningphilosophers() {
 	    ((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25)))"
 	EAT="((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5))) \
 	    ((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25)))"
-	#THINK="10 ((i&1)==0?9+(randu()%6):9-(randu()%6)) \
-	#    ((i&1)==0?i+((randu()&1023)>>2):i-((randu()&1023)>>2))    \
-	#    1+(randu()&1023)"
-	#EAT="13 ((item&1)==0?9+(randu()%6):9-(randu()%6))    \
-	#    ((item&1)==0?item+((randu()&1023)>>2):item-((randu()&1023)>>2)) \
-	#    1+(randu()&1023)"
 	PHILOS="5 8 10 16 20 32"
 
 	for ideas in ${IDEAS}; do
@@ -158,19 +154,16 @@ exp_diningphilosophers() {
 
 }
 
-while [ $# -gt 0 ]; do
-	case $1 in
-	1|producer-consumer)
-		exp_producerconsumer ;;
-	2|producer-consumerv2)
-		exp_producerconsumerv2 ;;
-	3|dining-philosophers)
-		exp_diningphilosophers ;;
-	clean)
-		rm -f perfct* producer-consumer_[0-9]* *.csv ;;
-	*)
-		echo 'Invalid experiment' ;;
-	esac
-
-	shift
-done
+case $1 in
+1|producer-consumer)
+	exp_producerconsumer ;;
+2|producer-consumerv2)
+	exp_producerconsumerv2 ;;
+3|dining-philosophers)
+	exp_diningphilosophers ;;
+clean)
+	rm -f perfct* producer-consumer_[0-9]* dining-philosopher_[0-9]* \
+	    *.csv ;;
+*)
+	echo 'Invalid experiment' ;;
+esac
