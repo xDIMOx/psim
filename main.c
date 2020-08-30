@@ -155,7 +155,7 @@ main(int argc, char *argv[])
 
 	Mem_destroy(mem);
 
-	sprintf(perfct, "./perfct_%s", basename(prog));
+	sprintf(perfct, "./perfct_%s.csv", basename(prog));
 	if ((fd = open(perfct, O_WRONLY | O_CREAT | O_TRUNC,
 		       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0)
 		err(EXIT_FAILURE, "open: %s", perfct);
