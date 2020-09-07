@@ -23,6 +23,8 @@ static const char *Net_errlist[] = {
 Net            *Net_create(size_t x, size_t y, size_t memsz);
 void            Net_destroy(Net *net);
 
+int             Net_progld(Net *net, size_t memsz, unsigned char *elf);
+
 const char     *Net_strerror(int code);
 
 /*
@@ -80,6 +82,28 @@ Net_destroy(Net *net)
 		CPU_destroy(net->nd[i].cpu);
 		Mem_destroy(net->nd[i].mem);
 	}
+}
+
+/*
+ * Net_progld: loads program to all nodes in the network
+ *
+ * net: network
+ * elf: ELF image
+ *
+ * Returns 0 if success, -1 otherwise, Mem_errno indicates the error
+ */
+int
+Net_progld(Net *net, size_t memsz, unsigned char *elf)
+{
+	size_t          i;
+
+	if (Mem_progld(net->nd[0].mem, elf) < 0)
+		return -1;
+
+	for (i = 1; i < net->size; ++i)
+		memcpy(net->nd[i].mem->data.b, net->nd[0].mem->data.b, memsz);
+
+	return 0;
 }
 
 /*
