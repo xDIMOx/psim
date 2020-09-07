@@ -30,7 +30,7 @@ typedef struct {
 	struct node {
 		CPU            *cpu;
 		Mem            *mem;
-	}             *nd;
+	}              *nd;
 } Net;				/* processor network */
 
 int             Net_errno;
