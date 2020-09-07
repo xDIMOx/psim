@@ -82,7 +82,7 @@ sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 		errx(EXIT_FAILURE, "Mem_progld: %s", Mem_strerror(Mem_errno));
 
 	for (i = 0; i < ncpu; ++i)
-		cpu[i]->pc = prog->entry;
+		CPU_setpc(cpu[i], prog->entry);
 
 	/* free memory after loading */
 	if (munmap(prog->elf, prog->size) < 0)

@@ -28,6 +28,8 @@ static const char *CPU_errlist[] = {
 CPU            *CPU_create(uint32_t id);
 void            CPU_destroy(CPU *cpu);
 
+void            CPU_setpc(CPU *cpu, uint32_t pc);
+
 const char     *CPU_strerror(int errno);
 
 /*
@@ -88,6 +90,18 @@ CPU_destroy(CPU *cpu)
 	close(cpu->debug.fd);
 #endif
 	free(cpu);
+}
+
+/*
+ * CPU_setpc: set program counter
+ *
+ * cpu: cpu
+ * pc: program counter
+ */
+inline void
+CPU_setpc(CPU *cpu, uint32_t pc)
+{
+	cpu->pc = pc;
 }
 
 /*
