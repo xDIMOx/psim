@@ -22,6 +22,7 @@
 #include "cpu.h"
 #include "mem.h"
 #include "datapath.h"
+#include "net.h"
 
 #ifndef IS_ELF
 #define IS_ELF(eh) ((eh).e_ident[EI_MAG0] == ELFMAG0 && \
