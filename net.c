@@ -4,12 +4,15 @@
  * Network node
  */
 
+#include <err.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "cpu.h"
 #include "mem.h"
+#include "datapath.h"
 
 /* Implements */
 #include "net.h"
@@ -26,6 +29,8 @@ void            Net_destroy(Net *net);
 void            Net_setpc(Net *net, size_t id, uint32_t pc);
 
 int             Net_progld(Net *net, size_t memsz, unsigned char *elf);
+
+void            Net_runsim(Net *net);
 
 const char     *Net_strerror(int code);
 
@@ -120,6 +125,30 @@ Net_progld(Net *net, size_t memsz, unsigned char *elf)
 		memcpy(net->nd[i].mem->data.b, net->nd[0].mem->data.b, memsz);
 
 	return 0;
+}
+
+/*
+ * Net_runsim: run simulation
+ *
+ * net: network
+ */
+void
+Net_runsim(Net *net)
+{
+	size_t          i;
+
+	for (i = 0; !Datapath_execute(net->nd[i].cpu, net->nd[i].mem); ++i) {
+		if (i >= net->size) {
+			++net->cycle;
+			fflush(stdout);
+			i = 0;
+		}
+	}
+
+	if (Datapath_errno != DATAPATHERR_EXIT) {
+		errx(EXIT_FAILURE, "net->nd[%lu] -- Datapath_execute %s",
+		     i, Datapath_strerror(Datapath_errno));
+	}
 }
 
 /*

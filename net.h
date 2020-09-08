@@ -42,4 +42,6 @@ void            Net_setpc(Net *net, size_t id, uint32_t pc);
 
 int             Net_progld(Net *net, size_t memsz, unsigned char *elf);
 
+void            Net_runsim(Net *net);
+
 const char     *Net_strerror(int code);
