@@ -38,6 +38,8 @@ int             Net_errno;
 Net            *Net_create(size_t x, size_t y, size_t memsz);
 void            Net_destroy(Net *net);
 
+void            Net_setpc(Net *net, size_t id, uint32_t pc);
+
 int             Net_progld(Net *net, size_t memsz, unsigned char *elf);
 
 const char     *Net_strerror(int code);

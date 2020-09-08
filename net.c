@@ -23,6 +23,8 @@ static const char *Net_errlist[] = {
 Net            *Net_create(size_t x, size_t y, size_t memsz);
 void            Net_destroy(Net *net);
 
+void            Net_setpc(Net *net, size_t id, uint32_t pc);
+
 int             Net_progld(Net *net, size_t memsz, unsigned char *elf);
 
 const char     *Net_strerror(int code);
@@ -82,6 +84,20 @@ Net_destroy(Net *net)
 		CPU_destroy(net->nd[i].cpu);
 		Mem_destroy(net->nd[i].mem);
 	}
+}
+
+/*
+ * Net_setpc: set a program counter to a cpu on the network
+ *
+ * net: network
+ * id: id of the cpu to set the program counter
+ * pc: program counter
+ *
+ */
+inline void
+Net_setpc(Net *net, size_t id, uint32_t pc)
+{
+	CPU_setpc(net->nd[id].cpu, pc);
 }
 
 /*
