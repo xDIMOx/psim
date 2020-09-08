@@ -44,4 +44,6 @@ int             Net_progld(Net *net, size_t memsz, unsigned char *elf);
 
 void            Net_runsim(Net *net);
 
+void            Net_perfct(Net *net, char *progname);
+
 const char     *Net_strerror(int code);

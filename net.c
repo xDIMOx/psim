@@ -5,10 +5,14 @@
  */
 
 #include <err.h>
+#include <fcntl.h>
+#include <libgen.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "cpu.h"
 #include "mem.h"
@@ -31,6 +35,8 @@ void            Net_setpc(Net *net, size_t id, uint32_t pc);
 int             Net_progld(Net *net, size_t memsz, unsigned char *elf);
 
 void            Net_runsim(Net *net);
+
+void            Net_perfct(Net *net, char *progname);
 
 const char     *Net_strerror(int code);
 
@@ -151,6 +157,57 @@ Net_runsim(Net *net)
 	}
 }
 
+/*
+ * Net_perfct: print performance counters of the simulation
+ *
+ * net: network
+ */
+void
+Net_perfct(Net *net, char *progname)
+{
+	int             fd;
+
+	size_t          i;
+
+	char            perfct[NAME_MAX];
+
+	sprintf(perfct, "./perfct_%s.csv", basename(progname));
+	if ((fd = open(perfct, O_WRONLY | O_CREAT | O_TRUNC,
+		       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0)
+		err(EXIT_FAILURE, "open: %s", perfct);
+
+	dprintf(fd, "id,cycles,"
+		"loads,ld defer,"
+		"stores,st defer,"
+		"ll,ll defer,"
+		"sc,sc defer,"
+		"rmwfail,"
+		"ct0\n");
+	dprintf(fd, "net,%lu\n", net->cycle);
+	for (i = 0; i < net->size; ++i) {
+		dprintf(fd, "%u,%lu,"	/* id,cycles */
+			"%lu,%lu,"	/* loads,ld defer */
+			"%lu,%lu,"	/* stores, st defer */
+			"%lu,%lu,"	/* ll, ll defer */
+			"%lu,%lu,%lu"	/* sc, sc defer,rmwfail */
+			"%lu\n",/* ct0 */
+			net->nd[i].cpu->gpr[K0],
+			net->nd[i].cpu->perfct.cycle,
+			net->nd[i].cpu->perfct.ld,
+			net->nd[i].cpu->perfct.lddefer,
+			net->nd[i].cpu->perfct.st,
+			net->nd[i].cpu->perfct.stdefer,
+			net->nd[i].cpu->perfct.ll,
+			net->nd[i].cpu->perfct.lldefer,
+			net->nd[i].cpu->perfct.sc,
+			net->nd[i].cpu->perfct.scdefer,
+			net->nd[i].cpu->perfct.rmwfail,
+			net->nd[i].cpu->perfct.ct[0].ct);
+	}
+
+	if (close(fd) < 0)
+		err(EXIT_FAILURE, "close");
+}
 /*
  * Net_strerror: map error number to error message string
  *
