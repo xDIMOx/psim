@@ -31,6 +31,11 @@
                     (eh).e_ident[EI_MAG3] == ELFMAG3)
 #endif
 
+enum org {
+	SHRMEM,
+	NET,
+};
+
 struct prog {
 	off_t           size;
 	Elf32_Addr      entry;
@@ -39,6 +44,7 @@ struct prog {
 };
 
 void            sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog);
+void            sim_net(size_t x, size_t y, size_t memsz, struct prog * prog);
 
 int             main(int argc, char *argv[]);
 
@@ -165,19 +171,60 @@ sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 
 }
 
+/*
+ * sim_net: simulate a network of processors
+ *
+ * x: number of processors on the x axis
+ * y: number of processors on the y axis
+ * memsz: memory size
+ * prog: information about the program to be executed
+ */
+void
+sim_net(size_t x, size_t y, size_t memsz, struct prog * prog)
+{
+	size_t          i;
+
+	Net            *net;
+
+	/*
+	 * Create network
+	 */
+	if (!(net = Net_create(x, y, memsz)))
+		errx(EXIT_FAILURE, "Net_create: %s", Net_strerror(Net_errno));
+
+	/*
+	 * Program loading
+	 */
+	if (Net_progld(net, memsz, prog->elf) < 0)
+		errx(EXIT_FAILURE, "Net_progld: %s", Mem_strerror(Mem_errno));
+
+	for (i = 0; i < (x * y); ++i)
+		Net_setpc(net, i, prog->entry);
+
+	/* free memory after loading */
+	if (munmap(prog->elf, prog->size) < 0)
+		err(EXIT_FAILURE, "munmap");
+
+	/*
+	 * Run simulation
+	 */
+	Net_runsim(net);
+	Net_perfct(net, prog->name);
+	Net_destroy(net);
+}
+
 int
 main(int argc, char *argv[])
 {
 	int             c;
 	int             fd;
+	int             flag;
 
 	size_t          memsz;
 	size_t          ncpu;
 	size_t          x, y;
 
 	Elf32_Ehdr     *eh;
-
-	Net            *net;
 
 	struct prog     prog;
 
@@ -188,17 +235,27 @@ main(int argc, char *argv[])
 	 */
 	memsz = (1 << 24);	/* 16 Mib */
 	ncpu = 1;
+	flag = SHRMEM;
+	x = y = 1;
 
 	/*
 	 * Parse command line options
 	 */
-	while ((c = getopt(argc, argv, ":m:c:")) != -1) {
+	while ((c = getopt(argc, argv, ":n:m:c:s")) != -1) {
 		switch (c) {
 		case 'c':
 			ncpu = strtoul(optarg, NULL, 10);
 			break;
+		case 'n':
+			flag = NET;
+			x = strtoul(strtok(optarg, "x"), NULL, 10);
+			y = strtoul(strtok(NULL, "x"), NULL, 10);
+			break;
 		case 'm':
 			memsz = strtoul(optarg, NULL, 10);
+			break;
+		case 's':
+			flag = SHRMEM;
 			break;
 		case ':':
 			errx(EXIT_FAILURE, "Option -%c requires an operand",
@@ -239,7 +296,10 @@ main(int argc, char *argv[])
 		     prog.name);
 	prog.entry = eh->e_entry;
 
-	sim_shrmem(ncpu, memsz, &prog);
+	if (flag == SHRMEM)
+		sim_shrmem(ncpu, memsz, &prog);
+	else
+		sim_net(x, y, memsz, &prog);
 
 	if (close(fd) < 0)
 		err(EXIT_FAILURE, "close");
