@@ -80,6 +80,8 @@ decode(Decoder *dec)
 	dec->isjump = 0;
 	dec->idx = INSTR_IDX(dec->raw) << 2;
 
+	dec->sel = SEL(dec->raw);
+
 	dec->sign = OPC(dec->raw);
 	switch (OPC(dec->raw) >> 26) {
 	case SPECIAL:
@@ -351,6 +353,20 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) COP0 << 26) | WAIT:
 		Datapath_errno = DATAPATHERR_EXIT;
 		return -1;
+	case ((uint32_t) COP2 << 26) | (MFC2 << 21):
+		if (cpu->dec.rs >= COP2_NREG || cpu->dec.sel >= COP2_NSEL) {
+			CPU_errno = CPUERR_COP2REG;
+			return -1;
+		}
+		cpu->gpr[cpu->dec.rt] = cpu->cop2[cpu->dec.rs][cpu->dec.sel];
+		break;
+	case ((uint32_t) COP2 << 26) | (MTC2 << 21):
+		if (cpu->dec.rs >= COP2_NREG || cpu->dec.sel >= COP2_NSEL) {
+			CPU_errno = CPUERR_COP2REG;
+			return -1;
+		}
+		cpu->cop2[cpu->dec.rs][cpu->dec.sel] = cpu->gpr[cpu->dec.rt];
+		break;
 	case ((uint32_t) COP2 << 26) | (1 << 25): /* coprocessor operation */
 		switch (COFUN(cpu->dec.raw)) {
 		case MEMSZ:

@@ -3,7 +3,14 @@
 /*
  * CPU module
  *
- * Implementation a MIPS processor
+ * Implementation a MIPS processor.
+ *
+ * COP2 have one register number (COP2_LINK) that represents the communication
+ * link. The link have three registers:
+ *	COP2_CORR is the correspondent processor;
+ *	COP2_DATA is the data sent/received;
+ *	COP2_STATUS is the status of the link, its format is:
+ *		bit 0..1: op (current operation)
  */
 
 /*
@@ -13,10 +20,11 @@
 #define NLOCKPERF 6
 #define NCOUNTERS 1
 
-#define CPUErrList                        \
-X(CPUERR_SUCC, "Success")                 \
-X(CPUERR_ALLOC, "Could not allocate CPU") \
-X(CPUERR_DEBUG, "Could not generate debug info")
+#define CPUErrList                               \
+X(CPUERR_SUCC, "Success")                        \
+X(CPUERR_ALLOC, "Could not allocate CPU")        \
+X(CPUERR_DEBUG, "Could not generate debug info") \
+X(CPUERR_COP2REG, "Invalid COP2 register")
 
 #define X(a, b) a,
 enum CPUErrNo {
@@ -31,6 +39,12 @@ int             CPU_errno;
  */
 
 #define N_GPR 32		/* No. of registers */
+
+#define COP2_NREG 1		/* No. of registers */
+#define COP2_NSEL 6		/* select field */
+
+/* TODO: clean way to set these fields */
+#define COP2_LINK_ST_OP(x) ((x) & 0x3)	/* operation flag */
 
 enum CPURegNo {
 	ZERO,
@@ -72,6 +86,23 @@ enum hilo {
 	HI,
 };
 
+enum cop2_reg {
+	COP2_LINK,
+};
+
+enum cop2_link_sel {
+	COP2_LINK_CORR,
+	COP2_LINK_DATA,
+	COP2_LINK_ST,
+	COP2_LINK_HOPS,
+	COP2_LINK_NMES,
+};
+
+enum cop2_link_op {
+	COP2_LINK_OP_IN,
+	COP2_LINK_OP_OUT,
+};
+
 typedef struct {
 	uint32_t        raw;
 	uint32_t        sign;
@@ -84,6 +115,7 @@ typedef struct {
 	uint32_t        idx;
 	uint32_t        npc;
 	uint32_t        stall;
+	uint32_t        sel;
 } Decoder;
 
 typedef struct {
@@ -97,7 +129,7 @@ typedef struct {
 
 	}               hilo;	/* HI/LO */
 	Decoder         dec;	/* instruction decoder */
-
+	uint32_t        cop2[COP2_NREG][COP2_NSEL];
 	struct {
 		size_t          cycle;	/* cycles executed */
 		size_t          ld;	/* no. of loads */
