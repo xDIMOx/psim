@@ -121,13 +121,7 @@ sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 		"ll,ll defer,"
 		"sc,sc defer,"
 		"rmwfail,"
-		"ct0,"
-		"lockperf0_cycles,lockperf0_acc,"
-		"lockperf1_cycles,lockperf1_acc,"
-		"lockperf2_cycles,lockperf2_acc,"
-		"lockperf3_cycles,lockperf3_acc,"
-		"lockperf4_cycles,lockperf4_acc,"
-		"lockperf5_cycles,lockperf5_acc\n");
+		"ct0\n");
 	dprintf(fd, "bus,%lu\n", Mem_busutil());
 	for (i = 0; i < ncpu; ++i) {
 		dprintf(fd, "%u,"	/* id */
@@ -137,32 +131,14 @@ sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 			"%lu,%lu,"	/* ll, ll defer */
 			"%lu,%lu,"	/* sc, sc defer */
 			"%lu,"	/* rmwfail */
-			"%lu,"	/* ct0 */
-			"%lu,%lu,"	/* lockperf0_cycles, lockperf0_acc */
-			"%lu,%lu,"	/* lockperf1_cycles, lockperf1_acc */
-			"%lu,%lu,"	/* lockperf2_cycles, lockperf2_acc */
-			"%lu,%lu,"	/* lockperf3_cycles, lockperf3_acc */
-			"%lu,%lu,"	/* lockperf4_cycles, lockperf4_acc */
-			"%lu,%lu\n",	/* lockperf5_cycles, lockperf5_acc */
+			"%lu,",	/* ct0 */
 			cpu[i]->gpr[K0], cpu[i]->perfct.cycle,
 			cpu[i]->perfct.ld, cpu[i]->perfct.lddefer,
 			cpu[i]->perfct.st, cpu[i]->perfct.stdefer,
 			cpu[i]->perfct.ll, cpu[i]->perfct.lldefer,
 			cpu[i]->perfct.sc, cpu[i]->perfct.scdefer,
 			cpu[i]->perfct.rmwfail,
-			cpu[i]->perfct.ct[0].ct,
-			cpu[i]->perfct.lockperf[0].cycle,
-			cpu[i]->perfct.lockperf[0].acc,
-			cpu[i]->perfct.lockperf[1].cycle,
-			cpu[i]->perfct.lockperf[1].acc,
-			cpu[i]->perfct.lockperf[2].cycle,
-			cpu[i]->perfct.lockperf[2].acc,
-			cpu[i]->perfct.lockperf[3].cycle,
-			cpu[i]->perfct.lockperf[3].acc,
-			cpu[i]->perfct.lockperf[4].cycle,
-			cpu[i]->perfct.lockperf[4].acc,
-			cpu[i]->perfct.lockperf[5].cycle,
-			cpu[i]->perfct.lockperf[5].acc);
+			cpu[i]->perfct.ct[0].ct);
 		CPU_destroy(cpu[i]);
 	}
 

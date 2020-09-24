@@ -17,7 +17,6 @@
  * Error handling
  */
 
-#define NLOCKPERF 6
 #define NCOUNTERS 1
 
 #define CPUErrList                               \
@@ -146,12 +145,6 @@ typedef struct {
 			size_t          en;	/* enable */
 			size_t          ct;	/* cycles counted */
 		}               ct[NCOUNTERS];
-		struct {
-			size_t          en;	/* enabled */
-			size_t          cycle;	/* cycles counted */
-			size_t          acc;	/* no. of accesses */
-		}               lockperf[NLOCKPERF];	/* locks performance
-							 * counters */
 	}               perfct;	/* performance counters */
 #ifndef NDEBUG
 	struct {

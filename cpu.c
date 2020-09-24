@@ -59,10 +59,6 @@ CPU_create(uint32_t id)
 	cpu->perfct.ll = cpu->perfct.lldefer = 0;
 	cpu->perfct.sc = cpu->perfct.scdefer = 0;
 	cpu->perfct.rmwfail = 0;
-	for (i = 0; i < NLOCKPERF; ++i) {
-		cpu->perfct.lockperf[i].en = cpu->perfct.lockperf[i].cycle =
-		    cpu->perfct.lockperf[i].acc = 0;
-	}
 	for (i = 0; i < NCOUNTERS; ++i)
 		cpu->perfct.ct[i].en = cpu->perfct.ct[i].ct = 0;
 

@@ -375,42 +375,6 @@ execute(CPU *cpu, Mem *mem)
 		case CT0:
 				cpu->perfct.ct[0].en = !cpu->perfct.ct[0].en;
 				break;
-		case LOCKPERF0:
-				if (!cpu->perfct.lockperf[0].en)
-					++cpu->perfct.lockperf[0].acc;
-				cpu->perfct.lockperf[0].en =
-				    !cpu->perfct.lockperf[0].en;
-				break;
-		case LOCKPERF1:
-				if (!cpu->perfct.lockperf[1].en)
-					++cpu->perfct.lockperf[1].acc;
-				cpu->perfct.lockperf[1].en =
-				    !cpu->perfct.lockperf[1].en;
-				break;
-		case LOCKPERF2:
-				if (!cpu->perfct.lockperf[2].en)
-					++cpu->perfct.lockperf[2].acc;
-				cpu->perfct.lockperf[2].en =
-				    !cpu->perfct.lockperf[2].en;
-				break;
-		case LOCKPERF3:
-				if (!cpu->perfct.lockperf[3].en)
-					++cpu->perfct.lockperf[3].acc;
-				cpu->perfct.lockperf[3].en =
-				    !cpu->perfct.lockperf[3].en;
-				break;
-		case LOCKPERF4:
-				if (!cpu->perfct.lockperf[4].en)
-					++cpu->perfct.lockperf[4].acc;
-				cpu->perfct.lockperf[4].en =
-				    !cpu->perfct.lockperf[4].en;
-				break;
-		case LOCKPERF5:
-				if (!cpu->perfct.lockperf[5].en)
-					++cpu->perfct.lockperf[5].acc;
-				cpu->perfct.lockperf[5].en =
-				    !cpu->perfct.lockperf[5].en;
-				break;
 		default:
 			Datapath_errno = DATAPATHERR_IMPL;
 			return -1;
@@ -590,10 +554,6 @@ Datapath_execute(CPU *cpu, Mem *mem)
 		cpu->pc += 4;
 
 	++cpu->perfct.cycle;
-	for (i = 0; i < NLOCKPERF; ++i) {
-		if (cpu->perfct.lockperf[i].en)
-			++cpu->perfct.lockperf[i].cycle;
-	}
 	for (i = 0; i < NCOUNTERS; ++i) {
 		if (cpu->perfct.ct[i].en)
 			++cpu->perfct.ct[i].ct;
