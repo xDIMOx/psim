@@ -354,18 +354,16 @@ execute(CPU *cpu, Mem *mem)
 		Datapath_errno = DATAPATHERR_EXIT;
 		return -1;
 	case ((uint32_t) COP2 << 26) | (MFC2 << 21):
-		if (cpu->dec.rs >= COP2_NREG || cpu->dec.sel >= COP2_NSEL) {
-			CPU_errno = CPUERR_COP2REG;
+		data = CPU_mfc2(cpu, cpu->dec.rs, cpu->dec.sel);
+		if (data < 0)
 			return -1;
-		}
-		cpu->gpr[cpu->dec.rt] = cpu->cop2[cpu->dec.rs][cpu->dec.sel];
+		cpu->gpr[cpu->dec.rt] = (uint32_t) data;
 		break;
 	case ((uint32_t) COP2 << 26) | (MTC2 << 21):
-		if (cpu->dec.rs >= COP2_NREG || cpu->dec.sel >= COP2_NSEL) {
-			CPU_errno = CPUERR_COP2REG;
+		if (CPU_mtc2(cpu, cpu->dec.rs, cpu->dec.sel,
+			     cpu->gpr[cpu->dec.rt])) {
 			return -1;
 		}
-		cpu->cop2[cpu->dec.rs][cpu->dec.sel] = cpu->gpr[cpu->dec.rt];
 		break;
 	case ((uint32_t) COP2 << 26) | (1 << 25): /* coprocessor operation */
 		switch (COFUN(cpu->dec.raw)) {

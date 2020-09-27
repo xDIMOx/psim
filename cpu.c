@@ -30,6 +30,9 @@ void            CPU_destroy(CPU *cpu);
 
 void            CPU_setpc(CPU *cpu, uint32_t pc);
 
+int64_t         CPU_mfc2(CPU *cpu, uint32_t src, uint32_t sel);
+int             CPU_mtc2(CPU *cpu, uint32_t dest, uint32_t sel, uint32_t val);
+
 const char     *CPU_strerror(int errno);
 
 /*
@@ -98,6 +101,48 @@ inline void
 CPU_setpc(CPU *cpu, uint32_t pc)
 {
 	cpu->pc = pc;
+}
+
+/*
+ * CPU_mfc2: move from coprocessor 2
+ *
+ * cpu: cpu
+ * src: source register
+ * sel: select
+ *
+ */
+int64_t
+CPU_mfc2(CPU *cpu,  uint32_t src, uint32_t sel)
+{
+	CPU_errno = CPUERR_SUCC;
+
+	if (src >= COP2_NREG || sel >= COP2_NSEL) {
+		CPU_errno = CPUERR_COP2REG;
+		return -1;
+	}
+	return cpu->cop2[src][sel];
+}
+
+/*
+ * CPU_mtc2: Move to coprocessor 2
+ *
+ * cpu: cpu
+ * dest: destination register
+ * sel: select
+ * val: value to insert
+ */
+int
+CPU_mtc2(CPU *cpu, uint32_t dest, uint32_t sel, uint32_t val)
+{
+	CPU_errno = CPUERR_SUCC;
+
+	if (dest >= COP2_NREG || sel >= COP2_NSEL) {
+		CPU_errno = CPUERR_COP2REG;
+		return -1;
+	}
+	cpu->cop2[dest][sel] = val;
+
+	return 0;
 }
 
 /*

@@ -159,4 +159,7 @@ void            CPU_destroy(CPU *cpu);
 
 void            CPU_setpc(CPU *cpu, uint32_t pc);
 
+int64_t         CPU_mfc2(CPU *cpu, uint32_t src, uint32_t sel);
+int             CPU_mtc2(CPU *cpu, uint32_t dest, uint32_t sel, uint32_t val);
+
 const char     *CPU_strerror(int errno);
