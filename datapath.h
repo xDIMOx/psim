@@ -24,6 +24,6 @@ enum DatapathErrNo {
 
 int             Datapath_errno;
 
-int             Datapath_execute(CPU *cpu, Mem *mem);
+int             Datapath_execute(CPU *, Mem *);
 
-const char     *Datapath_strerror(int errno);
+const char     *Datapath_strerror(int);

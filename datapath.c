@@ -28,13 +28,13 @@ static const char *Datapath_errlist[] = {
 
 #define IO_ADDR 0xFFFC
 
-static int64_t  fetch(CPU *cpu, Mem *mem);
-static int      decode(Decoder *dec);
-static int      execute(CPU *cpu, Mem *mem);
+static int64_t  fetch(CPU *, Mem *);
+static int      decode(Decoder *);
+static int      execute(CPU *, Mem *);
 
-int             Datapath_execute(CPU *cpu, Mem *mem);
+int             Datapath_execute(CPU *, Mem *);
 
-const char     *Datapath_strerror(int errno);
+const char     *Datapath_strerror(int);
 
 /*
  * fetch: Fetch an instruction

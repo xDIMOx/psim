@@ -30,13 +30,14 @@ static const char *Net_errlist[] = {
 Net            *Net_create(size_t x, size_t y, size_t memsz);
 void            Net_destroy(Net *net);
 
-void            Net_setpc(Net *net, size_t id, uint32_t pc);
+Net            *Net_create(size_t, size_t, size_t);
+void            Net_destroy(Net *);
 
-int             Net_progld(Net *net, size_t memsz, unsigned char *elf);
+void            Net_setpc(Net *, size_t, uint32_t);
 
-void            Net_runsim(Net *net);
+int             Net_progld(Net *, size_t, unsigned char *);
 
-void            Net_perfct(Net *net, char *progname);
+void            Net_runsim(Net *);
 
 const char     *Net_strerror(int code);
 

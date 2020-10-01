@@ -35,15 +35,15 @@ typedef struct {
 
 int             Net_errno;
 
-Net            *Net_create(size_t x, size_t y, size_t memsz);
-void            Net_destroy(Net *net);
+Net            *Net_create(size_t, size_t, size_t);
+void            Net_destroy(Net *);
 
-void            Net_setpc(Net *net, size_t id, uint32_t pc);
+void            Net_setpc(Net *, size_t, uint32_t);
 
-int             Net_progld(Net *net, size_t memsz, unsigned char *elf);
+int             Net_progld(Net *, size_t, unsigned char *);
 
-void            Net_runsim(Net *net);
+void            Net_runsim(Net *);
 
-void            Net_perfct(Net *net, char *progname);
+void            Net_perfct(Net *, char *);
 
-const char     *Net_strerror(int code);
+const char     *Net_strerror(int);

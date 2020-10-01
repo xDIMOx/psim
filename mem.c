@@ -37,25 +37,25 @@ static struct {
 }               memctl;
 
 
-Mem            *Mem_create(size_t size, size_t shr);
-void            Mem_destroy(Mem *mem);
+Mem            *Mem_create(size_t, size_t);
+void            Mem_destroy(Mem *);
 
-int             Mem_busacc(uint32_t prid);
+int             Mem_busacc(uint32_t);
 void            Mem_busclr(void);
 size_t          Mem_busutil(void);
 
-int             Mem_progld(Mem *mem, unsigned char *elf);
+int             Mem_progld(Mem *, unsigned char *);
 
-int64_t         Mem_lw(Mem *mem, size_t addr);
-int             Mem_sw(Mem *mem, size_t addr, uint32_t data);
+int64_t         Mem_lw(Mem *, size_t);
+int             Mem_sw(Mem *, size_t, uint32_t);
 
-int64_t         Mem_ll(Mem *mem, uint32_t prid, size_t addr);
-int             Mem_sc(Mem *mem, uint32_t prid, size_t addr, uint32_t data);
+int64_t         Mem_ll(Mem *, uint32_t prid, size_t);
+int             Mem_sc(Mem *, uint32_t prid, size_t, uint32_t);
 
-int64_t         Mem_lb(Mem *mem, size_t addr);
-int             Mem_sb(Mem *mem, size_t addr, uint8_t data);
+int64_t         Mem_lb(Mem *, size_t);
+int             Mem_sb(Mem *, size_t, uint8_t);
 
-const char     *Mem_strerror(int code);
+const char     *Mem_strerror(int);
 
 /*
  * Mem_create: create memory object

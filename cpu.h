@@ -154,12 +154,12 @@ typedef struct {
 #endif
 } CPU;
 
-CPU            *CPU_create(uint32_t id);
-void            CPU_destroy(CPU *cpu);
+CPU            *CPU_create(uint32_t);
+void            CPU_destroy(CPU *);
 
-void            CPU_setpc(CPU *cpu, uint32_t pc);
+void            CPU_setpc(CPU *, uint32_t);
 
-int64_t         CPU_mfc2(CPU *cpu, uint32_t src, uint32_t sel);
-int             CPU_mtc2(CPU *cpu, uint32_t dest, uint32_t sel, uint32_t val);
+int64_t         CPU_mfc2(CPU *, uint32_t, uint32_t);
+int             CPU_mtc2(CPU *, uint32_t, uint32_t, uint32_t);
 
-const char     *CPU_strerror(int errno);
+const char     *CPU_strerror(int);
