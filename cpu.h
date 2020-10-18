@@ -118,12 +118,12 @@ typedef struct {
 } Decoder;
 
 typedef struct {
-	uint32_t        pc;	/* Program counter */
+	size_t          pc;	/* Program counter */
 	uint32_t        gpr[N_GPR];	/* General purpose registers */
 	union {
 		int64_t         s64;
-		int32_t         s32[2];
 		uint64_t        u64;
+		int32_t         s32[2];
 		uint32_t        u32[2];
 
 	}               hilo;	/* HI/LO */
