@@ -11,6 +11,7 @@
  *	COP2_DATA is the data sent/received;
  *	COP2_STATUS is the status of the link, its format is:
  *		bit 0..1: op (current operation)
+ *		bit 2: sent message
  */
 
 /*
@@ -44,6 +45,7 @@ int             CPU_errno;
 
 /* TODO: clean way to set these fields */
 #define COP2_MSG_ST_OP(x) ((x) & 0x3)	/* operation flag */
+#define COP2_MSG_ST_SENT(x) ((x) & 0x4) /* sent flag */
 
 enum CPURegNo {
 	ZERO,
