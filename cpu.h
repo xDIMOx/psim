@@ -5,7 +5,7 @@
  *
  * Implementation a MIPS processor.
  *
- * COP2 have one register number (COP2_LINK) that represents the communication
+ * COP2 have one register number (COP2_MSG) that represents the communication
  * link. The link have three registers:
  *	COP2_CORR is the correspondent processor;
  *	COP2_DATA is the data sent/received;
@@ -43,7 +43,7 @@ int             CPU_errno;
 #define COP2_NSEL 6		/* select field */
 
 /* TODO: clean way to set these fields */
-#define COP2_LINK_ST_OP(x) ((x) & 0x3)	/* operation flag */
+#define COP2_MSG_ST_OP(x) ((x) & 0x3)	/* operation flag */
 
 enum CPURegNo {
 	ZERO,
@@ -86,20 +86,21 @@ enum hilo {
 };
 
 enum cop2_reg {
-	COP2_LINK,
+	COP2_MSG,
 };
 
 enum cop2_link_sel {
-	COP2_LINK_CORR,
-	COP2_LINK_DATA,
-	COP2_LINK_ST,
-	COP2_LINK_HOPS,
-	COP2_LINK_NMES,
+	COP2_MSG_CORR,
+	COP2_MSG_DATA,
+	COP2_MSG_ST,
+	COP2_MSG_HOPS,
+	COP2_MSG_NMSG,
 };
 
 enum cop2_link_op {
-	COP2_LINK_OP_IN,
-	COP2_LINK_OP_OUT,
+	COP2_MSG_OP_NONE,
+	COP2_MSG_OP_IN,
+	COP2_MSG_OP_OUT,
 };
 
 typedef struct {
