@@ -185,6 +185,9 @@ sim_net(size_t x, size_t y, size_t memsz, struct prog * prog)
 	 * Run simulation
 	 */
 	Net_runsim(net);
+	if (Net_errno != NETERR_SUCC || CPU_errno != CPUERR_SUCC) {
+		exit(EXIT_FAILURE);
+	}
 	Net_perfct(net, prog->name);
 	Net_destroy(net);
 }

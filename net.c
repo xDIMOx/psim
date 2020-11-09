@@ -41,6 +41,8 @@ static void     fwd(Net *, size_t);
 static void     hop(Net *, uint32_t);
 static void     operate(Net *, size_t);
 
+static void     execute(Net *);
+
 Net            *Net_create(size_t, size_t, size_t);
 void            Net_destroy(Net *);
 
@@ -368,6 +370,32 @@ operate(Net *net, size_t id)
 }
 
 /*
+ * execute: network cycle
+ *
+ * net: network
+ */
+static
+void
+execute(Net *net)
+{
+	size_t          i;
+
+	Net_errno = NETERR_SUCC;
+
+	for (i = 0; i < net->size; ++i) {
+		fwd(net, i);	 /* deal with old messages internally first */
+	}
+
+	for (i = 0; i < net->size; ++i) {
+		operate(net, i); /* do operation */
+	}
+
+	for (i = 0; i < net->size; ++i) {
+		hop(net, i);	 /* send messages to next nodes */
+	}
+}
+
+/*
  * Net_create: create cpu network
  *
  * x: number of processors on the x axis
@@ -482,17 +510,21 @@ Net_runsim(Net *net)
 {
 	size_t          i;
 
-	for (i = 0; !Datapath_execute(net->nd[i].cpu, net->nd[i].mem); ++i) {
-		if (i >= net->size) {
+	for (i = 0;; i = (i + 1) % net->size) {
+		if (Datapath_execute(net->nd[i].cpu, net->nd[i].mem)) {
+			warnx("net->nd[%lu] -- Datapath_execute %s",
+			      i, Datapath_strerror(Datapath_errno));
+			return;
+		}
+
+		if (i == (net->size - 1)) {
+			execute(net);
 			++net->cycle;
 			fflush(stdout);
-			i = 0;
+			if (Net_errno != NETERR_SUCC) {
+				return;
+			}
 		}
-	}
-
-	if (Datapath_errno != DATAPATHERR_EXIT) {
-		errx(EXIT_FAILURE, "net->nd[%lu] -- Datapath_execute %s",
-		     i, Datapath_strerror(Datapath_errno));
 	}
 }
 
