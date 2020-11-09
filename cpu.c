@@ -42,7 +42,7 @@ const char     *CPU_strerror(int);
  *
  * Returns cpu if success, NULL otherwise
  */
-CPU            *
+CPU *
 CPU_create(uint32_t id)
 {
 	size_t          i;
@@ -55,6 +55,7 @@ CPU_create(uint32_t id)
 		CPU_errno = CPUERR_ALLOC;
 		return NULL;
 	}
+
 	cpu->gpr[K0] = id;
 	cpu->perfct.cycle = 0;
 	cpu->perfct.ld = cpu->perfct.lddefer = 0;
@@ -62,8 +63,9 @@ CPU_create(uint32_t id)
 	cpu->perfct.ll = cpu->perfct.lldefer = 0;
 	cpu->perfct.sc = cpu->perfct.scdefer = 0;
 	cpu->perfct.rmwfail = 0;
-	for (i = 0; i < NCOUNTERS; ++i)
+	for (i = 0; i < NCOUNTERS; ++i) {
 		cpu->perfct.ct[i].en = cpu->perfct.ct[i].ct = 0;
+	}
 
 #ifndef NDEBUG
 	snprintf(cpu->debug.fname, 20, "cpu%04d_instrdump", id);
@@ -120,6 +122,7 @@ CPU_mfc2(CPU *cpu,  uint32_t src, uint32_t sel)
 		CPU_errno = CPUERR_COP2REG;
 		return -1;
 	}
+
 	return cpu->cop2[src][sel];
 }
 
@@ -140,6 +143,7 @@ CPU_mtc2(CPU *cpu, uint32_t dest, uint32_t sel, uint32_t val)
 		CPU_errno = CPUERR_COP2REG;
 		return -1;
 	}
+
 	cpu->cop2[dest][sel] = val;
 
 	return 0;

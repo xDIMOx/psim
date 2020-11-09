@@ -24,9 +24,12 @@ static const char *Mem_errlist[] = {
 static int      shared;
 
 static struct {
-	long            used;	/* memory controller was used in the cycle */
-	size_t          nshr;	/* no. of processors sharing the bus */
-	ssize_t        *resaddr;/* reserved addresses */
+	long            used;		/*
+					 * memory controller was used in the
+					 * cycle
+					 */
+	size_t          nshr;		/* no. of processors sharing the bus */
+	ssize_t        *resaddr;	/* reserved addresses */
 	struct {
 		size_t          hd, tl;
 		size_t          ct;
@@ -65,7 +68,7 @@ const char     *Mem_strerror(int);
  *
  * Returns a pointer to the newly allocated memory, NULL if failure
  */
-Mem            *
+Mem *
 Mem_create(size_t size, size_t nshr)
 {
 	size_t          i;
@@ -86,8 +89,9 @@ Mem_create(size_t size, size_t nshr)
 		}
 		memctl.queue.hd = memctl.queue.tl = memctl.queue.ct = 0;
 		memctl.util = 0;
-		for (i = 0; i < memctl.nshr; ++i)
+		for (i = 0; i < memctl.nshr; ++i) {
 			memctl.queue.arr[i] = -1;
+		}
 	}
 
 	if (!(mem = malloc(sizeof(Mem))) ||
@@ -137,16 +141,19 @@ Mem_busacc(uint32_t prid)
 			      prid, strerror(errcode));
 			return errcode;
 		}
+
 		/* checks if processor is already waiting to use the memory */
 		for (found = i = 0; !found && i < memctl.nshr; ++i) {
 			if (memctl.queue.arr[i] == prid)
 				found = 1;
 		}
+
 		/* enqueue if not present */
 		if (!found) {
 			memctl.queue.arr[memctl.queue.tl] = prid;
 			memctl.queue.tl = (memctl.queue.tl + 1) % memctl.nshr;
 		}
+
 		/* dequeue if calling processor is in the queue's head */
 		if (!memctl.used &&
 		    memctl.queue.arr[memctl.queue.hd] == prid) {
@@ -154,8 +161,10 @@ Mem_busacc(uint32_t prid)
 			memctl.queue.hd = (memctl.queue.hd + 1) % memctl.nshr;
 			memctl.used = 1;
 			++memctl.util;
-		} else
+		} else {
 			errcode = -1;
+		}
+
 		pthread_mutex_unlock(&memctl.lock);
 	}
 
@@ -204,8 +213,9 @@ Mem_progld(Mem *mem, unsigned char *elf)
 
 	for (ph = (Elf32_Phdr *) (elf + eh->e_phoff), phnum = eh->e_phnum;
 	     phnum > 0; --phnum, ++ph) {
-		if (ph->p_type != PT_LOAD)
+		if (ph->p_type != PT_LOAD) {
 			continue;
+		}
 
 		switch (ph->p_flags) {
 		case PF_R | PF_X:
@@ -240,10 +250,12 @@ Mem_lw(Mem *mem, size_t addr)
 		Mem_errno = MEMERR_BND;
 		return -1;
 	}
+
 	if (addr & 3) {
 		Mem_errno = MEMERR_ALIGN;
 		return -1;
 	}
+
 	return mem->data.w[addr >> 2];
 }
 
@@ -274,10 +286,12 @@ Mem_sw(Mem *mem, size_t addr, uint32_t data)
 		Mem_errno = MEMERR_BND;
 		return -1;
 	}
+
 	if (addr & 3) {
 		Mem_errno = MEMERR_ALIGN;
 		return -1;
 	}
+
 	mem->data.w[addr >> 2] = data;
 
 	return 0;
@@ -309,10 +323,12 @@ Mem_ll(Mem *mem, uint32_t prid, size_t addr)
 		Mem_errno = MEMERR_BND;
 		return -1;
 	}
+
 	if (addr & 3) {
 		Mem_errno = MEMERR_ALIGN;
 		return -1;
 	}
+
 	return mem->data.w[addr >> 2];
 }
 
@@ -352,10 +368,12 @@ Mem_sc(Mem *mem, uint32_t prid, size_t addr, uint32_t data)
 		Mem_errno = MEMERR_BND;
 		return -1;
 	}
+
 	if (addr & 3) {
 		Mem_errno = MEMERR_ALIGN;
 		return -1;
 	}
+
 	mem->data.w[addr >> 2] = data;
 
 	return 0;
@@ -377,6 +395,7 @@ Mem_lb(Mem *mem, size_t addr)
 		Mem_errno = MEMERR_BND;
 		return -1;
 	}
+
 	return mem->data.b[addr];
 }
 
@@ -395,6 +414,7 @@ Mem_sb(Mem *mem, size_t addr, uint8_t data)
 		Mem_errno = MEMERR_BND;
 		return -1;
 	}
+
 	mem->data.b[addr] = data;
 
 	return 0;

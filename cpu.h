@@ -121,7 +121,7 @@ typedef struct {
 } Decoder;
 
 typedef struct {
-	size_t          pc;	/* Program counter */
+	size_t          pc;		/* Program counter */
 	uint32_t        gpr[N_GPR];	/* General purpose registers */
 	union {
 		int64_t         s64;
@@ -133,15 +133,16 @@ typedef struct {
 	Decoder         dec;	/* instruction decoder */
 	uint32_t        cop2[COP2_NREG][COP2_NSEL];
 	struct {
-		size_t          cycle;	/* cycles executed */
-		size_t          ld;	/* no. of loads */
+		size_t          cycle;		/* cycles executed */
+		size_t          ld;		/* no. of loads */
 		size_t          lddefer;	/* no. of deferred loads */
-		size_t          st;	/* no. of stores */
+		size_t          st;		/* no. of stores */
 		size_t          stdefer;	/* no. of deferred stores */
-		size_t          ll;	/* no. of load linked instructions */
+		size_t          ll;		/* no. of load linked
+						 * instructions */
 		size_t          lldefer;	/* no. of deferred ll's */
-		size_t          sc;	/* no. of store-conditional
-					 * instructions */
+		size_t          sc;		/* no. of store-conditional
+						 * instructions */
 		size_t          scdefer;	/* no. of deferred sc's */
 		size_t          rmwfail;	/* no. of RMW failures */
 		struct {

@@ -52,6 +52,8 @@ int             Net_progld(Net *, size_t, unsigned char *);
 
 void            Net_runsim(Net *);
 
+void            Net_perfct(Net *, char *);
+
 const char     *Net_strerror(int);
 
 /*
@@ -93,7 +95,7 @@ link_insmsg(struct link * link, struct msg * msg)
  * Returns a pointer to the removed message if sucessfull, NULL otherwise
  */
 static
-struct msg     *
+struct msg *
 link_remmsg(struct link * link)
 {
 	struct msg     *msg;
@@ -404,7 +406,7 @@ execute(Net *net)
  *
  * Returns network if success, NULL otherwise
  */
-Net            *
+Net *
 Net_create(size_t x, size_t y, size_t memsz)
 {
 	size_t          i;
@@ -417,15 +419,18 @@ Net_create(size_t x, size_t y, size_t memsz)
 		Net_errno = NETERR_ALLOC;
 		return NULL;
 	}
+
 	net->cycle = 0;
 
 	net->x = x;
 	net->y = y;
 	net->size = x * y;
+
 	if (!(net->nd = malloc(sizeof(struct node) * net->size))) {
 		Net_errno = NETERR_ALLOC;
 		return NULL;
 	}
+
 	for (i = 0; i < net->size; ++i) {
 		if (!(net->nd[i].cpu = CPU_create(i))) {
 			Net_errno = NETERR_CPU;
@@ -491,11 +496,13 @@ Net_progld(Net *net, size_t memsz, unsigned char *elf)
 {
 	size_t          i;
 
-	if (Mem_progld(net->nd[0].mem, elf) < 0)
+	if (Mem_progld(net->nd[0].mem, elf) < 0) {
 		return -1;
+	}
 
-	for (i = 1; i < net->size; ++i)
+	for (i = 1; i < net->size; ++i) {
 		memcpy(net->nd[i].mem->data.b, net->nd[0].mem->data.b, memsz);
+	}
 
 	return 0;
 }
@@ -561,7 +568,7 @@ Net_perfct(Net *net, char *progname)
 			"%lu,%lu,"	/* stores, st defer */
 			"%lu,%lu,"	/* ll, ll defer */
 			"%lu,%lu,%lu"	/* sc, sc defer,rmwfail */
-			"%lu\n",/* ct0 */
+			"%lu,",		/* ct0 */
 			net->nd[i].cpu->gpr[K0],
 			net->nd[i].cpu->perfct.cycle,
 			net->nd[i].cpu->perfct.ld,
@@ -576,9 +583,11 @@ Net_perfct(Net *net, char *progname)
 			net->nd[i].cpu->perfct.ct[0].ct);
 	}
 
-	if (close(fd) < 0)
+	if (close(fd) < 0) {
 		err(EXIT_FAILURE, "close");
+	}
 }
+
 /*
  * Net_strerror: map error number to error message string
  *

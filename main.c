@@ -68,8 +68,9 @@ sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 
 	char            perfct[NAME_MAX];
 
-	if (!(cpu = malloc(sizeof(CPU *) * ncpu)))
+	if (!(cpu = malloc(sizeof(CPU *) * ncpu))) {
 		err(EXIT_FAILURE, "could not allocate cpu array");
+	}
 
 	for (i = 0; i < ncpu; ++i) {
 		if (!(cpu[i] = CPU_create(i))) {
@@ -78,21 +79,25 @@ sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 		}
 	}
 
-	if (!(mem = Mem_create(memsz, ncpu)))
+	if (!(mem = Mem_create(memsz, ncpu))) {
 		errx(EXIT_FAILURE, "Mem_create: %s", Mem_strerror(Mem_errno));
+	}
 
 	/*
 	 * Program loading
 	 */
-	if (Mem_progld(mem, prog->elf) < 0)
+	if (Mem_progld(mem, prog->elf) < 0) {
 		errx(EXIT_FAILURE, "Mem_progld: %s", Mem_strerror(Mem_errno));
+	}
 
-	for (i = 0; i < ncpu; ++i)
+	for (i = 0; i < ncpu; ++i) {
 		CPU_setpc(cpu[i], prog->entry);
+	}
 
 	/* free memory after loading */
-	if (munmap(prog->elf, prog->size) < 0)
+	if (munmap(prog->elf, prog->size) < 0) {
 		err(EXIT_FAILURE, "munmap");
+	}
 
 	/*
 	 * Program execution
@@ -108,31 +113,29 @@ sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 		errx(EXIT_FAILURE, "cpu[%lu] -- Datapath_execute %s",
 		     i, Datapath_strerror(Datapath_errno));
 	}
+
 	Mem_destroy(mem);
 
 	sprintf(perfct, "./perfct_%s.csv", basename(prog->name));
 	if ((fd = open(perfct, O_WRONLY | O_CREAT | O_TRUNC,
-		       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0)
+		       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0) {
 		err(EXIT_FAILURE, "open: %s", perfct);
+	}
 
-	dprintf(fd, "id,cycles,"
-		"loads,ld defer,"
-		"stores,st defer,"
-		"ll,ll defer,"
-		"sc,sc defer,"
-		"rmwfail,"
-		"ct0\n");
+	dprintf(fd, "id,cycles,loads,ld defer,stores,st defer,ll,ll defer,"
+		"sc,sc defer,rmwfail,ct0\n");
 	dprintf(fd, "bus,%lu\n", Mem_busutil());
 	for (i = 0; i < ncpu; ++i) {
 		dprintf(fd, "%u,"	/* id */
-			"%lu,"	/* cycles */
+			"%lu,"		/* cycles */
 			"%lu,%lu,"	/* loads,ld defer */
 			"%lu,%lu,"	/* stores, st defer */
 			"%lu,%lu,"	/* ll, ll defer */
 			"%lu,%lu,"	/* sc, sc defer */
-			"%lu,"	/* rmwfail */
-			"%lu,",	/* ct0 */
-			cpu[i]->gpr[K0], cpu[i]->perfct.cycle,
+			"%lu,"		/* rmwfail */
+			"%lu,",		/* ct0 */
+			cpu[i]->gpr[K0],
+			cpu[i]->perfct.cycle,
 			cpu[i]->perfct.ld, cpu[i]->perfct.lddefer,
 			cpu[i]->perfct.st, cpu[i]->perfct.stdefer,
 			cpu[i]->perfct.ll, cpu[i]->perfct.lldefer,
@@ -142,8 +145,9 @@ sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 		CPU_destroy(cpu[i]);
 	}
 
-	if (close(fd) < 0)
+	if (close(fd) < 0) {
 		err(EXIT_FAILURE, "close");
+	}
 
 }
 
@@ -165,21 +169,25 @@ sim_net(size_t x, size_t y, size_t memsz, struct prog * prog)
 	/*
 	 * Create network
 	 */
-	if (!(net = Net_create(x, y, memsz)))
+	if (!(net = Net_create(x, y, memsz))) {
 		errx(EXIT_FAILURE, "Net_create: %s", Net_strerror(Net_errno));
+	}
 
 	/*
 	 * Program loading
 	 */
-	if (Net_progld(net, memsz, prog->elf) < 0)
+	if (Net_progld(net, memsz, prog->elf) < 0) {
 		errx(EXIT_FAILURE, "Net_progld: %s", Mem_strerror(Mem_errno));
+	}
 
-	for (i = 0; i < (x * y); ++i)
+	for (i = 0; i < (x * y); ++i) {
 		Net_setpc(net, i, prog->entry);
+	}
 
 	/* free memory after loading */
-	if (munmap(prog->elf, prog->size) < 0)
+	if (munmap(prog->elf, prog->size) < 0) {
 		err(EXIT_FAILURE, "munmap");
+	}
 
 	/*
 	 * Run simulation
@@ -252,36 +260,43 @@ main(int argc, char *argv[])
 	/*
 	 * Read file
 	 */
-	if (!prog.name)
+	if (!prog.name) {
 		errx(EXIT_FAILURE, "usage: %s /path/to/objfile", argv[0]);
+	}
 
-	if ((fd = open(prog.name, O_RDONLY)) < 0)
+	if ((fd = open(prog.name, O_RDONLY)) < 0) {
 		err(EXIT_FAILURE, "open: %s", prog.name);
+	}
 
-	if (fstat(fd, &stat) < 0)
+	if (fstat(fd, &stat) < 0) {
 		err(EXIT_FAILURE, "fstat");
+	}
 
 	prog.size = stat.st_size;
 	if ((prog.elf = mmap(NULL, stat.st_size, PROT_READ,
-			     MAP_PRIVATE, fd, 0)) == MAP_FAILED)
+			     MAP_PRIVATE, fd, 0)) == MAP_FAILED) {
 		err(EXIT_FAILURE, "mmap");
+	}
 
 	/* Checks file type */
 	eh = (Elf32_Ehdr *) prog.elf;
+	prog.entry = eh->e_entry;
 	if (!IS_ELF(*eh) || eh->e_ident[EI_CLASS] != ELFCLASS32 ||
 	    eh->e_ident[EI_DATA] != ELFDATA2LSB || eh->e_type != ET_EXEC ||
-	    eh->e_machine != EM_MIPS)
+	    eh->e_machine != EM_MIPS) {
 		errx(EXIT_FAILURE, "%s is not a MIPS32 EL executable",
 		     prog.name);
-	prog.entry = eh->e_entry;
+	}
 
-	if (flag == SHRMEM)
+	if (flag == SHRMEM) {
 		sim_shrmem(ncpu, memsz, &prog);
-	else
+	} else { 
 		sim_net(x, y, memsz, &prog);
+	}
 
-	if (close(fd) < 0)
+	if (close(fd) < 0) {
 		err(EXIT_FAILURE, "close");
+	}
 
 	return EXIT_SUCCESS;
 }

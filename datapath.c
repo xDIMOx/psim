@@ -55,6 +55,7 @@ fetch(CPU *cpu, Mem *mem)
 		Datapath_errno = DATAPATHERR_FET;
 		return -1;
 	}
+
 	return instr;
 }
 
@@ -143,7 +144,7 @@ decode(Decoder *dec)
 	case LUI:
 		return 0;
 	case COP0:
-		if (dec->rs > COP0RS_IGN10)
+		if (dec->rs > COP0RS_IGN10) 
 			dec->sign |= FUNC(dec->raw);
 		else
 			dec->sign |= RS(dec->raw);
@@ -151,10 +152,11 @@ decode(Decoder *dec)
 	case COP1:
 		return 0;
 	case COP2:
-		if (dec->rs > COP2RS_IGN8)
+		if (dec->rs > COP2RS_IGN8) {
 			dec->sign |= CO(dec->raw);
-		else
+		} else {
 			dec->sign |= RS(dec->raw);
+		}
 		return 0;
 	case COP1X:
 		return 0;
@@ -172,8 +174,9 @@ decode(Decoder *dec)
 		return 0;
 	case SPECIAL3:
 		dec->sign |= FUNC(dec->raw);
-		if (FUNC(dec->raw) == BSHFL)
+		if (FUNC(dec->raw) == BSHFL) {
 			dec->sign |= SA(dec->raw);
+		}
 		return 0;
 	case LB:
 	case LH:
@@ -243,12 +246,14 @@ execute(CPU *cpu, Mem *mem)
 		cpu->dec.npc = cpu->gpr[cpu->dec.rs];
 		break;
 	case ((uint32_t) SPECIAL << 26) | MOVZ:
-		if (!cpu->gpr[cpu->dec.rt])
+		if (!cpu->gpr[cpu->dec.rt]) {
 			cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs];
+		}
 		break;
 	case ((uint32_t) SPECIAL << 26) | MOVN:
-		if (cpu->gpr[cpu->dec.rt] != 0)
+		if (cpu->gpr[cpu->dec.rt] != 0) {
 			cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs];
+		}
 		break;
 	case ((uint32_t) SPECIAL << 26) | MFHI:
 		cpu->gpr[cpu->dec.rd] = cpu->hilo.u32[HI];
@@ -355,8 +360,9 @@ execute(CPU *cpu, Mem *mem)
 		return -1;
 	case ((uint32_t) COP2 << 26) | (MFC2 << 21):
 		data = CPU_mfc2(cpu, cpu->dec.rs, cpu->dec.sel);
-		if (data < 0)
+		if (data < 0) {
 			return -1;
+		}
 		cpu->gpr[cpu->dec.rt] = (uint32_t) data;
 		break;
 	case ((uint32_t) COP2 << 26) | (MTC2 << 21):
@@ -389,9 +395,9 @@ execute(CPU *cpu, Mem *mem)
 		break;
 	case ((uint32_t) LB << 26):
 		++cpu->perfct.ld;
-		if (addr == IO_ADDR)
+		if (addr == IO_ADDR) {
 			cpu->gpr[cpu->dec.rt] = (int32_t) getchar();
-		else {
+		} else {
 			if (Mem_busacc(cpu->gpr[K0])) {
 				cpu->dec.stall = 1;
 				++cpu->perfct.lddefer;
@@ -431,9 +437,9 @@ execute(CPU *cpu, Mem *mem)
 		break;
 	case ((uint32_t) SB << 26):
 		++cpu->perfct.st;
-		if (addr == IO_ADDR)
+		if (addr == IO_ADDR) {
 			putchar((int) cpu->gpr[cpu->dec.rt]);
-		else if (Mem_busacc(cpu->gpr[K0])) {
+		} else if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
 			++cpu->perfct.stdefer;
 #ifndef NDEBUG
@@ -449,9 +455,9 @@ execute(CPU *cpu, Mem *mem)
 		break;
 	case ((uint32_t) SW << 26):
 		++cpu->perfct.st;
-		if (addr == IO_ADDR)
+		if (addr == IO_ADDR) {
 			printf("%08x\n", cpu->gpr[cpu->dec.rt]);
-		else if (Mem_busacc(cpu->gpr[K0])) {
+		} else if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
 			++cpu->perfct.stdefer;
 #ifndef NDEBUG
@@ -532,29 +538,35 @@ Datapath_execute(CPU *cpu, Mem *mem)
 
 	cpu->gpr[0] = 0;	/* forces that r0 is zero */
 
-	if ((instr = fetch(cpu, mem)) < 0)
+	if ((instr = fetch(cpu, mem)) < 0) {
 		return -1;
+	}
 
 #ifndef NDEBUG
 	write(cpu->debug.fd, &instr, sizeof(uint32_t));
 #endif
 
 	cpu->dec.raw = (uint32_t) instr;
-	if (decode(&cpu->dec))
+	if (decode(&cpu->dec)) {
 		return -1;
+	}
 
-	if (execute(cpu, mem) && !cpu->dec.stall)
+	if (execute(cpu, mem) && !cpu->dec.stall) {
 		return -1;
+	}
 
-	if (cpu->dec.isjump)
+	if (cpu->dec.isjump) {
 		cpu->pc = cpu->dec.npc;
-	else if (!cpu->dec.stall)
+	} else if (!cpu->dec.stall) {
 		cpu->pc += 4;
+	}
 
 	++cpu->perfct.cycle;
+
 	for (i = 0; i < NCOUNTERS; ++i) {
-		if (cpu->perfct.ct[i].en)
+		if (cpu->perfct.ct[i].en) {
 			++cpu->perfct.ct[i].ct;
+		}
 	}
 
 	return 0;
