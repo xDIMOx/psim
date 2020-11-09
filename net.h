@@ -73,6 +73,7 @@ typedef struct {
 			struct msg     *tl;
 			size_t          len;
 		}               link[LINK_DIR][LINK_NAMES];
+		struct msg    **mbox;
 	}              *nd;
 } Net;				/* processor network */
 

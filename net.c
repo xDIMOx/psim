@@ -147,6 +147,12 @@ Net_create(size_t x, size_t y, size_t memsz)
 
 		memset(net->nd[i].link, 0,
 		       sizeof(struct link) * LINK_DIR * LINK_NAMES);
+
+		if (!(net->nd[i].mbox =
+		      malloc(sizeof(struct msg *) * net->size))) {
+			Net_errno = NETERR_ALLOC;
+			return NULL;
+		}
 	}
 
 	return net;
