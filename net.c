@@ -37,6 +37,7 @@ static int         link_insmsg(struct link *, struct msg *);
 static struct msg *link_remmsg(struct link *);
 
 static int      guidance(Net *, size_t, size_t);
+static void     fwd(Net *, size_t);
 
 Net            *Net_create(size_t, size_t, size_t);
 void            Net_destroy(Net *);
@@ -129,6 +130,56 @@ guidance(Net *net, size_t from, size_t to)
 	}
 
 	return LINK_MBOX;
+}
+
+/*
+ * fwd:	foward messages from input links to output links or mailbox
+ *
+ * net: network
+ * id: id of current node
+ */
+static
+void
+fwd(Net *net, size_t id)
+{
+	int             ilink, olink;
+
+	struct msg     *msg;
+
+	struct link    *in, *out;
+
+	for (ilink = LINK_NORTH; ilink < LINK_NAMES; ++ilink) {
+		in = &(net->nd[id].link[LINK_IN][ilink]);
+
+		if (in->len == 0) {
+			continue;
+		}
+
+		msg = in->hd;
+
+		olink = guidance(net, id, msg->to);
+		if (olink != LINK_MBOX) {
+			out = &(net->nd[id].link[LINK_OUT][olink]);
+			if (out->len == LINK_BUFSZ) {
+				warnx("net->nd[%lu] cycle %lu -- "
+				      "output link %s is full",
+				      id, net->cycle, linkname[olink]);
+				continue;
+			}
+		} else if (net->nd[id].mbox[msg->from]) {
+			warnx("net->nd[%lu] cycle %lu -- mailbox is full",
+			      id, net->cycle);
+			continue;
+		}
+
+		msg = link_remmsg(in);
+
+		if (olink != LINK_MBOX) {
+			link_insmsg(out, msg);
+		} else {
+			net->nd[id].mbox[msg->from] = msg;
+		}
+	}
 }
 
 /*
