@@ -36,6 +36,8 @@ static const char *linkname[] = {
 static int         link_insmsg(struct link *, struct msg *);
 static struct msg *link_remmsg(struct link *);
 
+static int      guidance(Net *, size_t, size_t);
+
 Net            *Net_create(size_t, size_t, size_t);
 void            Net_destroy(Net *);
 
@@ -101,6 +103,32 @@ link_remmsg(struct link * link)
 	--link->len;
 
 	return msg;
+}
+
+/*
+ * guidance: get the direction of the next step to the target processor
+ *
+ * net: network
+ * from: current processor
+ * to: target processor
+ *
+ * Returns the direction of the next step
+ */
+static
+int
+guidance(Net *net, size_t from, size_t to)
+{
+	if ((from % net->x) < (to % net->x)) {
+		return LINK_EAST;
+	} else if ((from % net->x) > (to % net->x)) {
+		return LINK_WEST;
+	} else if (from < to) {
+		return LINK_NORTH;
+	} else if (from > to) {
+		return LINK_SOUTH;
+	}
+
+	return LINK_MBOX;
 }
 
 /*
