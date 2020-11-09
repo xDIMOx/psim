@@ -24,6 +24,15 @@ enum NetErrNo {
  * Definitions
  */
 
+struct msg {
+	uint16_t        to;
+	uint16_t        from;
+	uint32_t        data;
+	uint32_t        hops;
+	uint32_t        ack;
+	struct msg     *nxt;
+};
+
 typedef struct {
 	size_t          cycle;
 	size_t          size;
