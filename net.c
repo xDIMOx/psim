@@ -27,8 +27,14 @@ static const char *Net_errlist[] = {
 };
 #undef X
 
-Net            *Net_create(size_t x, size_t y, size_t memsz);
-void            Net_destroy(Net *net);
+#define Y(a, b) b,
+static const char *linkname[] = {
+	LinknameList
+};
+#undef Y
+
+static int         link_insmsg(struct link *, struct msg *);
+static struct msg *link_remmsg(struct link *);
 
 Net            *Net_create(size_t, size_t, size_t);
 void            Net_destroy(Net *);
@@ -39,7 +45,63 @@ int             Net_progld(Net *, size_t, unsigned char *);
 
 void            Net_runsim(Net *);
 
-const char     *Net_strerror(int code);
+const char     *Net_strerror(int);
+
+/*
+ * link_insmsg: insert message on link
+ *
+ * link: link to operate
+ * msg: message to insert
+ *
+ * Returns 0 if successfully inserted on the link's circular buffer, -1
+ * otherwise
+ */
+static
+int
+link_insmsg(struct link * link, struct msg * msg)
+{
+	if (link->len == LINK_BUFSZ) {
+		return -1;
+	}
+
+	if (link->len > 0) {
+		link->tl->nxt = msg;
+		msg->nxt = NULL;
+		link->tl = msg;
+	} else {
+		link->hd = msg;
+		link->tl = msg;
+	}
+
+	++link->len;
+
+	return 0;
+}
+
+/*
+ * link_remmsg: remove message from link
+ *
+ * link: link to operate
+ *
+ * Returns a pointer to the removed message if sucessfull, NULL otherwise
+ */
+static
+struct msg     *
+link_remmsg(struct link * link)
+{
+	struct msg     *msg;
+
+	if (!link->hd) {
+		return NULL;
+	}
+
+	msg = link->hd;
+	link->hd = link->hd->nxt;
+	msg->nxt = NULL;
+	--link->len;
+
+	return msg;
+}
 
 /*
  * Net_create: create cpu network
@@ -77,10 +139,14 @@ Net_create(size_t x, size_t y, size_t memsz)
 			Net_errno = NETERR_CPU;
 			return NULL;
 		}
+
 		if (!(net->nd[i].mem = Mem_create(memsz, 1))) {
 			Net_errno = NETERR_MEM;
 			return NULL;
 		}
+
+		memset(net->nd[i].link, 0,
+		       sizeof(struct link) * LINK_DIR * LINK_NAMES);
 	}
 
 	return net;

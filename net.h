@@ -14,11 +14,39 @@ X(NETERR_ALLOC, "Could not allocate memory") \
 X(NETERR_CPU, "Could not allocate CPU")      \
 X(NETERR_MEM, "Could not allocate simulation memory")
 
+#define LinknameList   \
+Y(LINK_NORTH, "north") \
+Y(LINK_EAST, "east")   \
+Y(LINK_SOUTH, "south") \
+Y(LINK_WEST, "west")   \
+Y(LINK_MBOX, "mbox")
+
 #define X(a, b) a,
 enum NetErrNo {
 	NetErrList
 };
 #undef X
+
+#define LINK_BUFSZ 2
+
+#define MAXMSG 1
+
+#define LINK_DIR 2		/* number of link directions */
+
+#define LINK_NAMES 4		/* number of link names */
+
+#define MBOX_BUFSZ 1
+
+enum linkdir {			/* transmission direction */
+	LINK_IN,
+	LINK_OUT,
+};
+
+#define Y(a, b) a,
+enum linkname {
+	LinknameList
+};
+#undef Y
 
 /*
  * Definitions
@@ -40,6 +68,11 @@ typedef struct {
 	struct node {
 		CPU            *cpu;
 		Mem            *mem;
+		struct link {
+			struct msg     *hd;
+			struct msg     *tl;
+			size_t          len;
+		}               link[LINK_DIR][LINK_NAMES];
 	}              *nd;
 } Net;				/* processor network */
 
