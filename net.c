@@ -39,6 +39,7 @@ static struct msg *link_remmsg(struct link *);
 static int      guidance(Net *, size_t, size_t);
 static void     fwd(Net *, size_t);
 static void     hop(Net *, uint32_t);
+static void     operate(Net *, size_t);
 
 Net            *Net_create(size_t, size_t, size_t);
 void            Net_destroy(Net *);
@@ -252,6 +253,117 @@ hop(Net *net, uint32_t id)
 		msg = link_remmsg(out);
 		++msg->hops;
 		link_insmsg(in, msg);
+	}
+}
+
+static
+void
+operate(Net *net, size_t id)
+{
+	int             link;
+
+	uint32_t        corr, data, st,  hops, nmsg;
+
+	struct msg     *msg, *ack;
+	struct link    *olink;
+
+	corr = CPU_mfc2(net->nd[id].cpu, COP2_MSG, COP2_MSG_CORR);
+	data = CPU_mfc2(net->nd[id].cpu, COP2_MSG, COP2_MSG_DATA);
+	st = CPU_mfc2(net->nd[id].cpu, COP2_MSG, COP2_MSG_ST);
+	hops = CPU_mfc2(net->nd[id].cpu, COP2_MSG, COP2_MSG_HOPS);
+	nmsg = CPU_mfc2(net->nd[id].cpu, COP2_MSG, COP2_MSG_NMSG);
+
+	switch (COP2_MSG_ST_OP(st)) {
+	case COP2_MSG_OP_IN:
+		if ((msg = net->nd[id].mbox[corr])) {
+#ifndef NDEBUG
+			warnx("net->nd[%lu] cycle %lu -- i%u",
+			      id, net->cycle, corr);
+#endif
+			if (!(ack = malloc(sizeof(*ack)))) {
+				warnx("net->nd[%lu] cycle %lu --"
+				      "could not allocate ack",
+				      id, net->cycle);
+				return;
+			}
+			++nmsg;
+			hops += msg->hops;
+			CPU_mtc2(net->nd[id].cpu, COP2_MSG,
+				 COP2_MSG_DATA, msg->data);
+			CPU_mtc2(net->nd[id].cpu, COP2_MSG,
+				 COP2_MSG_NMSG, nmsg);
+			CPU_mtc2(net->nd[id].cpu, COP2_MSG,
+				 COP2_MSG_HOPS, hops);
+			ack->to = msg->from;
+			ack->from = id;
+			ack->ack = 1;
+			ack->hops = msg->hops;
+			ack->nxt = NULL;
+			link = guidance(net, id, ack->to);
+			olink = &(net->nd[id].link[LINK_OUT][link]);
+			if (olink->len < LINK_BUFSZ) {
+				link_insmsg(olink, ack);
+				CPU_mtc2(net->nd[id].cpu, COP2_MSG,
+					 COP2_MSG_ST, 0);
+				CPU_mtc2(net->nd[id].cpu, COP2_MSG,
+					 COP2_MSG_NMSG, nmsg);
+				net->nd[id].mbox[corr] = NULL;
+				free(msg);
+			} else {
+				warnx("net->nd[%lu] cycle %lu -- "
+				      "could not send "
+				      "acknowledge (link %s full)",
+				      id, net->cycle, linkname[link]);
+			}
+		}
+		break;
+	case COP2_MSG_OP_OUT:
+		if (COP2_MSG_ST_SENT(st)) {	/* waiting for ack */
+			if ((msg = net->nd[id].mbox[corr])) {
+				if (msg->ack) {
+					++nmsg;
+					CPU_mtc2(net->nd[id].cpu, COP2_MSG,
+						 COP2_MSG_ST, 0);
+					CPU_mtc2(net->nd[id].cpu, COP2_MSG,
+						 COP2_MSG_NMSG, nmsg);
+					net->nd[id].mbox[corr] = NULL;
+					free(msg);
+				} else {
+					warnx("net->nd[%lu] cycle %lu -- "
+					      "*** DEADLOCK (%u) ***",
+					      id, net->cycle, corr);
+					Net_errno = NETERR_DEADLOCK;
+				}
+			}
+		} else if ((msg = malloc(sizeof(*msg)))) {	/* send msg */
+			link = guidance(net, id, corr);
+			olink = &(net->nd[id].link[LINK_OUT][link]);
+			if (olink->len < LINK_BUFSZ) {
+				msg->to = corr;
+				msg->from = id;
+				msg->data = data;
+				msg->ack = 0;
+				msg->hops = 0;
+				msg->nxt = NULL;
+				link_insmsg(olink, msg);
+				st |= 0x4;	/* set sent flag */
+				CPU_mtc2(net->nd[id].cpu, COP2_MSG,
+					 COP2_MSG_ST, st);
+#ifndef NDEBUG
+				warnx("net->nd[%lu] cycle %lu -- o%u",
+				      id, net->cycle, corr);
+#endif
+			} else {
+				warnx("net->nd[%lu] cycle %lu -- "
+				      "could not send message "
+				      "(link %s full)",
+				      id, net->cycle, linkname[link]);
+			}
+		} else {
+			warnx("net->nd[%lu] cycle %lu -- could not output",
+			      id, net->cycle);
+		}
+		break;
 	}
 }
 

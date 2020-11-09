@@ -8,11 +8,12 @@
  * Error handling
  */
 
-#define NetErrList                           \
-X(NETERR_SUCC, "Success")                    \
-X(NETERR_ALLOC, "Could not allocate memory") \
-X(NETERR_CPU, "Could not allocate CPU")      \
-X(NETERR_MEM, "Could not allocate simulation memory")
+#define NetErrList                                    \
+X(NETERR_SUCC, "Success")                             \
+X(NETERR_ALLOC, "Could not allocate memory")          \
+X(NETERR_CPU, "Could not allocate CPU")               \
+X(NETERR_MEM, "Could not allocate simulation memory") \
+X(NETERR_DEADLOCK, "DEADLOCK")
 
 #define LinknameList   \
 Y(LINK_NORTH, "north") \
