@@ -38,6 +38,7 @@ static struct msg *link_remmsg(struct link *);
 
 static int      guidance(Net *, size_t, size_t);
 static void     fwd(Net *, size_t);
+static void     hop(Net *, uint32_t);
 
 Net            *Net_create(size_t, size_t, size_t);
 void            Net_destroy(Net *);
@@ -179,6 +180,78 @@ fwd(Net *net, size_t id)
 		} else {
 			net->nd[id].mbox[msg->from] = msg;
 		}
+	}
+}
+
+/*
+ * hop:	transmit messages from output links of one node to the input link of
+ *	another node
+ *
+ * net: network
+ * id: id of the current node
+ */
+static void
+hop(Net *net, uint32_t id)
+{
+	int             ilink, olink;
+	int             oob;	/* out of bounds */
+
+	uint32_t        nxt;
+
+	struct msg     *msg;
+
+	struct link    *out, *in;
+
+	for (olink = LINK_NORTH; olink < LINK_NAMES; ++olink) {
+		oob = 0;
+		nxt = 0;
+		ilink = olink;
+		switch (olink) {
+		case LINK_NORTH:
+			nxt = id + net->x;
+			ilink = LINK_SOUTH;
+			oob = (nxt >= net->size) || (nxt < id);
+			break;
+		case LINK_EAST:
+			nxt = id + 1;
+			ilink = LINK_WEST;
+			oob = (nxt % net->x) == 0;
+			break;
+		case LINK_SOUTH:
+			nxt = id - net->x;
+			ilink = LINK_NORTH;
+			oob = nxt > id;
+			break;
+		case LINK_WEST:
+			nxt = id - 1;
+			ilink = LINK_EAST;
+			oob = ((nxt % net->x) == (net->x - 1)) || (nxt > id);
+			break;
+		}
+
+		out = &(net->nd[id].link[LINK_OUT][olink]);
+		if (out->len == 0) {
+			continue;
+		}
+
+		if (oob) {	/* out of bounds */
+			warnx("net->nd[%u] cycle %lu -- "
+			      "Can not send message out of the network (%s)",
+			      id, net->cycle, linkname[olink]);
+			continue;
+		}
+
+		in = &(net->nd[nxt].link[LINK_IN][ilink]);
+		if (in->len == LINK_BUFSZ) {
+			warnx("net->nd[%u] cycle %lu -- "
+			      "target link %s is full",
+			      id, net->cycle, linkname[ilink]);
+			continue;
+		}
+
+		msg = link_remmsg(out);
+		++msg->hops;
+		link_insmsg(in, msg);
 	}
 }
 
