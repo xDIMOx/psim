@@ -65,6 +65,8 @@ Net_create(size_t x, size_t y, size_t memsz)
 	}
 	net->cycle = 0;
 
+	net->x = x;
+	net->y = y;
 	net->size = x * y;
 	if (!(net->nd = malloc(sizeof(struct node) * net->size))) {
 		Net_errno = NETERR_ALLOC;

@@ -27,6 +27,7 @@ enum NetErrNo {
 typedef struct {
 	size_t          cycle;
 	size_t          size;
+	size_t          x, y;
 	struct node {
 		CPU            *cpu;
 		Mem            *mem;
