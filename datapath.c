@@ -359,14 +359,14 @@ execute(CPU *cpu, Mem *mem)
 		Datapath_errno = DATAPATHERR_EXIT;
 		return -1;
 	case ((uint32_t) COP2 << 26) | (MFC2 << 21):
-		data = CPU_mfc2(cpu, cpu->dec.rs, cpu->dec.sel);
+		data = CPU_mfc2(cpu, cpu->dec.rd, cpu->dec.sel);
 		if (data < 0) {
 			return -1;
 		}
 		cpu->gpr[cpu->dec.rt] = (uint32_t) data;
 		break;
 	case ((uint32_t) COP2 << 26) | (MTC2 << 21):
-		if (CPU_mtc2(cpu, cpu->dec.rs, cpu->dec.sel,
+		if (CPU_mtc2(cpu, cpu->dec.rd, cpu->dec.sel,
 			     cpu->gpr[cpu->dec.rt])) {
 			return -1;
 		}
