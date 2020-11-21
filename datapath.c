@@ -292,8 +292,18 @@ execute(CPU *cpu, Mem *mem)
 			ext = cpu->dec.imm;
 			off = ext << 2;
 			cpu->dec.npc = cpu->pc + 4 + off;
-		} else
+		} else {
 			cpu->dec.isjump = 0;
+		}
+		break;
+	case ((uint32_t) REGIMM << 26) | (BGEZ << 16):
+		if (((int32_t) cpu->gpr[cpu->dec.rs]) >= 0) {
+			ext = cpu->dec.imm;
+			off = ext << 2;
+			cpu->dec.npc = cpu->pc + 4 + off;
+		} else {
+			cpu->dec.isjump = 0;
+		}
 		break;
 	case ((uint32_t) J << 26):
 		cpu->dec.npc = (cpu->pc & 0xF0000000) | cpu->dec.idx;
