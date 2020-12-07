@@ -3,15 +3,17 @@
 /*
  * CPU module
  *
- * Implementation a MIPS processor.
+ * Implementation of a MIPS processor.
  *
  * COP2 have one register number (COP2_MSG) that represents the communication
- * link. The link have three registers:
+ * link. The link have five registers, selected by the "sel" field:
  *	COP2_CORR is the correspondent processor;
  *	COP2_DATA is the data sent/received;
  *	COP2_STATUS is the status of the link, its format is:
  *		bit 0..1: op (current operation)
  *		bit 2: sent message
+ *	COP2_MSG_NMSG is the number of messages received by the processor
+ *	COP2_MSG_HOPS is the total number of hops received by the processor
  */
 
 /*
@@ -95,8 +97,8 @@ enum cop2_link_sel {
 	COP2_MSG_CORR,
 	COP2_MSG_DATA,
 	COP2_MSG_ST,
-	COP2_MSG_HOPS,
 	COP2_MSG_NMSG,
+	COP2_MSG_HOPS,
 };
 
 enum cop2_link_op {
@@ -128,7 +130,6 @@ typedef struct {
 		uint64_t        u64;
 		int32_t         s32[2];
 		uint32_t        u32[2];
-
 	}               hilo;	/* HI/LO */
 	Decoder         dec;	/* instruction decoder */
 	uint32_t        cop2[COP2_NREG][COP2_NSEL];
