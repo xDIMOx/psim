@@ -146,6 +146,10 @@ typedef struct {
 						 * instructions */
 		size_t          scdefer;	/* no. of deferred sc's */
 		size_t          rmwfail;	/* no. of RMW failures */
+		size_t          nin;		/* no. of inputs */
+		size_t          nout;		/* no. of outputs */
+		size_t          commwait;	/* cycles waiting to
+						 * communication to finish */
 		struct {
 			size_t          en;	/* enable */
 			size_t          ct;	/* cycles counted */

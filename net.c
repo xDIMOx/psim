@@ -559,16 +559,22 @@ Net_perfct(Net *net, char *progname)
 		"stores,st defer,"
 		"ll,ll defer,"
 		"sc,sc defer,"
-		"rmwfail,"
-		"ct0\n");
+		"rmail,"
+		"ct0,"
+		"ninput,noutput,"
+		"commwait,"
+		"hops,nmsg\n");
 	dprintf(fd, "net,%lu\n", net->cycle);
 	for (i = 0; i < net->size; ++i) {
 		dprintf(fd, "%u,%lu,"	/* id,cycles */
 			"%lu,%lu,"	/* loads,ld defer */
 			"%lu,%lu,"	/* stores, st defer */
 			"%lu,%lu,"	/* ll, ll defer */
-			"%lu,%lu,%lu"	/* sc, sc defer,rmwfail */
-			"%lu,",		/* ct0 */
+			"%lu,%lu,%lu,"	/* sc, sc defer,rmwfail */
+			"%lu,"		/* ct0 */
+			"%lu,%lu,"	/* ninput, noutput */
+			"%lu,"		/* commwait */
+			"%lu,%lu\n",	/* hops, nmsg */
 			net->nd[i].cpu->gpr[K0],
 			net->nd[i].cpu->perfct.cycle,
 			net->nd[i].cpu->perfct.ld,
@@ -580,7 +586,12 @@ Net_perfct(Net *net, char *progname)
 			net->nd[i].cpu->perfct.sc,
 			net->nd[i].cpu->perfct.scdefer,
 			net->nd[i].cpu->perfct.rmwfail,
-			net->nd[i].cpu->perfct.ct[0].ct);
+			net->nd[i].cpu->perfct.ct[0].ct,
+			net->nd[i].cpu->perfct.nin,
+			net->nd[i].cpu->perfct.nout,
+			net->nd[i].cpu->perfct.commwait,
+			CPU_mfc2(net->nd[i].cpu, COP2_MSG, COP2_MSG_HOPS),
+			CPU_mfc2(net->nd[i].cpu, COP2_MSG, COP2_MSG_NMSG));
 	}
 
 	if (close(fd) < 0) {

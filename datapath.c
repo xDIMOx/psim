@@ -393,6 +393,14 @@ execute(CPU *cpu, Mem *mem)
 		case CT0:
 				cpu->perfct.ct[0].en = !cpu->perfct.ct[0].en;
 				break;
+		case INPUT:
+			CPU_mtc2(cpu, COP2_MSG, COP2_MSG_ST, COP2_MSG_OP_IN);
+			++cpu->perfct.nin;
+			break;
+		case OUTPUT:
+			CPU_mtc2(cpu, COP2_MSG, COP2_MSG_ST, COP2_MSG_OP_OUT);
+			++cpu->perfct.nout;
+			break;
 		default:
 			Datapath_errno = DATAPATHERR_IMPL;
 			return -1;
@@ -552,6 +560,11 @@ Datapath_execute(CPU *cpu, Mem *mem)
 
 	cpu->gpr[0] = 0;	/* forces that r0 is zero */
 
+	if (CPU_mfc2(cpu, COP2_MSG, COP2_MSG_ST)) {
+		++cpu->perfct.commwait;
+		goto INC_CYCLE;
+	}
+
 	if ((instr = fetch(cpu, mem)) < 0) {
 		return -1;
 	}
@@ -575,6 +588,7 @@ Datapath_execute(CPU *cpu, Mem *mem)
 		cpu->pc += 4;
 	}
 
+INC_CYCLE:
 	++cpu->perfct.cycle;
 
 	for (i = 0; i < NCOUNTERS; ++i) {

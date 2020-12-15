@@ -37,7 +37,10 @@ all: ${EXE}
 start.o: start.s
 common.o: common.s
 spinlock.o: spinlock.s
+comm.o: comm.s
+
 null.o: null.c
+
 hello.o: hello.c
 
 producer-consumer.o: producer-consumer.c

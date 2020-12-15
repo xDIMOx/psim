@@ -3,9 +3,15 @@
 # Coprocessor 2 operation
 	.set MEMSZ,0
 	.set CT0,1
-	.set LOCKPERF0,2
-	.set LOCKPERF1,3
-	.set LOCKPERF2,4
-	.set LOCKPERF3,5
-	.set LOCKPERF4,6
-	.set LOCKPERF5,7
+	.set INPUT,2
+	.set OUTPUT,3
+
+# Coprocessor 2 registers (number)
+	.set COMM,$0
+
+# Coprocessor 2 registers (select)
+	.set CORR,0
+	.set DATA,1
+	.set ST,2
+	.set HOPS,3
+	.set NMSG,4
