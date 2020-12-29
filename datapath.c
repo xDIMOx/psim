@@ -391,8 +391,8 @@ execute(CPU *cpu, Mem *mem)
 			cpu->gpr[K1] = mem->size;
 			break;
 		case CT0:
-				cpu->perfct.ct[0].en = !cpu->perfct.ct[0].en;
-				break;
+			cpu->perfct.ct[0].en = !cpu->perfct.ct[0].en;
+			break;
 		case INPUT:
 			CPU_mtc2(cpu, COP2_MSG, COP2_MSG_ST, COP2_MSG_OP_IN);
 			++cpu->perfct.nin;
