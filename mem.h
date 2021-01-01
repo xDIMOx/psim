@@ -54,4 +54,6 @@ int             Mem_sc(Mem *, uint32_t prid, size_t, uint32_t);
 int64_t         Mem_lb(Mem *, size_t);
 int             Mem_sb(Mem *, size_t, uint8_t);
 
+uint32_t       *Mem_getptr(Mem *, uint32_t);
+
 const char     *Mem_strerror(int);

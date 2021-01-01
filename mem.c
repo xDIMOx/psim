@@ -58,6 +58,8 @@ int             Mem_sc(Mem *, uint32_t prid, size_t, uint32_t);
 int64_t         Mem_lb(Mem *, size_t);
 int             Mem_sb(Mem *, size_t, uint8_t);
 
+uint32_t       *Mem_getptr(Mem *, uint32_t);
+
 const char     *Mem_strerror(int);
 
 /*
@@ -418,6 +420,27 @@ Mem_sb(Mem *mem, size_t addr, uint8_t data)
 	mem->data.b[addr] = data;
 
 	return 0;
+}
+
+/*
+ * Mem_getptr: Get a pointer to the simulation memory
+ *
+ * mem: Memory structure
+ * addr: Address to get pointer from
+ *
+ * Returns pointer to simulation memory at address 'addr'.
+ */
+uint32_t *
+Mem_getptr(Mem *mem, uint32_t addr)
+{
+	Mem_errno = MEMERR_SUCC;
+
+	if (addr >= mem->size) {
+		Mem_errno = MEMERR_BND;
+		return NULL;
+	}
+
+	return &(mem->data.w[addr >> 2]);
 }
 
 /*
