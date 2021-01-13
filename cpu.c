@@ -56,6 +56,7 @@ CPU_create(uint32_t id)
 		return NULL;
 	}
 
+	cpu->running = 1;
 	cpu->gpr[K0] = id;
 	cpu->perfct.cycle = 0;
 	cpu->perfct.ld = cpu->perfct.lddefer = 0;

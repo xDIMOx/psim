@@ -370,8 +370,8 @@ execute(CPU *cpu, Mem *mem)
 		cpu->gpr[cpu->dec.rt] = cpu->dec.imm << 16;
 		break;
 	case ((uint32_t) COP0 << 26) | WAIT:
-		Datapath_errno = DATAPATHERR_EXIT;
-		return -1;
+		cpu->running = 0;
+		break;
 	case ((uint32_t) COP2 << 26) | (MFC2 << 21):
 		data = CPU_mfc2(cpu, cpu->dec.rd, cpu->dec.sel);
 		if (data < 0) {
@@ -560,7 +560,9 @@ Datapath_execute(CPU *cpu, Mem *mem)
 
 	int64_t         instr;
 
-	Datapath_errno = DATAPATHERR_SUCC;
+	if (!cpu->running) {
+		return -1;
+	}
 
 	cpu->gpr[0] = 0;	/* forces that r0 is zero */
 

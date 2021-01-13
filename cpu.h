@@ -128,6 +128,7 @@ typedef struct {
 } Decoder;
 
 typedef struct {
+	size_t          running;	/* CPU is running */
 	size_t          pc;		/* Program counter */
 	uint32_t        gpr[N_GPR];	/* General purpose registers */
 	union {
