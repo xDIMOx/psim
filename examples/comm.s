@@ -28,3 +28,20 @@ C2_output:
 	nop
 
 	.end C2_output
+
+	.text
+	.align 0
+	.set noreorder
+	.global C2_alt
+	.ent C2_alt
+C2_alt:
+	mtc2 $a0, COMM, CORR
+	mtc2 $a1, COMM, NCL
+	c2 ALT
+	mfc2 $t0, COMM, DATA
+	sw $t0, 0($a2)
+	addiu $v0, $k1, 0
+	jr $ra
+	nop
+
+	.end C2_alt

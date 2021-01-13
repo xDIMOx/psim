@@ -150,6 +150,8 @@ fwd(Net *net, size_t id)
 {
 	int             ilink, olink;
 
+	uint32_t        nmsg;
+
 	struct msg     *msg;
 
 	struct link    *in, *out;
@@ -184,6 +186,11 @@ fwd(Net *net, size_t id)
 			link_insmsg(out, msg);
 		} else {
 			net->nd[id].mbox[msg->from] = msg;
+			nmsg = CPU_mfc2(net->nd[id].cpu, COP2_MSG,
+					COP2_MSG_NMSG);
+			CPU_mtc2(net->nd[id].cpu, COP2_MSG,
+				 COP2_MSG_NMSG, nmsg + 1);
+			++net->nd[id].mbox_unread;
 		}
 	}
 }
@@ -266,7 +273,13 @@ operate(Net *net, size_t id)
 {
 	int             link;
 
-	uint32_t        corr, data, st,  hops, nmsg;
+	int             done, found;
+
+	uint32_t        corr, data, st,  hops, ncl;
+
+	uint32_t       *clauses;
+
+	size_t          i, cur;
 
 	struct msg     *msg, *ack;
 	struct link    *olink;
@@ -275,7 +288,7 @@ operate(Net *net, size_t id)
 	data = CPU_mfc2(net->nd[id].cpu, COP2_MSG, COP2_MSG_DATA);
 	st = CPU_mfc2(net->nd[id].cpu, COP2_MSG, COP2_MSG_ST);
 	hops = CPU_mfc2(net->nd[id].cpu, COP2_MSG, COP2_MSG_HOPS);
-	nmsg = CPU_mfc2(net->nd[id].cpu, COP2_MSG, COP2_MSG_NMSG);
+	ncl = CPU_mfc2(net->nd[id].cpu, COP2_MSG, COP2_MSG_NCL);
 
 	switch (COP2_MSG_ST_OP(st)) {
 	case COP2_MSG_OP_IN:
@@ -290,14 +303,6 @@ operate(Net *net, size_t id)
 				      id, net->cycle);
 				return;
 			}
-			++nmsg;
-			hops += msg->hops;
-			CPU_mtc2(net->nd[id].cpu, COP2_MSG,
-				 COP2_MSG_DATA, msg->data);
-			CPU_mtc2(net->nd[id].cpu, COP2_MSG,
-				 COP2_MSG_NMSG, nmsg);
-			CPU_mtc2(net->nd[id].cpu, COP2_MSG,
-				 COP2_MSG_HOPS, hops);
 			ack->to = msg->from;
 			ack->from = id;
 			ack->ack = 1;
@@ -307,14 +312,18 @@ operate(Net *net, size_t id)
 			olink = &(net->nd[id].link[LINK_OUT][link]);
 			if (olink->len < LINK_BUFSZ) {
 				link_insmsg(olink, ack);
+				/* remove message from mailbox */
 				CPU_mtc2(net->nd[id].cpu, COP2_MSG,
-					 COP2_MSG_ST, 0);
+					 COP2_MSG_DATA, msg->data);
+				hops += msg->hops;
 				CPU_mtc2(net->nd[id].cpu, COP2_MSG,
-					 COP2_MSG_NMSG, nmsg);
+					 COP2_MSG_HOPS, hops);
+				CPU_mtc2(net->nd[id].cpu, COP2_MSG,
+					 COP2_MSG_ST, COP2_MSG_OP_NONE);
 				net->nd[id].mbox[corr] = NULL;
 				free(msg);
 			} else {
-				warnx("net->nd[%lu] cycle %lu -- "
+				warnx("net->nd[%lu] cycle %lu -- i"
 				      "could not send "
 				      "acknowledge (link %s full)",
 				      id, net->cycle, linkname[link]);
@@ -325,11 +334,9 @@ operate(Net *net, size_t id)
 		if (COP2_MSG_ST_SENT(st)) {	/* waiting for ack */
 			if ((msg = net->nd[id].mbox[corr])) {
 				if (msg->ack) {
-					++nmsg;
 					CPU_mtc2(net->nd[id].cpu, COP2_MSG,
-						 COP2_MSG_ST, 0);
-					CPU_mtc2(net->nd[id].cpu, COP2_MSG,
-						 COP2_MSG_NMSG, nmsg);
+						 COP2_MSG_ST,
+						 COP2_MSG_OP_NONE);
 					net->nd[id].mbox[corr] = NULL;
 					free(msg);
 				} else {
@@ -358,7 +365,7 @@ operate(Net *net, size_t id)
 				      id, net->cycle, corr);
 #endif
 			} else {
-				warnx("net->nd[%lu] cycle %lu -- "
+				warnx("net->nd[%lu] cycle %lu -- o"
 				      "could not send message "
 				      "(link %s full)",
 				      id, net->cycle, linkname[link]);
@@ -366,6 +373,79 @@ operate(Net *net, size_t id)
 		} else {
 			warnx("net->nd[%lu] cycle %lu -- could not output",
 			      id, net->cycle);
+		}
+		break;
+	case COP2_MSG_OP_ALT:
+		if (ncl <= 0) {
+			warnx("net->nd[%lu] cycle %lu -- "
+			      "*** DEADLOCK (NCL <= 0) ***",
+			      id, net->cycle);
+			Net_errno = NETERR_DEADLOCK;
+		} else if (net->nd[id].mbox_unread) {
+			--net->nd[id].mbox_unread;
+			clauses = Mem_getptr(net->nd[id].mem, corr);
+			cur = net->nd[id].mbox_start;
+			found = done = 0;
+			for (;!done;) {
+				if (!net->nd[id].mbox[cur]) {
+					goto CONT;
+				}
+				for (i = 0; i < ncl; ++i) {
+					if (clauses[i] == cur) {
+						done = found = 1;
+						corr = cur;
+#ifndef NDEBUG
+						warnx("net->nd[%lu] cycle %lu "
+						      "-- a%u", id,
+						      net->cycle, corr);
+#endif
+						break;
+					}
+				}
+CONT:
+				cur = (cur + 1) % net->size;
+				if (cur == net->nd[id].mbox_start) {
+					done = 1;
+				}
+			}
+			net->nd[id].mbox_start =
+			    (net->nd[id].mbox_start + 1) % net->size;
+			if (found) {
+				msg = net->nd[id].mbox[corr];
+				if (!(ack = malloc(sizeof(*ack)))) {
+					warnx("net->nd[%lu] cycle %lu --"
+					      "could not allocate ack",
+					      id, net->cycle);
+					return;
+				}
+				ack->to = msg->from;
+				ack->from = id;
+				ack->ack = 1;
+				ack->hops = msg->hops;
+				ack->nxt = NULL;
+				link = guidance(net, id, ack->to);
+				olink = &(net->nd[id].link[LINK_OUT][link]);
+				if (olink->len < LINK_BUFSZ) {
+					link_insmsg(olink, ack);
+					/* remove message from mailbox */
+					CPU_mtc2(net->nd[id].cpu, COP2_MSG,
+						 COP2_MSG_DATA, msg->data);
+					hops += msg->hops;
+					CPU_mtc2(net->nd[id].cpu, COP2_MSG,
+						 COP2_MSG_HOPS, hops);
+					CPU_mtc2(net->nd[id].cpu, COP2_MSG,
+						 COP2_MSG_ST,
+						 COP2_MSG_OP_NONE);
+					net->nd[id].mbox[corr] = NULL;
+					free(msg);
+					net->nd[id].cpu->gpr[K1] = corr;
+				} else {
+					warnx("net->nd[%lu] cycle %lu -- a"
+					      "could not send "
+					      "acknowledge (link %s full)",
+					      id, net->cycle, linkname[link]);
+				}
+			}
 		}
 		break;
 	}
@@ -445,6 +525,8 @@ Net_create(size_t x, size_t y, size_t memsz)
 		memset(net->nd[i].link, 0,
 		       sizeof(struct link) * LINK_DIR * LINK_NAMES);
 
+		net->nd[i].mbox_start = 0;
+		net->nd[i].mbox_unread = 0;
 		if (!(net->nd[i].mbox =
 		      malloc(sizeof(struct msg *) * net->size))) {
 			Net_errno = NETERR_ALLOC;

@@ -401,6 +401,10 @@ execute(CPU *cpu, Mem *mem)
 			CPU_mtc2(cpu, COP2_MSG, COP2_MSG_ST, COP2_MSG_OP_OUT);
 			++cpu->perfct.nout;
 			break;
+		case ALT:
+			CPU_mtc2(cpu, COP2_MSG, COP2_MSG_ST, COP2_MSG_OP_ALT);
+			++cpu->perfct.nin;
+			break;
 		default:
 			Datapath_errno = DATAPATHERR_IMPL;
 			return -1;

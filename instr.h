@@ -492,4 +492,5 @@ enum cofun2 {
 	CT0,			/* counter */
 	INPUT,			/* input */
 	OUTPUT,			/* output */
+	ALT,			/* alternative command */
 };

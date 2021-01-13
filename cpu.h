@@ -7,7 +7,10 @@
  *
  * COP2 have one register number (COP2_MSG) that represents the communication
  * link. The link have five registers, selected by the "sel" field:
- *	COP2_CORR is the correspondent processor;
+ *	COP2_CORR is the correspondent processor if op == COP2_MSG_OP_IN ||
+ *		op == COP2_MSG_OP_OUT. If op == COP2_MSG_OP_ALT this holds
+ *		a pointer to an array containing all processors involved in
+ *		the alternative command clauses;
  *	COP2_DATA is the data sent/received;
  *	COP2_STATUS is the status of the link, its format is:
  *		bit 0..1: op (current operation)
@@ -99,12 +102,14 @@ enum cop2_link_sel {
 	COP2_MSG_ST,
 	COP2_MSG_NMSG,
 	COP2_MSG_HOPS,
+	COP2_MSG_NCL,
 };
 
 enum cop2_link_op {
 	COP2_MSG_OP_NONE,
 	COP2_MSG_OP_IN,
 	COP2_MSG_OP_OUT,
+	COP2_MSG_OP_ALT,
 };
 
 typedef struct {

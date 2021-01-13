@@ -6,3 +6,4 @@
 
 int             C2_input(int);
 void            C2_output(int, int);
+int             C2_alt(int *, int, int *);
