@@ -17,6 +17,11 @@ To build the simulator:
 
 To build the examples:
 	- Build dependencies: MIPSEL capable assembler, compiler and linker
+		* To be fair, the assembly files were written with GNU as(1) in
+		  mind, nonetheless, it should be easy to port to another
+		  assembler, given that no fancy features were used. Anecdotal
+		  evidence points that GNU as is the most available option, so
+		  in the end, this is a non-issue.
 	- cd examples
 	- check config.mk and, if needed, set compiler and flags to your liking
 	- make
@@ -28,39 +33,53 @@ EXAMPLES:
 To run the simulator (from the repository's root directory):
 	- ./psim /path/to/mipsel_object_file
 
+Alternatively, if a sh(1) compatible shell is available:
+	- cd examples
+	- ./run_exp PROGRAM_NAME
+		* This generates some data for plotting, so, after its
+		  execution a *LOT* of .csv files will be on the examples
+		  directory. Creating these plots needs gnuplot(1) and there
+		  are some .gp scripts already.
+
 If your program uses more than one processor (like most of the examples):
 	- ./psim -c NPROC /path/to/program
 By default, NPROC is 1.
+
+The '-c' option is for simulating a shared memory multiprocessor system. To
+simulate a network of processors use:
+	- ./psim -n NxM /path/to/program
+By "network", understand it as a NxM 2D mesh, where each node is a processor.
+This behaviour is to simulate how the transputer network capabilities were
+initially conceived.
 
 If your program needs more memory:
 	- ./psim -m MEMSZ_IN_BYTES /path/to/program
 By default MEMSZ_IN_BYTES is 16777216 bytes (16 MiB).
 
-Alternatively:
-	- cd examples
-	- ./run_exp PROGRAM_NAME
-		* This script assumes a POSIX environment
-		* This generates some data for plotting, so, after its
-		  execution a LOT of .csv files will be on the examples
-		  directory. Creating these plots needs gnuplot(1) and there
-		  are some .gp scripts already.
-
 TODO:
-- Implement COP2 to have some transputer-like functionality.
 - Multi-threaded simulation
+- Proper (C-style) error handling
+- Change debugging macro to something less confusing
+- Better program loading in the networked mode
+- Better libraries for simulted programs
 
 NOTES:
 if NDEBUG was not set when compiling (it is by default), files called
-cpuXXXX_instrdump will be created when the program is executed. To check
-these files a MIPSEL capable objdump(1) is needed:
+cpuXXXX_instrdump will be created when the program is executed. To check these
+files a MIPSEL capable disassembler is needed (it is possible to use hexdump
+but this will make debugging even worse). For example, using GNU objdump(1):
 	- objdump -b binary -m mips -EL -Mno-aliases -D cpuXXXX_instrdump
 
-At the end of the simulation, a file called perfct_PROGRAM_NAME will be
+At the end of the simulation, a file called perfct_PROGRAM_NAME.csv will be
 created at the current directory, containing a number of performance counters.
 
 Although it can simulate multiple processors, the simulator itself runs on
 a single thread. This makes easier to debug the examples (the simulation is
-deterministic) at the cost of simulation speed.
+deterministic, and gives the same result every time) at the cost of simulation
+speed.
+
+Program loading on the network mode is quite dumb and wasteful, since it loads
+every processor in the the network with the same program.
 
 Always remember to use the correct number of simulated processors while
 running the examples, otherwise the simulation can hang forever.
