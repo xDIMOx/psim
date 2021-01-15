@@ -8,22 +8,6 @@
  * Error handling
  */
 
-#define MemErrList                                    \
-X(MEMERR_SUCC, "Success")                             \
-X(MEMERR_ALLOC, "Could not allocate memory")          \
-X(MEMERR_BND, "Address is out of bounds")             \
-X(MEMERR_ALIGN, "Misaligned address")                 \
-X(MEMERR_SHR, "Processor can not used shared memory") \
-X(MEMERR_SC, "SC failed")
-
-#define X(a, b) a,
-enum MemErrNo {
-	MemErrList
-};
-#undef X
-
-int             Mem_errno;
-
 /*
  * Definitions
  */
@@ -55,5 +39,3 @@ int64_t         Mem_lb(Mem *, size_t);
 int             Mem_sb(Mem *, size_t, uint8_t);
 
 uint32_t       *Mem_getptr(Mem *, uint32_t);
-
-const char     *Mem_strerror(int);

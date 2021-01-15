@@ -58,7 +58,6 @@ By default MEMSZ_IN_BYTES is 16777216 bytes (16 MiB).
 
 TODO:
 - Multi-threaded simulation
-- Proper (C-style) error handling
 - Change debugging macro to something less confusing
 - Better program loading in the networked mode
 - Better libraries for simulted programs

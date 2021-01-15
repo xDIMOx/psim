@@ -8,13 +8,6 @@
  * Error handling
  */
 
-#define NetErrList                                    \
-X(NETERR_SUCC, "Success")                             \
-X(NETERR_ALLOC, "Could not allocate memory")          \
-X(NETERR_CPU, "Could not allocate CPU")               \
-X(NETERR_MEM, "Could not allocate simulation memory") \
-X(NETERR_DEADLOCK, "DEADLOCK")
-
 #define LinknameList   \
 Y(LINK_NORTH, "north") \
 Y(LINK_EAST, "east")   \
@@ -92,5 +85,3 @@ int             Net_progld(Net *, size_t, unsigned char *);
 void            Net_runsim(Net *);
 
 void            Net_perfct(Net *, char *);
-
-const char     *Net_strerror(int);

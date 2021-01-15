@@ -5,9 +5,11 @@
  */
 
 #include <err.h>
+#include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #ifndef NDEBUG
 #include <unistd.h>
@@ -20,12 +22,6 @@
 /* Implements */
 #include "datapath.h"
 
-#define X(a, b) b,
-static const char *Datapath_errlist[] = {
-	DatapathErrList
-};
-#undef X
-
 #define IO_ADDR 0xFFFC
 
 static int64_t  fetch(CPU *, Mem *);
@@ -34,15 +30,13 @@ static int      execute(CPU *, Mem *);
 
 int             Datapath_execute(CPU *, Mem *);
 
-const char     *Datapath_strerror(int);
-
 /*
  * fetch: Fetch an instruction
  *
  * cpu: CPU fetching the instruction
  * mem: memory where the instruction is
  *
- * Returns instruction if success, -1 otherwise
+ * Returns instruction if success, -1 otherwise.
  */
 static int64_t
 fetch(CPU *cpu, Mem *mem)
@@ -50,9 +44,7 @@ fetch(CPU *cpu, Mem *mem)
 	int64_t         instr;
 
 	if ((instr = Mem_lw(mem, cpu->pc)) < 0) {
-		warnx("cpu[%u] -- fetch Mem_lw: %s",
-		      cpu->gpr[K0], Mem_strerror(Mem_errno));
-		Datapath_errno = DATAPATHERR_FET;
+		warnx("cpu[%u] fetch -- Mem_lw", cpu->gpr[K0]);
 		return -1;
 	}
 
@@ -64,7 +56,7 @@ fetch(CPU *cpu, Mem *mem)
  *
  * dec: struct containing decoding information
  *
- * Returns 0 if success, -1 otherwise
+ * Returns 0 if success, -1 otherwise.
  */
 static int
 decode(Decoder *dec)
@@ -204,12 +196,7 @@ decode(Decoder *dec)
 	case SDC2:
 		dec->ismem = 1;
 		return 0;
-	default:
-		Datapath_errno = DATAPATHERR_RES;
-		return -1;
 	}
-
-	Datapath_errno = DATAPATHERR_DEC;
 
 	return -1;
 }
@@ -220,18 +207,27 @@ decode(Decoder *dec)
  * cpu: CPU executing the instruction
  * mem: memory
  *
- * Returns 0 if success, -1 otherwise
+ * Returns 0 if success, an error number otherwise.
+ *
+ * This function fails if:
+ *	EINVAL: invalid arguments
+ *	ENOTSUP: instruction not implemented.
+ *	EBUSY: resource not available now.
+ *	EADDRNOTAVAIL: address is out of bounds.
+ *	EFAULT: address is not word aligned.
+ *	EOVERFLOW: tried to access reserved addresses array out of bounds.
+ *	EAGAIN: SC failed.
  */
 static int
 execute(CPU *cpu, Mem *mem)
 {
+	int             errnum;
+
 	int32_t         ext;
 	uint32_t        off;
 	uint32_t        addr;
 
 	int64_t         data;
-
-	Datapath_errno = DATAPATHERR_SUCC;
 
 	addr = cpu->gpr[cpu->dec.rs] + cpu->dec.imm;
 
@@ -375,14 +371,14 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) COP2 << 26) | (MFC2 << 21):
 		data = CPU_mfc2(cpu, cpu->dec.rd, cpu->dec.sel);
 		if (data < 0) {
-			return -1;
+			return errno;	/* EINVAL */
 		}
 		cpu->gpr[cpu->dec.rt] = (uint32_t) data;
 		break;
 	case ((uint32_t) COP2 << 26) | (MTC2 << 21):
-		if (CPU_mtc2(cpu, cpu->dec.rd, cpu->dec.sel,
-			     cpu->gpr[cpu->dec.rt])) {
-			return -1;
+		if ((errnum = CPU_mtc2(cpu, cpu->dec.rd, cpu->dec.sel,
+			     cpu->gpr[cpu->dec.rt]))) {
+			return errno;	/* EINVAL */
 		}
 		break;
 	case ((uint32_t) COP2 << 26) | (1 << 25): /* coprocessor operation */
@@ -406,8 +402,7 @@ execute(CPU *cpu, Mem *mem)
 			++cpu->perfct.nin;
 			break;
 		default:
-			Datapath_errno = DATAPATHERR_IMPL;
-			return -1;
+			return ENOTSUP;
 		}
 		break;
 	case ((uint32_t) SPECIAL2 << 26) | MUL:
@@ -431,12 +426,10 @@ execute(CPU *cpu, Mem *mem)
 				warnx("cpu[%u] -- Mem_lb: deferred",
 				      cpu->gpr[K0]);
 #endif
-				return -1;
+				return EBUSY;
 			}
 			if ((data = Mem_lb(mem, addr)) < 0) {
-				warnx("cpu[%u] -- Mem_lb: %s",
-				      cpu->gpr[K0], Mem_strerror(Mem_errno));
-				return -1;
+				return errno;	/* EADDRNOTAVAIL */
 			}
 			/* sign extention */
 			ext = (int8_t) data;
@@ -452,12 +445,10 @@ execute(CPU *cpu, Mem *mem)
 			warnx("cpu[%u] -- Mem_lw: deferred",
 			      cpu->gpr[K0]);
 #endif
-			return -1;
+			return EBUSY;
 		}
 		if ((data = Mem_lw(mem, addr)) < 0) {
-			warnx("cpu[%u] -- Mem_lw: %s",
-			      cpu->gpr[K0], Mem_strerror(Mem_errno));
-			return -1;
+			return errno;	/* EADDRNOTAVAIL, EFAULT */
 		}
 		cpu->gpr[cpu->dec.rt] = data;
 		break;
@@ -472,11 +463,10 @@ execute(CPU *cpu, Mem *mem)
 			warnx("cpu[%u] -- Mem_sb: deferred",
 			      cpu->gpr[K0]);
 #endif
-			return -1;
-		} else if (Mem_sb(mem, addr, cpu->gpr[cpu->dec.rt])) {
-			warnx("cpu[%u] -- Mem_sb: %s",
-			      cpu->gpr[K0], Mem_strerror(Mem_errno));
-			return -1;
+			return EBUSY;
+		} else if ((errnum = Mem_sb(mem, addr,
+		           cpu->gpr[cpu->dec.rt]))) {
+			return errno;	/* EADDRNOTAVAIL */
 		}
 		break;
 	case ((uint32_t) SW << 26):
@@ -490,11 +480,10 @@ execute(CPU *cpu, Mem *mem)
 			warnx("cpu[%u] -- Mem_sw: deferred",
 			      cpu->gpr[K0]);
 #endif
-			return -1;
-		} else if (Mem_sw(mem, addr, cpu->gpr[cpu->dec.rt])) {
-			warnx("cpu[%u] -- Mem_sw: %s",
-			      cpu->gpr[K0], Mem_strerror(Mem_errno));
-			return -1;
+			return EBUSY;
+		} else if ((errnum = Mem_sw(mem, addr,
+		           cpu->gpr[cpu->dec.rt]))) {
+			return errno;	/* EADDRNOTAVAIL, EFAULT */
 		}
 		break;
 	case ((uint32_t) LL << 26):
@@ -506,12 +495,10 @@ execute(CPU *cpu, Mem *mem)
 			warnx("cpu[%u] -- Mem_ll: deferred",
 			      cpu->gpr[K0]);
 #endif
-			return -1;
+			return EBUSY;
 		}
 		if ((data = Mem_ll(mem, cpu->gpr[K0], addr)) < 0) {
-			warnx("cpu[%u] -- Mem_ll: %s",
-			      cpu->gpr[K0], Mem_strerror(Mem_errno));
-			return -1;
+			return errno;	/* EOVERFLOW, EADDRNOTAVAIL, EFAULT */
 		}
 		cpu->gpr[cpu->dec.rt] = data;
 		break;
@@ -524,22 +511,19 @@ execute(CPU *cpu, Mem *mem)
 			warnx("cpu[%u] -- Mem_sc: deferred",
 			      cpu->gpr[K0]);
 #endif
-			return -1;
+			return EAGAIN;
 		}
-		Mem_sc(mem, cpu->gpr[K0], addr, cpu->gpr[cpu->dec.rt]);
-		if (Mem_errno == MEMERR_SC) {	/* SC failed */
-			cpu->gpr[cpu->dec.rt] = 0;
-			++cpu->perfct.rmwfail;
-		} else if (Mem_errno != MEMERR_SUCC) {	/* other errors */
-			warnx("cpu[%u] -- Mem_sc: %s",
-			      cpu->gpr[K0], Mem_strerror(Mem_errno));
-			return -1;
-		} else		/* SC successful */
-			cpu->gpr[cpu->dec.rt] = 1;
+		errnum = Mem_sc(mem, cpu->gpr[K0], addr,
+				cpu->gpr[cpu->dec.rt]);
+		cpu->gpr[cpu->dec.rt] = 0;
+		if (errnum) {
+			return errnum;	/* EOVERFLOW, EAGAIN, EADDRNOTAVAIL,
+					 * EFAULT */
+		}
+		cpu->gpr[cpu->dec.rt] = 1;
 		break;
 	default:
-		Datapath_errno = DATAPATHERR_IMPL;
-		return -1;
+		return ENOTSUP;
 	}
 
 	return 0;
@@ -551,14 +535,18 @@ execute(CPU *cpu, Mem *mem)
  * cpu: CPU running at the moment
  * mem: memory that the CPU is using
  *
- * Returns 0 if success, -1 otherwise
+ * Returns 0 if success, -1 otherwise.
  */
 int
 Datapath_execute(CPU *cpu, Mem *mem)
 {
+	int             errnum;
+
 	size_t          i;
 
 	int64_t         instr;
+
+	errnum = 0;
 
 	if (!cpu->running) {
 		return -1;
@@ -572,6 +560,8 @@ Datapath_execute(CPU *cpu, Mem *mem)
 	}
 
 	if ((instr = fetch(cpu, mem)) < 0) {
+		warnx("Datapath_execute -- cpu[%u] fetch failed",
+		      cpu->gpr[K0]);
 		return -1;
 	}
 
@@ -581,10 +571,14 @@ Datapath_execute(CPU *cpu, Mem *mem)
 
 	cpu->dec.raw = (uint32_t) instr;
 	if (decode(&cpu->dec)) {
+		warnx("Datapath_execute -- cpu[%u] decode failed",
+		      cpu->gpr[K0]);
 		return -1;
 	}
 
-	if (execute(cpu, mem) && !cpu->dec.stall) {
+	if (((errnum = execute(cpu, mem)) && !cpu->dec.stall)) {
+		warnx("Datapath_execute -- cpu[%u] execution failed, %d %s",
+		      cpu->gpr[K0], errnum, strerror(errnum));
 		return -1;
 	}
 
@@ -604,17 +598,4 @@ INC_CYCLE:
 	}
 
 	return 0;
-}
-
-/*
- * Datapath_strerror: Map error number to error message string
- *
- * errno: error number
- *
- * Returns error message string
- */
-inline const char *
-Datapath_strerror(int errno)
-{
-	return Datapath_errlist[errno];
 }

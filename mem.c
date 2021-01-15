@@ -15,12 +15,6 @@
 /* Implements */
 #include "mem.h"
 
-#define X(a, b) b,
-static const char *Mem_errlist[] = {
-	MemErrList
-};
-#undef X
-
 static int      shared;
 
 static struct {
@@ -68,7 +62,11 @@ const char     *Mem_strerror(int);
  * size: memory size in bytes
  * nshr: number of processors sharing the memory
  *
- * Returns a pointer to the newly allocated memory, NULL if failure
+ * Returns a pointer to the newly allocated memory object, NULL if failure. In
+ * case of failure errno indicates the error.
+ *
+ * The function fails if:
+ *	ENOMEM: Could not allocate memory object.
  */
 Mem *
 Mem_create(size_t size, size_t nshr)
@@ -77,7 +75,7 @@ Mem_create(size_t size, size_t nshr)
 
 	Mem            *mem;
 
-	Mem_errno = MEMERR_SUCC;
+	errno = 0;
 
 	if (nshr > 1) {
 		shared = 1;
@@ -86,7 +84,8 @@ Mem_create(size_t size, size_t nshr)
 		if (!(memctl.resaddr = malloc(sizeof(ssize_t) * nshr)) ||
 		    !(memctl.queue.arr = malloc(sizeof(ssize_t) * nshr)) ||
 		    pthread_mutex_init(&memctl.lock, NULL)) {
-			Mem_errno = MEMERR_ALLOC;
+			warn("Mem_create -- shared processors initialization");
+			errno = ENOMEM;
 			return NULL;
 		}
 		memctl.queue.hd = memctl.queue.tl = memctl.queue.ct = 0;
@@ -98,7 +97,7 @@ Mem_create(size_t size, size_t nshr)
 
 	if (!(mem = malloc(sizeof(Mem))) ||
 	    !(mem->data.b = malloc(size * sizeof(uint8_t)))) {
-		Mem_errno = MEMERR_ALLOC;
+		errno = ENOMEM;
 		return NULL;
 	}
 
@@ -109,6 +108,8 @@ Mem_create(size_t size, size_t nshr)
 
 /*
  * Mem_destroy: free memory object
+ *
+ * mem: memory object
  */
 void
 Mem_destroy(Mem *mem)
@@ -125,7 +126,9 @@ Mem_destroy(Mem *mem)
  * Mem_busacc: try to access the memory bus, setting the state of the memory
  *             controller
  *
- * Returns 0 if successfully acquired the bus, an error number otherwise
+ * prid: processor id
+ *
+ * Returns 0 if successfully acquired the bus, -1 otherwise.
  */
 int
 Mem_busacc(uint32_t prid)
@@ -135,40 +138,43 @@ Mem_busacc(uint32_t prid)
 
 	size_t          i;
 
-	errcode = 0;
-	if (shared) {
-		if ((errcode = pthread_mutex_lock(&memctl.lock))) {
-			warnx("Mem_busacc cpu[%u] -- "
-			      "pthread_mutex_lock: %s",
-			      prid, strerror(errcode));
-			return errcode;
-		}
-
-		/* checks if processor is already waiting to use the memory */
-		for (found = i = 0; !found && i < memctl.nshr; ++i) {
-			if (memctl.queue.arr[i] == prid)
-				found = 1;
-		}
-
-		/* enqueue if not present */
-		if (!found) {
-			memctl.queue.arr[memctl.queue.tl] = prid;
-			memctl.queue.tl = (memctl.queue.tl + 1) % memctl.nshr;
-		}
-
-		/* dequeue if calling processor is in the queue's head */
-		if (!memctl.used &&
-		    memctl.queue.arr[memctl.queue.hd] == prid) {
-			memctl.queue.arr[memctl.queue.hd] = -1;
-			memctl.queue.hd = (memctl.queue.hd + 1) % memctl.nshr;
-			memctl.used = 1;
-			++memctl.util;
-		} else {
-			errcode = -1;
-		}
-
-		pthread_mutex_unlock(&memctl.lock);
+	if (!shared) {
+		return 0;
 	}
+
+	errcode = 0;
+
+	if ((errcode = pthread_mutex_lock(&memctl.lock))) {
+		warnx("Mem_busacc cpu[%u] -- "
+		      "pthread_mutex_lock: %s",
+		      prid, strerror(errcode));
+		return -1;
+	}
+
+	/* checks if processor is already waiting to use the memory */
+	for (found = i = 0; !found && i < memctl.nshr; ++i) {
+		if (memctl.queue.arr[i] == prid)
+			found = 1;
+	}
+
+	/* enqueue if not present */
+	if (!found) {
+		memctl.queue.arr[memctl.queue.tl] = prid;
+		memctl.queue.tl = (memctl.queue.tl + 1) % memctl.nshr;
+	}
+
+	/* dequeue if calling processor is in the queue's head */
+	if (!memctl.used &&
+	    memctl.queue.arr[memctl.queue.hd] == prid) {
+		memctl.queue.arr[memctl.queue.hd] = -1;
+		memctl.queue.hd = (memctl.queue.hd + 1) % memctl.nshr;
+		memctl.used = 1;
+		++memctl.util;
+	} else {
+		errcode = -1;
+	}
+
+	pthread_mutex_unlock(&memctl.lock);
 
 	return errcode;
 }
@@ -194,10 +200,13 @@ Mem_busutil(void)
 /*
  * Mem_progld: loads program to memory
  *
- * mem: pointer to destination memory
+ * mem: memory object
  * elf: ELF image
  *
- * Returns 0 if success, -1 otherwise, Mem_errno indicates the error
+ * Returns 0 if success, an error number otherwise.
+ *
+ * This function fails if:
+ *	ENOSPC: could not load because the segment is out of bounds.
  */
 int
 Mem_progld(Mem *mem, unsigned char *elf)
@@ -206,8 +215,6 @@ Mem_progld(Mem *mem, unsigned char *elf)
 
 	Elf32_Ehdr     *eh;
 	Elf32_Phdr     *ph;
-
-	Mem_errno = MEMERR_SUCC;
 
 	memset(mem->data.b, 0, mem->size);
 
@@ -224,8 +231,7 @@ Mem_progld(Mem *mem, unsigned char *elf)
 		case PF_R | PF_W:
 		case PF_R | PF_W | PF_X:
 			if (ph->p_paddr >= mem->size) {
-				Mem_errno = MEMERR_BND;
-				return -1;
+				return ENOSPC;
 			}
 			memcpy(mem->data.b + ph->p_paddr,
 			       (uint8_t *) elf + ph->p_offset, ph->p_filesz);
@@ -238,23 +244,28 @@ Mem_progld(Mem *mem, unsigned char *elf)
 /*
  * Mem_lw: load word
  *
- * mem: pointer to memory
+ * mem:  memory object
  * addr: address where the data is
  *
- * Returns data if successful, -1 otherwise, Mem_errno indicates the error
+ * Returns data if successful, -1 otherwise. In case of failure errno indicates
+ * the error.
+ *
+ * This function fails if:
+ *	EADDRNOTAVAIL: address is out of bounds.
+ *	EFAULT: address is not word aligned.
  */
 int64_t
 Mem_lw(Mem *mem, size_t addr)
 {
-	Mem_errno = MEMERR_SUCC;
+	errno = 0;
 
 	if (addr >= mem->size) {
-		Mem_errno = MEMERR_BND;
+		errno = EADDRNOTAVAIL;
 		return -1;
 	}
 
 	if (addr & 3) {
-		Mem_errno = MEMERR_ALIGN;
+		errno = EFAULT;
 		return -1;
 	}
 
@@ -264,18 +275,22 @@ Mem_lw(Mem *mem, size_t addr)
 /*
  * Mem_sw: store word
  *
- * mem: Pointer to memory
- * addr: Address where the data is;
+ * mem:  memory object
+ * addr: Address where the data is
  * data: Data to be stored
  *
- * Returns 0 if successful, -1 otherwise, Mem_errno indicates the error
+ * Returns 0 if successful, an error code otherwise.
+ *
+ * This function fails if:
+ *	EADDRNOTAVAIL: address is out of bounds.
+ *	EFAULT: address is not word aligned.
  */
 int
 Mem_sw(Mem *mem, size_t addr, uint32_t data)
 {
 	uint32_t        i;
 
-	Mem_errno = MEMERR_SUCC;
+	errno = 0;
 
 	if (shared) {
 		for (i = 0; i < memctl.nshr; ++i) {
@@ -285,13 +300,11 @@ Mem_sw(Mem *mem, size_t addr, uint32_t data)
 	}
 
 	if (addr >= mem->size) {
-		Mem_errno = MEMERR_BND;
-		return -1;
+		return EADDRNOTAVAIL;
 	}
 
 	if (addr & 3) {
-		Mem_errno = MEMERR_ALIGN;
-		return -1;
+		return EFAULT;
 	}
 
 	mem->data.w[addr >> 2] = data;
@@ -302,32 +315,38 @@ Mem_sw(Mem *mem, size_t addr, uint32_t data)
 /*
  * Mem_ll: load linked
  *
- * mem: pointer to memory
+ * mem:  memory object
  * prid: id of the processor doing the operation
  * addr: address where the data is
  *
- * Returns data if successful, -1 otherwise, Mem_errno indicates the error
+ * Returns data if successful, -1 otherwise. In case of failure errno indicates
+ * the error.
+ *
+ * This function fails if:
+ *	EOVERFLOW: tried to access reserved addresses array out of bounds.
+ *	EADDRNOTAVAIL: address is out of bounds.
+ *	EFAULT: address is not word aligned.
  */
 int64_t
 Mem_ll(Mem *mem, uint32_t prid, size_t addr)
 {
-	Mem_errno = MEMERR_SUCC;
+	errno = 0;
 
 	if (shared) {
 		if (prid >= memctl.nshr) {
-			Mem_errno = MEMERR_SHR;
+			errno = EOVERFLOW;
 			return -1;
 		}
 		memctl.resaddr[prid] = addr;
 	}
 
 	if (addr >= mem->size) {
-		Mem_errno = MEMERR_BND;
+		errno = EADDRNOTAVAIL;
 		return -1;
 	}
 
 	if (addr & 3) {
-		Mem_errno = MEMERR_ALIGN;
+		errno = EFAULT;
 		return -1;
 	}
 
@@ -335,30 +354,34 @@ Mem_ll(Mem *mem, uint32_t prid, size_t addr)
 }
 
 /*
- * Mem_sw: store word
+ * Mem_sc: store word
  *
- * mem: Pointer to memory
+ * mem:  memory object
  * prid: id of the processor doing the operation
  * addr: Address where the data is;
  * data: Data to be stored
  *
- * Returns 0 if successful, -1 otherwise, Mem_errno indicates the error
+ * Returns 0 if successful, an error number otherwise.
+ *
+ * This function fails if:
+ *	EOVERFLOW: tried to access reserved addresses array out of bounds.
+ *	EAGAIN: SC failed.
+ *	EADDRNOTAVAIL: address is out of bounds.
+ *	EFAULT: address is not word aligned.
  */
 int
 Mem_sc(Mem *mem, uint32_t prid, size_t addr, uint32_t data)
 {
 	uint32_t        i;
 
-	Mem_errno = MEMERR_SUCC;
+	errno = 0;
 
 	if (shared) {
 		if (prid >= memctl.nshr) {
-			Mem_errno = MEMERR_SHR;
-			return -1;
+			return EOVERFLOW;
 		}
 		if (memctl.resaddr[prid] != (ssize_t) addr) {
-			Mem_errno = MEMERR_SC;
-			return -1;
+			return EAGAIN;
 		}
 		for (i = 0; i < memctl.nshr; ++i) {
 			if (memctl.resaddr[i] == (ssize_t) addr)
@@ -367,13 +390,11 @@ Mem_sc(Mem *mem, uint32_t prid, size_t addr, uint32_t data)
 	}
 
 	if (addr >= mem->size) {
-		Mem_errno = MEMERR_BND;
-		return -1;
+		return EADDRNOTAVAIL;
 	}
 
 	if (addr & 3) {
-		Mem_errno = MEMERR_ALIGN;
-		return -1;
+		return EFAULT;
 	}
 
 	mem->data.w[addr >> 2] = data;
@@ -384,17 +405,22 @@ Mem_sc(Mem *mem, uint32_t prid, size_t addr, uint32_t data)
 /*
  * Mem_lb: Load byte
  *
- * addr: Address where the data is;
+ * mem:  memory object
+ * addr: address where the data is;
  *
- * Returns the data if success, -1 otherwise
+ * Returns the data if success, -1 otherwise. In case of failure errno
+ * indicates the error.
+ *
+ * This function fails if:
+ *	EADDRNOTAVAIL: address is out of bounds.
  */
 int64_t
 Mem_lb(Mem *mem, size_t addr)
 {
-	Mem_errno = MEMERR_SUCC;
+	errno = 0;
 
 	if (addr >= mem->size) {
-		Mem_errno = MEMERR_BND;
+		errno = EADDRNOTAVAIL;
 		return -1;
 	}
 
@@ -404,17 +430,22 @@ Mem_lb(Mem *mem, size_t addr)
 /*
  * Mem_sb: Store byte
  *
- * addr: Address where the data is;
- * data: Data to be stored
+ * mem:  memory object
+ * addr: address where the data is;
+ * data: data to be stored
+ *
+ * Returns 0 if success, an error number otherwise.
+ *
+ * This function fails if:
+ *	EADDRNOTAVAIL: address is out of bounds.
  */
 int
 Mem_sb(Mem *mem, size_t addr, uint8_t data)
 {
-	Mem_errno = MEMERR_SUCC;
+	errno = 0;
 
 	if (addr >= mem->size) {
-		Mem_errno = MEMERR_BND;
-		return -1;
+		return EADDRNOTAVAIL;
 	}
 
 	mem->data.b[addr] = data;
@@ -425,33 +456,24 @@ Mem_sb(Mem *mem, size_t addr, uint8_t data)
 /*
  * Mem_getptr: Get a pointer to the simulation memory
  *
- * mem: Memory structure
- * addr: Address to get pointer from
+ * mem:  memory object
+ * addr: address to get pointer from
  *
- * Returns pointer to simulation memory at address 'addr'.
+ * Returns pointer to simulation memory at address 'addr'. In case of failure
+ * errno indicates the error.
+ *
+ * This function fails if:
+ *	EADDRNOTAVAIL: address is out of bounds.
  */
 uint32_t *
 Mem_getptr(Mem *mem, uint32_t addr)
 {
-	Mem_errno = MEMERR_SUCC;
+	errno = 0;
 
 	if (addr >= mem->size) {
-		Mem_errno = MEMERR_BND;
+		errno = EADDRNOTAVAIL;
 		return NULL;
 	}
 
 	return &(mem->data.w[addr >> 2]);
-}
-
-/*
- * Mem_strerror: Map error number to error message string
- *
- * errno: error number
- *
- * Returns error message string
- */
-inline const char *
-Mem_strerror(int code)
-{
-	return Mem_errlist[code];
 }

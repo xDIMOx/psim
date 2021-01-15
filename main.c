@@ -10,6 +10,7 @@
 
 #include <elf.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
 #include <limits.h>
@@ -58,6 +59,8 @@ int             main(int argc, char *argv[]);
 void
 sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 {
+	int             errnum;
+
 	int             fd;
 
 	size_t          i;
@@ -74,20 +77,19 @@ sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 
 	for (i = 0; i < ncpu; ++i) {
 		if (!(cpu[i] = CPU_create(i))) {
-			errx(EXIT_FAILURE, "cpu[%lu] -- CPU_create: %s",
-			     i, CPU_strerror(CPU_errno));
+			err(EXIT_FAILURE, "sim_shrmem -- CPU_create(%lu)", i);
 		}
 	}
 
 	if (!(mem = Mem_create(memsz, ncpu))) {
-		errx(EXIT_FAILURE, "Mem_create: %s", Mem_strerror(Mem_errno));
+		err(EXIT_FAILURE, "sim_shrmem -- Mem_create");
 	}
 
 	/*
 	 * Program loading
 	 */
-	if (Mem_progld(mem, prog->elf) < 0) {
-		errx(EXIT_FAILURE, "Mem_progld: %s", Mem_strerror(Mem_errno));
+	if ((errnum = Mem_progld(mem, prog->elf))) {
+		err(EXIT_FAILURE, "sim_shrmem -- Mem_progld");
 	}
 
 	for (i = 0; i < ncpu; ++i) {
@@ -96,7 +98,7 @@ sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 
 	/* free memory after loading */
 	if (munmap(prog->elf, prog->size) < 0) {
-		err(EXIT_FAILURE, "munmap");
+		err(EXIT_FAILURE, "sim_shrmem -- munmap");
 	}
 
 	/*
@@ -113,17 +115,12 @@ sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 		}
 	}
 
-	if (Datapath_errno != DATAPATHERR_EXIT) {
-		errx(EXIT_FAILURE, "cpu[%lu] -- Datapath_execute %s",
-		     i, Datapath_strerror(Datapath_errno));
-	}
-
 	Mem_destroy(mem);
 
 	sprintf(perfct, "./perfct_%s.csv", basename(prog->name));
 	if ((fd = open(perfct, O_WRONLY | O_CREAT | O_TRUNC,
 		       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0) {
-		err(EXIT_FAILURE, "open: %s", perfct);
+		err(EXIT_FAILURE, "sim_shrmem -- open %s", perfct);
 	}
 
 	dprintf(fd, "id,cycles,loads,ld defer,stores,st defer,ll,ll defer,"
@@ -150,7 +147,7 @@ sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 	}
 
 	if (close(fd) < 0) {
-		err(EXIT_FAILURE, "close");
+		err(EXIT_FAILURE, "sim_shrmem -- close");
 	}
 
 }
@@ -174,14 +171,14 @@ sim_net(size_t x, size_t y, size_t memsz, struct prog * prog)
 	 * Create network
 	 */
 	if (!(net = Net_create(x, y, memsz))) {
-		errx(EXIT_FAILURE, "Net_create: %s", Net_strerror(Net_errno));
+		err(EXIT_FAILURE, "Net_create");
 	}
 
 	/*
 	 * Program loading
 	 */
 	if (Net_progld(net, memsz, prog->elf) < 0) {
-		errx(EXIT_FAILURE, "Net_progld: %s", Mem_strerror(Mem_errno));
+		err(EXIT_FAILURE, "Net_progld");
 	}
 
 	for (i = 0; i < (x * y); ++i) {
@@ -197,8 +194,8 @@ sim_net(size_t x, size_t y, size_t memsz, struct prog * prog)
 	 * Run simulation
 	 */
 	Net_runsim(net);
-	if (Net_errno != NETERR_SUCC || CPU_errno != CPUERR_SUCC) {
-		exit(EXIT_FAILURE);
+	if (errno) {
+		err(EXIT_FAILURE, "Net_runsim");
 	}
 	Net_perfct(net, prog->name);
 	Net_destroy(net);

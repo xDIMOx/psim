@@ -6,6 +6,7 @@
  * Implementation a MIPS processor
  */
 
+#include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -19,12 +20,6 @@
 /* Implements */
 #include "cpu.h"
 
-#define X(a, b) b,
-static const char *CPU_errlist[] = {
-	CPUErrList
-};
-#undef X
-
 CPU            *CPU_create(uint32_t);
 void            CPU_destroy(CPU *);
 
@@ -33,14 +28,16 @@ void            CPU_setpc(CPU *, uint32_t);
 int64_t         CPU_mfc2(CPU *, uint32_t, uint32_t);
 int             CPU_mtc2(CPU *, uint32_t, uint32_t, uint32_t);
 
-const char     *CPU_strerror(int);
-
 /*
  * CPU_create: create CPU object
  *
  * id: CPU id
  *
- * Returns cpu if success, NULL otherwise
+ * Returns cpu if success, NULL otherwise, errno indicates the error.
+ *
+ * This function fails if:
+ *	ENOMEM: Could not allocate CPU.
+ *	ENOENT: Could not create debug file (if debuging is enabled).
  */
 CPU *
 CPU_create(uint32_t id)
@@ -49,10 +46,10 @@ CPU_create(uint32_t id)
 
 	CPU            *cpu;
 
-	CPU_errno = CPUERR_SUCC;
+	errno = 0;
 
 	if (!(cpu = malloc(sizeof(CPU)))) {
-		CPU_errno = CPUERR_ALLOC;
+		errno = ENOMEM;
 		return NULL;
 	}
 
@@ -75,8 +72,8 @@ CPU_create(uint32_t id)
 	if ((cpu->debug.fd = open(cpu->debug.fname,
 				  O_CREAT | O_WRONLY | O_TRUNC,
 				  S_IRUSR | S_IWUSR)) < 0) {
-		warn("cpu id = %u -- open: %s", id, cpu->debug.fname);
-		CPU_errno = CPUERR_DEBUG;
+		warn("CPU_create -- open %s", cpu->debug.fname);
+		errno = ENOENT;
 		return NULL;
 	}
 #endif
@@ -85,13 +82,17 @@ CPU_create(uint32_t id)
 }
 
 /*
- * CPU_destroy: free memory object
+ * CPU_destroy: free CPU object
+ *
+ * cpu: cpu object
  */
 void
 CPU_destroy(CPU *cpu)
 {
 #ifndef NDEBUG
-	close(cpu->debug.fd);
+	if (close(cpu->debug.fd)) {
+		warn("CPU_destroy -- close %s", cpu->debug.fname);
+	}
 #endif
 	free(cpu);
 }
@@ -99,8 +100,8 @@ CPU_destroy(CPU *cpu)
 /*
  * CPU_setpc: set program counter
  *
- * cpu: cpu
- * pc: program counter
+ * cpu: cpu object
+ * pc:  program counter
  */
 inline void
 CPU_setpc(CPU *cpu, uint32_t pc)
@@ -111,18 +112,23 @@ CPU_setpc(CPU *cpu, uint32_t pc)
 /*
  * CPU_mfc2: move from coprocessor 2
  *
- * cpu: cpu
+ * cpu: cpu object
  * src: source register
  * sel: select
  *
+ * Returns the contents of copressor 2 register if success, -1 otherwise, errno
+ * indicates the error.
+ *
+ * This function fails if:
+ *	EINVAL: Either src or sel are invalid values.
  */
 int64_t
-CPU_mfc2(CPU *cpu,  uint32_t src, uint32_t sel)
+CPU_mfc2(CPU *cpu, uint32_t src, uint32_t sel)
 {
-	CPU_errno = CPUERR_SUCC;
+	errno = 0;
 
 	if (src >= COP2_NREG || sel >= COP2_NSEL) {
-		CPU_errno = CPUERR_COP2REG;
+		errno = EINVAL;
 		return -1;
 	}
 
@@ -132,35 +138,26 @@ CPU_mfc2(CPU *cpu,  uint32_t src, uint32_t sel)
 /*
  * CPU_mtc2: Move to coprocessor 2
  *
- * cpu: cpu
+ * cpu:  cpu object
  * dest: destination register
- * sel: select
- * val: value to insert
+ * sel:  select
+ * val:  value to insert
+ *
+ * Returns 0 if success, an error code otherwise.
+ *
+ * This function fails if:
+ *	EINVAL: Either src or sel are invalid values.
  */
 int
 CPU_mtc2(CPU *cpu, uint32_t dest, uint32_t sel, uint32_t val)
 {
-	CPU_errno = CPUERR_SUCC;
+	errno = 0;
 
 	if (dest >= COP2_NREG || sel >= COP2_NSEL) {
-		CPU_errno = CPUERR_COP2REG;
-		return -1;
+		return EINVAL;
 	}
 
 	cpu->cop2[dest][sel] = val;
 
 	return 0;
-}
-
-/*
- * CPU_strerror: Map error number to error message string
- *
- * errno: error number
- *
- * Returns error message string
- */
-inline const char *
-CPU_strerror(int errno)
-{
-	return CPU_errlist[errno];
 }

@@ -5,6 +5,7 @@
  */
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
 #include <limits.h>
@@ -21,12 +22,6 @@
 /* Implements */
 #include "net.h"
 
-#define X(a, b) b,
-static const char *Net_errlist[] = {
-	NetErrList
-};
-#undef X
-
 #define Y(a, b) b,
 static const char *linkname[] = {
 	LinknameList
@@ -39,9 +34,9 @@ static struct msg *link_remmsg(struct link *);
 static int      guidance(Net *, size_t, size_t);
 static void     fwd(Net *, size_t);
 static void     hop(Net *, uint32_t);
-static void     operate(Net *, size_t);
+static int      operate(Net *, size_t);
 
-static void     execute(Net *);
+static int      execute(Net *);
 
 Net            *Net_create(size_t, size_t, size_t);
 void            Net_destroy(Net *);
@@ -54,20 +49,18 @@ void            Net_runsim(Net *);
 
 void            Net_perfct(Net *, char *);
 
-const char     *Net_strerror(int);
-
 /*
  * link_insmsg: insert message on link
  *
  * link: link to operate
- * msg: message to insert
+ * msg:  message to insert
  *
  * Returns 0 if successfully inserted on the link's circular buffer, -1
- * otherwise
+ * otherwise.
  */
 static
 int
-link_insmsg(struct link * link, struct msg * msg)
+link_insmsg(struct link *link, struct msg *msg)
 {
 	if (link->len == LINK_BUFSZ) {
 		return -1;
@@ -92,11 +85,11 @@ link_insmsg(struct link * link, struct msg * msg)
  *
  * link: link to operate
  *
- * Returns a pointer to the removed message if sucessfull, NULL otherwise
+ * Returns a pointer to the removed message if sucessfull, NULL otherwise.
  */
 static
 struct msg *
-link_remmsg(struct link * link)
+link_remmsg(struct link *link)
 {
 	struct msg     *msg;
 
@@ -115,11 +108,11 @@ link_remmsg(struct link * link)
 /*
  * guidance: get the direction of the next step to the target processor
  *
- * net: network
+ * net:  network
  * from: current processor
- * to: target processor
+ * to:   target processor
  *
- * Returns the direction of the next step
+ * Returns the direction of the next step.
  */
 static
 int
@@ -142,7 +135,7 @@ guidance(Net *net, size_t from, size_t to)
  * fwd:	foward messages from input links to output links or mailbox
  *
  * net: network
- * id: id of current node
+ * id:  id of current node
  */
 static
 void
@@ -169,14 +162,15 @@ fwd(Net *net, size_t id)
 		if (olink != LINK_MBOX) {
 			out = &(net->nd[id].link[LINK_OUT][olink]);
 			if (out->len == LINK_BUFSZ) {
-				warnx("net->nd[%lu] cycle %lu -- "
+				warnx("%s fwd -- nd[%lu] cycle %lu -- "
 				      "output link %s is full",
-				      id, net->cycle, linkname[olink]);
+				      __FILE__, id, net->cycle,
+				      linkname[olink]);
 				continue;
 			}
 		} else if (net->nd[id].mbox[msg->from]) {
-			warnx("net->nd[%lu] cycle %lu -- mailbox is full",
-			      id, net->cycle);
+			warnx("%s fwd -- nd[%lu] cycle %lu -- mailbox is full",
+			      __FILE__, id, net->cycle);
 			continue;
 		}
 
@@ -200,7 +194,7 @@ fwd(Net *net, size_t id)
  *	another node
  *
  * net: network
- * id: id of the current node
+ * id:  id of the current node
  */
 static void
 hop(Net *net, uint32_t id)
@@ -247,17 +241,17 @@ hop(Net *net, uint32_t id)
 		}
 
 		if (oob) {	/* out of bounds */
-			warnx("net->nd[%u] cycle %lu -- "
+			warnx("%s hop -- nd[%u] cycle %lu -- "
 			      "Can not send message out of the network (%s)",
-			      id, net->cycle, linkname[olink]);
+			      __FILE__, id, net->cycle, linkname[olink]);
 			continue;
 		}
 
 		in = &(net->nd[nxt].link[LINK_IN][ilink]);
 		if (in->len == LINK_BUFSZ) {
-			warnx("net->nd[%u] cycle %lu -- "
+			warnx("%s hop -- nd[%u] cycle %lu -- "
 			      "target link %s is full",
-			      id, net->cycle, linkname[ilink]);
+			      __FILE__, id, net->cycle, linkname[ilink]);
 			continue;
 		}
 
@@ -267,8 +261,20 @@ hop(Net *net, uint32_t id)
 	}
 }
 
+/*
+ * operate: execute an network related instruction
+ *
+ * net: network
+ * id:  node id
+ *
+ * Returns 0 if success, an error number otherwise.
+ *
+ * This function fails if:
+ *	ENOMEM:  could not allocate an object.
+ *	EDEADLK: deadlock detected.
+ */
 static
-void
+int
 operate(Net *net, size_t id)
 {
 	int             link;
@@ -294,14 +300,14 @@ operate(Net *net, size_t id)
 	case COP2_MSG_OP_IN:
 		if ((msg = net->nd[id].mbox[corr])) {
 #ifndef NDEBUG
-			warnx("net->nd[%lu] cycle %lu -- i%u",
-			      id, net->cycle, corr);
+			warnx("%s operate -- nd[%lu] cycle %lu -- "
+			      "%u?data", __FILE__, id, net->cycle, corr);
 #endif
 			if (!(ack = malloc(sizeof(*ack)))) {
-				warnx("net->nd[%lu] cycle %lu --"
-				      "could not allocate ack",
-				      id, net->cycle);
-				return;
+				warn("%s operate -- nd[%lu] cycle %lu -- "
+				      "could not allocate ack (input)",
+				      __FILE__, id, net->cycle);
+				return ENOMEM;
 			}
 			ack->to = msg->from;
 			ack->from = id;
@@ -323,10 +329,12 @@ operate(Net *net, size_t id)
 				net->nd[id].mbox[corr] = NULL;
 				free(msg);
 			} else {
-				warnx("net->nd[%lu] cycle %lu -- i"
-				      "could not send "
-				      "acknowledge (link %s full)",
-				      id, net->cycle, linkname[link]);
+				warnx("%s operate -- "
+				      "nd[%lu] cycle %lu -- "
+				      "could not send acknowledge "
+				      "(link %s full)",
+				      __FILE__, id, net->cycle,
+				      linkname[link]);
 			}
 		}
 		break;
@@ -340,10 +348,11 @@ operate(Net *net, size_t id)
 					net->nd[id].mbox[corr] = NULL;
 					free(msg);
 				} else {
-					warnx("net->nd[%lu] cycle %lu -- "
-					      "*** DEADLOCK (%u) ***",
-					      id, net->cycle, corr);
-					Net_errno = NETERR_DEADLOCK;
+					warnx("%s operate -- "
+					      "nd[%lu] cycle %lu -- "
+					      "expected ack from %u",
+					      __FILE__, id, net->cycle, corr);
+					return EDEADLK;
 				}
 			}
 		} else if ((msg = malloc(sizeof(*msg)))) {	/* send msg */
@@ -361,26 +370,29 @@ operate(Net *net, size_t id)
 				CPU_mtc2(net->nd[id].cpu, COP2_MSG,
 					 COP2_MSG_ST, st);
 #ifndef NDEBUG
-				warnx("net->nd[%lu] cycle %lu -- o%u",
-				      id, net->cycle, corr);
+				warnx("%s operate -- "
+				      "nd[%lu] cycle %lu -- %u!data",
+				      __FILE__, id, net->cycle, corr);
 #endif
 			} else {
-				warnx("net->nd[%lu] cycle %lu -- o"
+				warnx("%s operate -- "
+				      "nd[%lu] cycle %lu -- "
 				      "could not send message "
 				      "(link %s full)",
-				      id, net->cycle, linkname[link]);
+				      __FILE__, id, net->cycle,
+				      linkname[link]);
 			}
 		} else {
-			warnx("net->nd[%lu] cycle %lu -- could not output",
-			      id, net->cycle);
+			warnx("%s operate -- nd[%lu] cycle %lu -- "
+			      "could not output",
+			      __FILE__, id, net->cycle);
 		}
 		break;
 	case COP2_MSG_OP_ALT:
 		if (ncl <= 0) {
-			warnx("net->nd[%lu] cycle %lu -- "
-			      "*** DEADLOCK (NCL <= 0) ***",
-			      id, net->cycle);
-			Net_errno = NETERR_DEADLOCK;
+			warnx("%s operate -- nd[%lu] cycle %lu -- "
+			      "NCL <= 0", __FILE__, id, net->cycle);
+			return EDEADLK;
 		} else if (net->nd[id].mbox_unread) {
 			--net->nd[id].mbox_unread;
 			clauses = Mem_getptr(net->nd[id].mem, corr);
@@ -395,8 +407,10 @@ operate(Net *net, size_t id)
 						done = found = 1;
 						corr = cur;
 #ifndef NDEBUG
-						warnx("net->nd[%lu] cycle %lu "
-						      "-- a%u", id,
+						warnx("%s operate -- "
+						      "nd[%lu] cycle %lu "
+						      "-- %u?data (clause)",
+						      __FILE__, id,
 						      net->cycle, corr);
 #endif
 						break;
@@ -413,10 +427,11 @@ CONT:
 			if (found) {
 				msg = net->nd[id].mbox[corr];
 				if (!(ack = malloc(sizeof(*ack)))) {
-					warnx("net->nd[%lu] cycle %lu --"
-					      "could not allocate ack",
-					      id, net->cycle);
-					return;
+					warnx("%s operate -- "
+					      "nd[%lu] cycle %lu --"
+					      "could not allocate ack (alt)",
+					      __FILE__, id, net->cycle);
+					return ENOMEM;
 				}
 				ack->to = msg->from;
 				ack->from = id;
@@ -440,51 +455,68 @@ CONT:
 					free(msg);
 					net->nd[id].cpu->gpr[K1] = corr;
 				} else {
-					warnx("net->nd[%lu] cycle %lu -- a"
+					warnx("%s operate -- "
+					      "nd[%lu] cycle %lu -- "
 					      "could not send "
 					      "acknowledge (link %s full)",
-					      id, net->cycle, linkname[link]);
+					      __FILE__, id, net->cycle,
+					      linkname[link]);
 				}
 			}
 		}
 		break;
 	}
+
+	return 0;
 }
 
 /*
  * execute: network cycle
  *
  * net: network
+ *
+ * Returns 0 if success, -1 otherwise.
  */
 static
-void
+int
 execute(Net *net)
 {
-	size_t          i;
+	int             errnum;
 
-	Net_errno = NETERR_SUCC;
+	size_t          i;
 
 	for (i = 0; i < net->size; ++i) {
 		fwd(net, i);	 /* deal with old messages internally first */
 	}
 
 	for (i = 0; i < net->size; ++i) {
-		operate(net, i); /* do operation */
+		errnum = operate(net, i); /* do operation */
+		if (errnum == EDEADLK) {
+			warnx("%s execute -- operate nd[%lu] cycle %lu -- "
+			      "*** DEADLOCK ***", __FILE__, i, net->cycle);
+			return -1;
+		}
 	}
 
 	for (i = 0; i < net->size; ++i) {
 		hop(net, i);	 /* send messages to next nodes */
 	}
+
+	return 0;
 }
 
 /*
  * Net_create: create cpu network
  *
- * x: number of processors on the x axis
- * y: number of processors on the y axis
+ * x:     number of processors on the x axis
+ * y:     number of processors on the y axis
  * memsz: memory size
  *
- * Returns network if success, NULL otherwise
+ * Returns network if success, NULL otherwise. In case of failure, errno is set
+ * to correspondent error number.
+ *
+ *	ENOMEM: Could not allocate the network object because some memory
+ *		allocation failed.
  */
 Net *
 Net_create(size_t x, size_t y, size_t memsz)
@@ -493,10 +525,10 @@ Net_create(size_t x, size_t y, size_t memsz)
 
 	Net            *net;
 
-	Net_errno = NETERR_SUCC;
+	errno = 0;
 
 	if (!(net = malloc(sizeof(Net)))) {
-		Net_errno = NETERR_ALLOC;
+		errno = ENOMEM;
 		return NULL;
 	}
 
@@ -507,18 +539,18 @@ Net_create(size_t x, size_t y, size_t memsz)
 	net->size = x * y;
 
 	if (!(net->nd = malloc(sizeof(struct node) * net->size))) {
-		Net_errno = NETERR_ALLOC;
+		errno = ENOMEM;
 		return NULL;
 	}
 
 	for (i = 0; i < net->size; ++i) {
 		if (!(net->nd[i].cpu = CPU_create(i))) {
-			Net_errno = NETERR_CPU;
+			errno = ENOMEM;
 			return NULL;
 		}
 
 		if (!(net->nd[i].mem = Mem_create(memsz, 1))) {
-			Net_errno = NETERR_MEM;
+			errno = ENOMEM;
 			return NULL;
 		}
 
@@ -529,7 +561,7 @@ Net_create(size_t x, size_t y, size_t memsz)
 		net->nd[i].mbox_unread = 0;
 		if (!(net->nd[i].mbox =
 		      malloc(sizeof(struct msg *) * net->size))) {
-			Net_errno = NETERR_ALLOC;
+			errno = ENOMEM;
 			return NULL;
 		}
 	}
@@ -539,6 +571,8 @@ Net_create(size_t x, size_t y, size_t memsz)
 
 /*
  * Net_destroy: deallocate network object
+ *
+ * net: network object
  */
 void
 Net_destroy(Net *net)
@@ -571,14 +605,21 @@ Net_setpc(Net *net, size_t id, uint32_t pc)
  * net: network
  * elf: ELF image
  *
- * Returns 0 if success, -1 otherwise, Mem_errno indicates the error
+ * Returns 0 if success, -1 otherwise. In case of failuere errno indicates the
+ * error
+ *
+ * This function fails if:
+ *	ENOSPC: could not load because the segment is out of bounds (inherited
+ *		from Mem_progld).
  */
 int
 Net_progld(Net *net, size_t memsz, unsigned char *elf)
 {
 	size_t          i;
 
-	if (Mem_progld(net->nd[0].mem, elf) < 0) {
+	errno = 0;
+
+	if (Mem_progld(net->nd[0].mem, elf)) {
 		return -1;
 	}
 
@@ -597,22 +638,26 @@ Net_progld(Net *net, size_t memsz, unsigned char *elf)
 void
 Net_runsim(Net *net)
 {
+	int             errcode;
+
 	size_t          i;
 
 	for (i = 0;; i = (i + 1) % net->size) {
-		if (Datapath_execute(net->nd[i].cpu, net->nd[i].mem)) {
-			warnx("net->nd[%lu] -- Datapath_execute %s",
-			      i, Datapath_strerror(Datapath_errno));
+		if (!net->nd[0].cpu->running) {
 			return;
 		}
-
+		if (Datapath_execute(net->nd[i].cpu, net->nd[i].mem)) {
+			warnx("Net_runsim -- Datapath_execute nd[%lu]", i);
+			return;
+		}
 		if (i == (net->size - 1)) {
-			execute(net);
-			++net->cycle;
-			fflush(stdout);
-			if (Net_errno != NETERR_SUCC) {
+			errcode = execute(net);
+			if (!errcode) {
+				++net->cycle;
+			} else {
 				return;
 			}
+			fflush(stdout);
 		}
 	}
 }
@@ -679,17 +724,4 @@ Net_perfct(Net *net, char *progname)
 	if (close(fd) < 0) {
 		err(EXIT_FAILURE, "close");
 	}
-}
-
-/*
- * Net_strerror: map error number to error message string
- *
- * code: error number
- *
- * Returns error message string
- */
-inline const char *
-Net_strerror(int code)
-{
-	return Net_errlist[code];
 }

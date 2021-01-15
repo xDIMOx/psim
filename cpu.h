@@ -25,20 +25,6 @@
 
 #define NCOUNTERS 1
 
-#define CPUErrList                               \
-X(CPUERR_SUCC, "Success")                        \
-X(CPUERR_ALLOC, "Could not allocate CPU")        \
-X(CPUERR_DEBUG, "Could not generate debug info") \
-X(CPUERR_COP2REG, "Invalid COP2 register")
-
-#define X(a, b) a,
-enum CPUErrNo {
-	CPUErrList
-};
-#undef X
-
-int             CPU_errno;
-
 /*
  * Definitions
  */
@@ -176,5 +162,3 @@ void            CPU_setpc(CPU *, uint32_t);
 
 int64_t         CPU_mfc2(CPU *, uint32_t, uint32_t);
 int             CPU_mtc2(CPU *, uint32_t, uint32_t, uint32_t);
-
-const char     *CPU_strerror(int);
