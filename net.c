@@ -175,7 +175,7 @@ input(Net *net, size_t from, size_t to)
 	net->nd[to].mbox[from] = NULL;
 	free(msg);
 
-#ifndef NDEBUG
+#ifdef VERBOSE
 	warnx("%s input -- nd[%lu] cycle %lu -- %lu?data",
 	      __FILE__, to, net->cycle, from);
 #endif
@@ -264,7 +264,7 @@ output(Net *net, size_t to, size_t from)
 	st |= 0x4;
 	CPU_mtc2(net->nd[from].cpu, COP2_MSG, COP2_MSG_ST, st);
 
-#ifndef NDEBUG
+#ifdef VERBOSE
 	warnx("%s output -- nd[%lu] cycle %lu -- %lu!data",
 	      __FILE__, from, net->cycle, to);
 #endif
@@ -325,7 +325,7 @@ alt(Net *net, uint32_t *clauses, size_t to)
 			if (clauses[i] == cur) {
 				done = found = 1;
 				from = cur;
-#ifndef NDEBUG
+#ifdef VERBOSE
 				warnx("%s alt -- nd[%lu] cycle %lu -- "
 				      "%u?data", __FILE__, to, net->cycle,
 				      from);

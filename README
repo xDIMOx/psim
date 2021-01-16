@@ -58,23 +58,26 @@ By default MEMSZ_IN_BYTES is 16777216 bytes (16 MiB).
 
 TODO:
 - Multi-threaded simulation
-- Change debugging macro to something less confusing
 - Better program loading in the networked mode
-- Better libraries for simulted programs
+- Better libraries for simulated programs
 
 NOTES:
-if NDEBUG was not set when compiling (it is by default), files called
-cpuXXXX_instrdump will be created when the program is executed. To check these
-files a MIPSEL capable disassembler is needed (it is possible to use hexdump
-but this will make debugging even worse). For example, using GNU objdump(1):
+If the INSTRDUMP macro is set when compiling (it is not by default) files
+called cpuXXXX_instrdump will be created when the program is executed. To
+check these files a MIPSEL capable disassembler is needed (it is possible
+to use hexdump but this will make debugging even worse). For example, using
+GNU objdump(1):
 	- objdump -b binary -m mips -EL -Mno-aliases -D cpuXXXX_instrdump
+
+If the VERBOSE macro is set when compiling (it is not by default) the simulator
+will print additional warning messages to stderr, maybe useful for debugging.
 
 At the end of the simulation, a file called perfct_PROGRAM_NAME.csv will be
 created at the current directory, containing a number of performance counters.
 
 Although it can simulate multiple processors, the simulator itself runs on
 a single thread. This makes easier to debug the examples (the simulation is
-deterministic, and gives the same result every time) at the cost of simulation
+deterministic and gives the same result every time) at the cost of simulation
 speed.
 
 Program loading on the network mode is quite dumb and wasteful, since it loads

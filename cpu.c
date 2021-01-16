@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#ifndef NDEBUG
+#ifdef INSTRDUMP
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -67,7 +67,7 @@ CPU_create(uint32_t id)
 		cpu->perfct.ct[i].en = cpu->perfct.ct[i].ct = 0;
 	}
 
-#ifndef NDEBUG
+#ifdef INSTRDUMP
 	snprintf(cpu->debug.fname, 20, "cpu%04d_instrdump", id);
 	if ((cpu->debug.fd = open(cpu->debug.fname,
 				  O_CREAT | O_WRONLY | O_TRUNC,
@@ -89,7 +89,7 @@ CPU_create(uint32_t id)
 void
 CPU_destroy(CPU *cpu)
 {
-#ifndef NDEBUG
+#ifdef INSTRDUMP
 	if (close(cpu->debug.fd)) {
 		warn("CPU_destroy -- close %s", cpu->debug.fname);
 	}

@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifndef NDEBUG
+#ifdef INSTRDUMP
 #include <unistd.h>
 #endif
 
@@ -422,7 +422,7 @@ execute(CPU *cpu, Mem *mem)
 			if (Mem_busacc(cpu->gpr[K0])) {
 				cpu->dec.stall = 1;
 				++cpu->perfct.lddefer;
-#ifndef NDEBUG
+#ifdef VERBOSE
 				warnx("cpu[%u] -- Mem_lb: deferred",
 				      cpu->gpr[K0]);
 #endif
@@ -441,7 +441,7 @@ execute(CPU *cpu, Mem *mem)
 		if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
 			++cpu->perfct.lddefer;
-#ifndef NDEBUG
+#ifdef VERBOSE
 			warnx("cpu[%u] -- Mem_lw: deferred",
 			      cpu->gpr[K0]);
 #endif
@@ -459,7 +459,7 @@ execute(CPU *cpu, Mem *mem)
 		} else if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
 			++cpu->perfct.stdefer;
-#ifndef NDEBUG
+#ifdef VERBOSE
 			warnx("cpu[%u] -- Mem_sb: deferred",
 			      cpu->gpr[K0]);
 #endif
@@ -476,7 +476,7 @@ execute(CPU *cpu, Mem *mem)
 		} else if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
 			++cpu->perfct.stdefer;
-#ifndef NDEBUG
+#ifdef VERBOSE
 			warnx("cpu[%u] -- Mem_sw: deferred",
 			      cpu->gpr[K0]);
 #endif
@@ -491,7 +491,7 @@ execute(CPU *cpu, Mem *mem)
 		if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
 			++cpu->perfct.lldefer;
-#ifndef NDEBUG
+#ifdef VERBOSE
 			warnx("cpu[%u] -- Mem_ll: deferred",
 			      cpu->gpr[K0]);
 #endif
@@ -507,7 +507,7 @@ execute(CPU *cpu, Mem *mem)
 		if (Mem_busacc(cpu->gpr[K0])) {
 			cpu->dec.stall = 1;
 			++cpu->perfct.scdefer;
-#ifndef NDEBUG
+#ifdef VERBOSE
 			warnx("cpu[%u] -- Mem_sc: deferred",
 			      cpu->gpr[K0]);
 #endif
@@ -565,7 +565,7 @@ Datapath_execute(CPU *cpu, Mem *mem)
 		return -1;
 	}
 
-#ifndef NDEBUG
+#ifdef INSTRDUMP
 	write(cpu->debug.fd, &instr, sizeof(uint32_t));
 #endif
 
