@@ -31,6 +31,10 @@ static const char *linkname[] = {
 static int         link_insmsg(struct link *, struct msg *);
 static struct msg *link_remmsg(struct link *);
 
+static int      input(Net *, size_t, size_t);
+static int      output(Net *, size_t, size_t);
+static int      alt(Net *, uint32_t *, size_t);
+
 static int      guidance(Net *, size_t, size_t);
 static void     fwd(Net *, size_t);
 static void     hop(Net *, uint32_t);
@@ -103,6 +107,285 @@ link_remmsg(struct link *link)
 	--link->len;
 
 	return msg;
+}
+
+/*
+ * input: execute input command
+ *
+ * net:  network object
+ * from: who the message is from
+ * to:   who the message is to
+ *
+ * Returns 0 if succesfull, an error number otherwise.
+ *
+ * This function fails if:
+ *	EAGAIN: message not arrived yet, try later.
+ *	ENOMEM: could not allocate an object.
+ *	ENOBUFS: link buffer full.
+ */
+static int
+input(Net *net, size_t from, size_t to)
+{
+	int             link;
+
+	uint32_t        hops;
+
+	struct msg     *msg, *ack;
+
+	struct link    *olink;
+
+	msg = net->nd[to].mbox[from];
+
+	if (!msg) {
+		return EAGAIN;
+	}
+
+	if (!(ack = malloc(sizeof(*ack)))) {
+		warn("%s operate -- nd[%lu] cycle %lu -- "
+		      "could not allocate ack (input)",
+		      __FILE__, to, net->cycle);
+		return ENOMEM;
+	}
+
+	ack->to = msg->from;
+	ack->from = to;
+	ack->ack = 1;
+	ack->hops = msg->hops;
+	ack->nxt = NULL;
+
+	link = guidance(net, to, ack->to);
+	olink = &(net->nd[to].link[LINK_OUT][link]);
+	if (olink->len >= LINK_BUFSZ) {
+		warnx("%s input -- nd[%lu] cycle %lu -- "
+		      "could not send acknowledge (link %s full)",
+		      __FILE__, to, net->cycle, linkname[link]);
+		return ENOBUFS;
+	}
+
+	link_insmsg(olink, ack);
+
+	CPU_mtc2(net->nd[to].cpu, COP2_MSG, COP2_MSG_DATA, msg->data);
+
+	hops = CPU_mfc2(net->nd[to].cpu, COP2_MSG, COP2_MSG_HOPS);
+	hops += msg->hops;
+	CPU_mtc2(net->nd[to].cpu, COP2_MSG, COP2_MSG_HOPS, hops);
+
+	CPU_mtc2(net->nd[to].cpu, COP2_MSG, COP2_MSG_ST, COP2_MSG_OP_NONE);
+
+	net->nd[to].mbox[from] = NULL;
+	free(msg);
+
+#ifndef NDEBUG
+	warnx("%s input -- nd[%lu] cycle %lu -- %lu?data",
+	      __FILE__, to, net->cycle, from);
+#endif
+
+	return 0;
+}
+
+/*
+ * output: output command
+ *
+ * net:  network object
+ * to:   target of the message
+ * from: sender of the message
+ *
+ * Returns 0 if success, an error number otherwise.
+ *
+ * This function fails if:
+ *	EDEADLK: deadlock.
+ *	EAGAIN:  acknowledge not arrived yet, try later.
+ *	ENOMEM:  could not allocate message.
+ *	ENOBUFS: link buffer full.
+ */
+static int
+output(Net *net, size_t to, size_t from)
+{
+	int             link;
+
+	uint32_t        st;
+
+	struct msg     *msg;
+
+	struct link    *olink;
+
+	st = CPU_mfc2(net->nd[from].cpu, COP2_MSG, COP2_MSG_ST);
+
+	/*
+	 * check if waiting for acknowledge
+	 */
+	if (COP2_MSG_ST_SENT(st)) {
+		if ((msg = net->nd[from].mbox[to])) {
+			if (msg->ack) {
+				CPU_mtc2(net->nd[from].cpu, COP2_MSG,
+					 COP2_MSG_ST, COP2_MSG_OP_NONE);
+				net->nd[from].mbox[to] = NULL;
+				free(msg);
+				return 0;
+			} else {
+				warnx("%s output -- nd[%lu] cycle %lu -- "
+				      "expected ack from %lu",
+				      __FILE__, from, net->cycle, to);
+				return EDEADLK;
+			}
+		} else {
+			return EAGAIN;
+		}
+	}
+
+	/*
+	 * send message
+	 */
+	if (!(msg = malloc(sizeof(*msg)))) {
+		warn("%s output -- nd[%lu] cycle %lu -- could not output",
+		      __FILE__, from, net->cycle);
+		return ENOMEM;
+	}
+
+	link = guidance(net, from, to);
+	olink = &(net->nd[from].link[LINK_OUT][link]);
+	if (olink->len >= LINK_BUFSZ) {
+		warnx("%s output -- nd[%lu] cycle %lu -- "
+		      "could not send message (link %s full)",
+		      __FILE__, from, net->cycle, linkname[link]);
+		return ENOBUFS;
+	}
+
+	msg->to = to;
+	msg->from = from;
+	msg->data = CPU_mfc2(net->nd[from].cpu, COP2_MSG, COP2_MSG_DATA);
+	msg->ack = 0;
+	msg->hops = 0;
+	msg->nxt = NULL;
+
+	link_insmsg(olink, msg);
+
+	/* set sent flag */
+	st |= 0x4;
+	CPU_mtc2(net->nd[from].cpu, COP2_MSG, COP2_MSG_ST, st);
+
+#ifndef NDEBUG
+	warnx("%s output -- nd[%lu] cycle %lu -- %lu!data",
+	      __FILE__, from, net->cycle, to);
+#endif
+
+	return 0;
+}
+
+/*
+ * alt: alternative command
+ *
+ * net:     network object
+ * clauses: array containg clauses
+ * to:      target processor
+ *
+ * This function returns 0 if syccessfull, an error number otherwise.
+ *
+ * This function fails if:
+ *	EDEADLK: deadlock.
+ *	EAGAIN:  no message arrived yet, try later.
+ *	ENOMEM:  could not allocate an object.
+ *	ENOBUFS: link buffer full.
+ */
+static int
+alt(Net *net, uint32_t *clauses, size_t to)
+{
+	int             link;
+
+	int             done, found;
+
+	uint32_t        from, hops, ncl;
+
+	size_t          i, cur;
+
+	struct msg     *msg, *ack;
+	struct link    *olink;
+
+	ncl = CPU_mfc2(net->nd[to].cpu, COP2_MSG, COP2_MSG_NCL);
+
+	if (ncl <= 0) {
+		warnx("%s alt -- nd[%lu] cycle %lu -- NCL <= 0",
+		      __FILE__, to, net->cycle);
+		return EDEADLK;
+	}
+
+	if (!net->nd[to].mbox_new) {
+		return EAGAIN;
+	}
+
+	--net->nd[to].mbox_new;
+
+	cur = net->nd[to].mbox_start;
+	found = done = 0;
+	while (!done) {
+		if (!net->nd[to].mbox[cur]) {
+			goto INC_CB;
+		}
+		for (i = 0; i < ncl; ++i) {
+			if (clauses[i] == cur) {
+				done = found = 1;
+				from = cur;
+#ifndef NDEBUG
+				warnx("%s alt -- nd[%lu] cycle %lu -- "
+				      "%u?data", __FILE__, to, net->cycle,
+				      from);
+#endif
+				break;
+			}
+		}
+INC_CB:
+		cur = (cur + 1) % net->size;
+		if (cur == net->nd[to].mbox_start) {
+			done = 1;
+		}
+	}
+
+	/* increment round-robin counter */
+	net->nd[to].mbox_start = (net->nd[to].mbox_start + 1) % net->size;
+
+	if (!found) {
+		return EAGAIN;
+	}
+
+	msg = net->nd[to].mbox[from];
+
+	if (!(ack = malloc(sizeof(*ack)))) {
+		warn("%s alt -- nd[%lu] cycle %lu -- could not allocate ack",
+		      __FILE__, to, net->cycle);
+		return ENOMEM;
+	}
+
+	ack->to = msg->from;
+	ack->from = to;
+	ack->ack = 1;
+	ack->hops = msg->hops;
+	ack->nxt = NULL;
+
+	link = guidance(net, to, ack->to);
+	olink = &(net->nd[to].link[LINK_OUT][link]);
+	if (olink->len >= LINK_BUFSZ) {
+		warnx("%s alt -- nd[%lu] cycle %lu -- "
+		      "could not send acknowledge (link %s full)",
+		      __FILE__, to, net->cycle, linkname[link]);
+		return ENOBUFS;
+	}
+
+	link_insmsg(olink, ack);
+
+	CPU_mtc2(net->nd[to].cpu, COP2_MSG, COP2_MSG_DATA, msg->data);
+
+	hops = CPU_mfc2(net->nd[to].cpu, COP2_MSG, COP2_MSG_HOPS);
+	hops += msg->hops;
+	CPU_mtc2(net->nd[to].cpu, COP2_MSG, COP2_MSG_HOPS, hops);
+
+	CPU_mtc2(net->nd[to].cpu, COP2_MSG, COP2_MSG_ST, COP2_MSG_OP_NONE);
+
+	net->nd[to].mbox[from] = NULL;
+	free(msg);
+
+	net->nd[to].cpu->gpr[K1] = from;
+
+	return 0;
 }
 
 /*
@@ -184,7 +467,7 @@ fwd(Net *net, size_t id)
 					COP2_MSG_NMSG);
 			CPU_mtc2(net->nd[id].cpu, COP2_MSG,
 				 COP2_MSG_NMSG, nmsg + 1);
-			++net->nd[id].mbox_unread;
+			++net->nd[id].mbox_new;
 		}
 	}
 }
@@ -270,204 +553,41 @@ hop(Net *net, uint32_t id)
  * Returns 0 if success, an error number otherwise.
  *
  * This function fails if:
+ *	EAGAIN:  try later.
  *	ENOMEM:  could not allocate an object.
  *	EDEADLK: deadlock detected.
+ *	ENOBUFS: link buffer full.
+ *	EINVAL:  operation does not exist.
  */
 static
 int
 operate(Net *net, size_t id)
 {
-	int             link;
-
-	int             done, found;
-
-	uint32_t        corr, data, st,  hops, ncl;
+	uint32_t        corr, st;
 
 	uint32_t       *clauses;
 
-	size_t          i, cur;
-
-	struct msg     *msg, *ack;
-	struct link    *olink;
-
 	corr = CPU_mfc2(net->nd[id].cpu, COP2_MSG, COP2_MSG_CORR);
-	data = CPU_mfc2(net->nd[id].cpu, COP2_MSG, COP2_MSG_DATA);
 	st = CPU_mfc2(net->nd[id].cpu, COP2_MSG, COP2_MSG_ST);
-	hops = CPU_mfc2(net->nd[id].cpu, COP2_MSG, COP2_MSG_HOPS);
-	ncl = CPU_mfc2(net->nd[id].cpu, COP2_MSG, COP2_MSG_NCL);
 
 	switch (COP2_MSG_ST_OP(st)) {
+	case COP2_MSG_OP_NONE:
+		return 0;
 	case COP2_MSG_OP_IN:
-		if ((msg = net->nd[id].mbox[corr])) {
-#ifndef NDEBUG
-			warnx("%s operate -- nd[%lu] cycle %lu -- "
-			      "%u?data", __FILE__, id, net->cycle, corr);
-#endif
-			if (!(ack = malloc(sizeof(*ack)))) {
-				warn("%s operate -- nd[%lu] cycle %lu -- "
-				      "could not allocate ack (input)",
-				      __FILE__, id, net->cycle);
-				return ENOMEM;
-			}
-			ack->to = msg->from;
-			ack->from = id;
-			ack->ack = 1;
-			ack->hops = msg->hops;
-			ack->nxt = NULL;
-			link = guidance(net, id, ack->to);
-			olink = &(net->nd[id].link[LINK_OUT][link]);
-			if (olink->len < LINK_BUFSZ) {
-				link_insmsg(olink, ack);
-				/* remove message from mailbox */
-				CPU_mtc2(net->nd[id].cpu, COP2_MSG,
-					 COP2_MSG_DATA, msg->data);
-				hops += msg->hops;
-				CPU_mtc2(net->nd[id].cpu, COP2_MSG,
-					 COP2_MSG_HOPS, hops);
-				CPU_mtc2(net->nd[id].cpu, COP2_MSG,
-					 COP2_MSG_ST, COP2_MSG_OP_NONE);
-				net->nd[id].mbox[corr] = NULL;
-				free(msg);
-			} else {
-				warnx("%s operate -- "
-				      "nd[%lu] cycle %lu -- "
-				      "could not send acknowledge "
-				      "(link %s full)",
-				      __FILE__, id, net->cycle,
-				      linkname[link]);
-			}
-		}
-		break;
+		return input(net, corr, id);	/* 0, EAGAIN, ENOMEM,
+						 * ENOBUFS */
 	case COP2_MSG_OP_OUT:
-		if (COP2_MSG_ST_SENT(st)) {	/* waiting for ack */
-			if ((msg = net->nd[id].mbox[corr])) {
-				if (msg->ack) {
-					CPU_mtc2(net->nd[id].cpu, COP2_MSG,
-						 COP2_MSG_ST,
-						 COP2_MSG_OP_NONE);
-					net->nd[id].mbox[corr] = NULL;
-					free(msg);
-				} else {
-					warnx("%s operate -- "
-					      "nd[%lu] cycle %lu -- "
-					      "expected ack from %u",
-					      __FILE__, id, net->cycle, corr);
-					return EDEADLK;
-				}
-			}
-		} else if ((msg = malloc(sizeof(*msg)))) {	/* send msg */
-			link = guidance(net, id, corr);
-			olink = &(net->nd[id].link[LINK_OUT][link]);
-			if (olink->len < LINK_BUFSZ) {
-				msg->to = corr;
-				msg->from = id;
-				msg->data = data;
-				msg->ack = 0;
-				msg->hops = 0;
-				msg->nxt = NULL;
-				link_insmsg(olink, msg);
-				st |= 0x4;	/* set sent flag */
-				CPU_mtc2(net->nd[id].cpu, COP2_MSG,
-					 COP2_MSG_ST, st);
-#ifndef NDEBUG
-				warnx("%s operate -- "
-				      "nd[%lu] cycle %lu -- %u!data",
-				      __FILE__, id, net->cycle, corr);
-#endif
-			} else {
-				warnx("%s operate -- "
-				      "nd[%lu] cycle %lu -- "
-				      "could not send message "
-				      "(link %s full)",
-				      __FILE__, id, net->cycle,
-				      linkname[link]);
-			}
-		} else {
-			warnx("%s operate -- nd[%lu] cycle %lu -- "
-			      "could not output",
-			      __FILE__, id, net->cycle);
-		}
-		break;
+		return output(net, corr, id);	/* 0, EDEADLK, EAGAIN,
+						 * ENOMEM, ENOBUFS */
 	case COP2_MSG_OP_ALT:
-		if (ncl <= 0) {
-			warnx("%s operate -- nd[%lu] cycle %lu -- "
-			      "NCL <= 0", __FILE__, id, net->cycle);
-			return EDEADLK;
-		} else if (net->nd[id].mbox_unread) {
-			--net->nd[id].mbox_unread;
-			clauses = Mem_getptr(net->nd[id].mem, corr);
-			cur = net->nd[id].mbox_start;
-			found = done = 0;
-			for (;!done;) {
-				if (!net->nd[id].mbox[cur]) {
-					goto CONT;
-				}
-				for (i = 0; i < ncl; ++i) {
-					if (clauses[i] == cur) {
-						done = found = 1;
-						corr = cur;
-#ifndef NDEBUG
-						warnx("%s operate -- "
-						      "nd[%lu] cycle %lu "
-						      "-- %u?data (clause)",
-						      __FILE__, id,
-						      net->cycle, corr);
-#endif
-						break;
-					}
-				}
-CONT:
-				cur = (cur + 1) % net->size;
-				if (cur == net->nd[id].mbox_start) {
-					done = 1;
-				}
-			}
-			net->nd[id].mbox_start =
-			    (net->nd[id].mbox_start + 1) % net->size;
-			if (found) {
-				msg = net->nd[id].mbox[corr];
-				if (!(ack = malloc(sizeof(*ack)))) {
-					warnx("%s operate -- "
-					      "nd[%lu] cycle %lu --"
-					      "could not allocate ack (alt)",
-					      __FILE__, id, net->cycle);
-					return ENOMEM;
-				}
-				ack->to = msg->from;
-				ack->from = id;
-				ack->ack = 1;
-				ack->hops = msg->hops;
-				ack->nxt = NULL;
-				link = guidance(net, id, ack->to);
-				olink = &(net->nd[id].link[LINK_OUT][link]);
-				if (olink->len < LINK_BUFSZ) {
-					link_insmsg(olink, ack);
-					/* remove message from mailbox */
-					CPU_mtc2(net->nd[id].cpu, COP2_MSG,
-						 COP2_MSG_DATA, msg->data);
-					hops += msg->hops;
-					CPU_mtc2(net->nd[id].cpu, COP2_MSG,
-						 COP2_MSG_HOPS, hops);
-					CPU_mtc2(net->nd[id].cpu, COP2_MSG,
-						 COP2_MSG_ST,
-						 COP2_MSG_OP_NONE);
-					net->nd[id].mbox[corr] = NULL;
-					free(msg);
-					net->nd[id].cpu->gpr[K1] = corr;
-				} else {
-					warnx("%s operate -- "
-					      "nd[%lu] cycle %lu -- "
-					      "could not send "
-					      "acknowledge (link %s full)",
-					      __FILE__, id, net->cycle,
-					      linkname[link]);
-				}
-			}
-		}
-		break;
+		clauses = Mem_getptr(net->nd[id].mem, corr);
+		return alt(net, clauses, id);	/* 0, EDEADLK, EAGAIN,
+						 * ENOMEM, ENOBUFS */
+	default:
+		warnx("unreconized operation");
 	}
 
-	return 0;
+	return EINVAL;
 }
 
 /*
@@ -558,7 +678,7 @@ Net_create(size_t x, size_t y, size_t memsz)
 		       sizeof(struct link) * LINK_DIR * LINK_NAMES);
 
 		net->nd[i].mbox_start = 0;
-		net->nd[i].mbox_unread = 0;
+		net->nd[i].mbox_new = 0;
 		if (!(net->nd[i].mbox =
 		      malloc(sizeof(struct msg *) * net->size))) {
 			errno = ENOMEM;

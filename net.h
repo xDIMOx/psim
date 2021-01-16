@@ -68,7 +68,7 @@ typedef struct {
 			size_t          len;
 		}               link[LINK_DIR][LINK_NAMES];
 		size_t          mbox_start;	/* for round-robin */
-		size_t          mbox_unread;	/* no. of unread messages */
+		size_t          mbox_new;	/* new messages */
 		struct msg    **mbox;
 	}              *nd;
 } Net;				/* processor network */
