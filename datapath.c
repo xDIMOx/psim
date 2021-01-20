@@ -511,16 +511,28 @@ execute(CPU *cpu, Mem *mem)
 			warnx("cpu[%u] -- Mem_sc: deferred",
 			      cpu->gpr[K0]);
 #endif
-			return EAGAIN;
+			return EBUSY;
 		}
 		errnum = Mem_sc(mem, cpu->gpr[K0], addr,
 				cpu->gpr[cpu->dec.rt]);
-		cpu->gpr[cpu->dec.rt] = 0;
-		if (errnum) {
+		switch (errnum) {
+		case 0:
+			cpu->gpr[cpu->dec.rt] = 1;
+			break;
+		case EAGAIN:
+#ifdef VERBOSE
+			warnx("%s execute -- cpu[%u] cycle %lu -- "
+			      "Mem_sc rmw fail",
+			      __FILE__, cpu->gpr[K0], cpu->perfct.cycle);
+#endif
+			cpu->dec.rmwfail = 1;
+			++cpu->perfct.rmwfail;
+			cpu->gpr[cpu->dec.rt] = 0;
+			break;
+		default:
 			return errnum;	/* EOVERFLOW, EAGAIN, EADDRNOTAVAIL,
 					 * EFAULT */
 		}
-		cpu->gpr[cpu->dec.rt] = 1;
 		break;
 	default:
 		return ENOTSUP;
@@ -547,6 +559,9 @@ Datapath_execute(CPU *cpu, Mem *mem)
 	int64_t         instr;
 
 	errnum = 0;
+
+	cpu->dec.stall = 0;
+	cpu->dec.rmwfail = 0;
 
 	if (!cpu->running) {
 		return -1;
@@ -576,9 +591,10 @@ Datapath_execute(CPU *cpu, Mem *mem)
 		return -1;
 	}
 
-	if (((errnum = execute(cpu, mem)) && !cpu->dec.stall)) {
-		warnx("Datapath_execute -- cpu[%u] execution failed, %d %s",
-		      cpu->gpr[K0], errnum, strerror(errnum));
+	if (((errnum = execute(cpu, mem)) && !cpu->dec.rmwfail &&
+	     !cpu->dec.stall)) {
+		warnx("Datapath_execute -- cpu[%u] execution failed, %s",
+		      cpu->gpr[K0], strerror(errnum));
 		return -1;
 	}
 

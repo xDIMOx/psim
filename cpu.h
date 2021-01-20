@@ -109,7 +109,8 @@ typedef struct {
 	uint8_t         rs, rt;
 	uint32_t        idx;
 	uint32_t        npc;
-	uint32_t        stall;
+	uint16_t        stall;
+	uint16_t        rmwfail;
 	uint32_t        sel;
 } Decoder;
 
