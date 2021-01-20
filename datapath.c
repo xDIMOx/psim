@@ -44,7 +44,8 @@ fetch(CPU *cpu, Mem *mem)
 	int64_t         instr;
 
 	if ((instr = Mem_lw(mem, cpu->pc)) < 0) {
-		warnx("cpu[%u] fetch -- Mem_lw", cpu->gpr[K0]);
+		warn("%s fetch -- cpu[%u] cycle %lu -- Mem_lw",
+		     __FILE__, cpu->gpr[K0], cpu->perfct.cycle);
 		return -1;
 	}
 
@@ -366,6 +367,10 @@ execute(CPU *cpu, Mem *mem)
 		cpu->gpr[cpu->dec.rt] = cpu->dec.imm << 16;
 		break;
 	case ((uint32_t) COP0 << 26) | WAIT:
+#ifdef VERBOSE
+		warnx("%s execute -- cpu[%u] cycle %lu -- going to sleep",
+		      __FILE__, cpu->gpr[K0], cpu->perfct.cycle);
+#endif
 		cpu->running = 0;
 		break;
 	case ((uint32_t) COP2 << 26) | (MFC2 << 21):
@@ -423,8 +428,10 @@ execute(CPU *cpu, Mem *mem)
 				cpu->dec.stall = 1;
 				++cpu->perfct.lddefer;
 #ifdef VERBOSE
-				warnx("cpu[%u] -- Mem_lb: deferred",
-				      cpu->gpr[K0]);
+				warnx("%s execute -- cpu[%u] cycle %lu -- "
+				      "Mem_lb deferred",
+				      __FILE__, cpu->gpr[K0],
+				      cpu->perfct.cycle);
 #endif
 				return EBUSY;
 			}
@@ -442,8 +449,9 @@ execute(CPU *cpu, Mem *mem)
 			cpu->dec.stall = 1;
 			++cpu->perfct.lddefer;
 #ifdef VERBOSE
-			warnx("cpu[%u] -- Mem_lw: deferred",
-			      cpu->gpr[K0]);
+			warnx("%s execute -- cpu[%u] cycle %lu -- "
+			      "Mem_lw deferred",
+			      __FILE__, cpu->gpr[K0], cpu->perfct.cycle);
 #endif
 			return EBUSY;
 		}
@@ -460,8 +468,9 @@ execute(CPU *cpu, Mem *mem)
 			cpu->dec.stall = 1;
 			++cpu->perfct.stdefer;
 #ifdef VERBOSE
-			warnx("cpu[%u] -- Mem_sb: deferred",
-			      cpu->gpr[K0]);
+			warnx("%s execute -- cpu[%u] cycle %lu -- "
+			      "Mem_sb deferred ",
+			      __FILE__, cpu->gpr[K0], cpu->perfct.cycle);
 #endif
 			return EBUSY;
 		} else if ((errnum = Mem_sb(mem, addr,
@@ -477,8 +486,9 @@ execute(CPU *cpu, Mem *mem)
 			cpu->dec.stall = 1;
 			++cpu->perfct.stdefer;
 #ifdef VERBOSE
-			warnx("cpu[%u] -- Mem_sw: deferred",
-			      cpu->gpr[K0]);
+			warnx("%s execute -- cpu[%u] cycle %lu -- "
+			      "Mem_sw deferred",
+			      __FILE__, cpu->gpr[K0], cpu->perfct.cycle);
 #endif
 			return EBUSY;
 		} else if ((errnum = Mem_sw(mem, addr,
@@ -492,8 +502,9 @@ execute(CPU *cpu, Mem *mem)
 			cpu->dec.stall = 1;
 			++cpu->perfct.lldefer;
 #ifdef VERBOSE
-			warnx("cpu[%u] -- Mem_ll: deferred",
-			      cpu->gpr[K0]);
+			warnx("%s execute -- cpu[%u] cycle %lu -- "
+			      "Mem_ll deferred",
+			      __FILE__, cpu->gpr[K0], cpu->perfct.cycle);
 #endif
 			return EBUSY;
 		}
@@ -508,8 +519,9 @@ execute(CPU *cpu, Mem *mem)
 			cpu->dec.stall = 1;
 			++cpu->perfct.scdefer;
 #ifdef VERBOSE
-			warnx("cpu[%u] -- Mem_sc: deferred",
-			      cpu->gpr[K0]);
+			warnx("%s execute -- cpu[%u] cycle %lu -- "
+			      "Mem_sc deferred ",
+			      __FILE__, cpu->gpr[K0], cpu->perfct.cycle);
 #endif
 			return EBUSY;
 		}
@@ -575,8 +587,8 @@ Datapath_execute(CPU *cpu, Mem *mem)
 	}
 
 	if ((instr = fetch(cpu, mem)) < 0) {
-		warnx("Datapath_execute -- cpu[%u] fetch failed",
-		      cpu->gpr[K0]);
+		warnx("Datapath_execute -- cpu[%u] cycle %lu -- fetch failed",
+		      cpu->gpr[K0], cpu->perfct.cycle);
 		return -1;
 	}
 
@@ -586,15 +598,16 @@ Datapath_execute(CPU *cpu, Mem *mem)
 
 	cpu->dec.raw = (uint32_t) instr;
 	if (decode(&cpu->dec)) {
-		warnx("Datapath_execute -- cpu[%u] decode failed",
-		      cpu->gpr[K0]);
+		warnx("Datapath_execute -- cpu[%u] cycle %lu -- decode failed",
+		      cpu->gpr[K0], cpu->perfct.cycle);
 		return -1;
 	}
 
 	if (((errnum = execute(cpu, mem)) && !cpu->dec.rmwfail &&
 	     !cpu->dec.stall)) {
-		warnx("Datapath_execute -- cpu[%u] execution failed, %s",
-		      cpu->gpr[K0], strerror(errnum));
+		warnx("Datapath_execute -- cpu[%u] cycle %lu -- "
+		      "execution failed: %s",
+		      cpu->gpr[K0], cpu->perfct.cycle, strerror(errnum));
 		return -1;
 	}
 
