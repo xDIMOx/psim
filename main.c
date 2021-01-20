@@ -134,7 +134,7 @@ sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 			"%lu,%lu,"	/* ll, ll defer */
 			"%lu,%lu,"	/* sc, sc defer */
 			"%lu,"		/* rmwfail */
-			"%lu,",		/* ct0 */
+			"%lu\n",	/* ct0 */
 			cpu[i]->gpr[K0],
 			cpu[i]->perfct.cycle,
 			cpu[i]->perfct.ld, cpu[i]->perfct.lddefer,
