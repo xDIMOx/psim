@@ -17,11 +17,7 @@ _start:
 	# start code
 	jal main
 	nop
-
-BUSYWAIT:
-	bnez $k0, BUSYWAIT
-	wait # only processor 0 can stop the simulation
-	nop
+	wait # stop execution
 
 	.end _start
 

@@ -64,13 +64,5 @@ main(void)
 	}
 
 out:
-	flag = (id == 0) ? 1 : 0;
-	while (flag) {
-		Spin_lock(&lock);
-		if (!philos)
-			flag = 0;
-		Spin_unlock(&lock);
-	}
-
 	return 0;
 }

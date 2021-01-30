@@ -83,8 +83,9 @@ producer(void)
 				--nempty;
 			} else
 				flag = SUCCESS;
-		} else
+		} else {
 			flag = FULL;
+		}
 		Spin_unlock(&lock);
 		switch (flag) {
 		case SUCCESS:
@@ -99,19 +100,14 @@ producer(void)
 	}
 
 	Spin_lock(&lock);
-	producing = 0;
-	Spin_unlock(&lock);
 
-	while (flag != END) {
-		Spin_lock(&lock);
-		if (!nconsumers)
-			flag = END;
-		else if (nempty > 0) {
-			--nempty;
-			Spin_unlock(&empty);
-		}
-		Spin_unlock(&lock);
+	producing = 0;
+
+	for (i = NCONSUMERS; i > 0; --i) {
+		Spin_unlock(&empty);
 	}
+
+	Spin_unlock(&lock);
 }
 
 void
@@ -124,10 +120,11 @@ consumer(void)
 	while (flag != END) {
 		Spin_lock(&lock);
 		if (ct > 0) {
-			if (ct == MAXELEM)
+			if (ct == MAXELEM) {
 				flag = FULL;
-			else
+			} else {
 				flag = SUCCESS;
+			}
 			item = dequeue();
 		} else if (!producing) {
 			--nconsumers;

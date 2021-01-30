@@ -657,6 +657,7 @@ Net_create(size_t x, size_t y, size_t memsz)
 	net->x = x;
 	net->y = y;
 	net->size = x * y;
+	net->nrun = net->size;
 
 	if (!(net->nd = malloc(sizeof(struct node) * net->size))) {
 		errno = ENOMEM;
@@ -762,23 +763,22 @@ Net_runsim(Net *net)
 
 	size_t          i;
 
-	for (i = 0;; i = (i + 1) % net->size) {
-		if (!net->nd[0].cpu->running) {
-			return;
-		}
-		if (Datapath_execute(net->nd[i].cpu, net->nd[i].mem)) {
-			warnx("Net_runsim -- Datapath_execute nd[%lu]", i);
-			return;
-		}
-		if (i == (net->size - 1)) {
-			errcode = execute(net);
-			if (!errcode) {
-				++net->cycle;
-			} else {
-				return;
+	while (net->nrun > 0) {
+		for (i = 0; i < net->size; ++i) {
+			if (Datapath_execute(net->nd[i].cpu, net->nd[i].mem)) {
+				continue;
 			}
-			fflush(stdout);
+			if (!net->nd[i].cpu->running) {
+				--net->nrun;
+			}
 		}
+		errcode = execute(net);
+		if (!errcode) {
+			++net->cycle;
+		} else {
+			return;
+		}
+		fflush(stdout);
 	}
 }
 

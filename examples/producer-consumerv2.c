@@ -84,8 +84,9 @@ producer(void)
 			if (nempty > 0) {
 				flag = EMPTY;
 				--nempty;
-			} else
+			} else {
 				flag = SUCCESS;
+			}
 		} else {
 			++nfull;
 			flag = FULL;
@@ -104,22 +105,16 @@ producer(void)
 	}
 
 	Spin_lock(&lock);
+
 	producing[tid & 1] = 0;
-	Spin_unlock(&lock);
 
-	if (tid > 0)
-		return;
-
-	while (flag != END) {
-		Spin_lock(&lock);
-		if (!nconsumers)
-			flag = END;
-		else if (nempty > 0) {
-			--nempty;
+	if (tid == 0) {
+		for (val = NCONSUMERS; val > 0; --val) {
 			Spin_unlock(&empty);
 		}
-		Spin_unlock(&lock);
 	}
+
+	Spin_unlock(&lock);
 }
 
 void
@@ -135,8 +130,9 @@ consumer(void)
 			if (nfull > 0) {
 				flag = FULL;
 				--nfull;
-			} else
+			} else {
 				flag = SUCCESS;
+			}
 			item = dequeue();
 		} else if (!producing[0] && !producing[1]) {
 			--nconsumers;

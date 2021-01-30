@@ -59,6 +59,7 @@ typedef struct {
 	size_t          cycle;
 	size_t          size;
 	size_t          x, y;
+	size_t          nrun;	/* no. of running processors */
 	struct node {
 		CPU            *cpu;
 		Mem            *mem;

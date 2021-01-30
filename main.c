@@ -64,6 +64,7 @@ sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 	int             fd;
 
 	size_t          i;
+	size_t          nrun;
 
 	CPU           **cpu;
 
@@ -104,15 +105,18 @@ sim_shrmem(size_t ncpu, size_t memsz, struct prog * prog)
 	/*
 	 * Program execution
 	 */
-	for (i = 0;; i = (i + 1) % ncpu) {
-		if (!cpu[0]->running) {
-			break;
+	nrun = ncpu;
+	while (nrun > 0) {
+		for (i = 0; i < ncpu; ++i) {
+			if (Datapath_execute(cpu[i], mem)) {
+				continue;
+			}
+			if (!cpu[i]->running) {
+				--nrun;
+			}
 		}
-		Datapath_execute(cpu[i], mem);
-		if (i == (ncpu - 1)) {
-			Mem_busclr();
-			fflush(stdout);
-		}
+		Mem_busclr();
+		fflush(stdout);
 	}
 
 	Mem_destroy(mem);
