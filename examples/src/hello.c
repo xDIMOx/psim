@@ -4,6 +4,8 @@
  * Hello world
  */
 
+#include <common.h>
+
 int
 main(void)
 {
@@ -11,13 +13,10 @@ main(void)
 
 	char           *str;
 
-	volatile char  *stdout;
-
-	stdout = (char *) 0xFFFC;
-
 	str = "hello, world\n";
-	for (i = 0; str[i]; ++i)
-		*stdout = str[i];
+	for (i = 0; str[i]; ++i) {
+		putchar(str[i]);
+	}
 
 	return 0;
 }

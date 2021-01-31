@@ -3,11 +3,11 @@
 # Customize for your needs bellow
 
 AS     = mipsel-elf-as
-AFLAGS = -Os -mips32r2 -msoft-float
+AFLAGS = -Os -mips32r2 -msoft-float -I../include/
 
 CC     = mipsel-elf-gcc
 CFLAGS = -O1 -nostartfiles -mips32r2 -msoft-float -fno-builtin -mno-memcpy \
-         -fno-stack-protector -fno-delayed-branch -mno-gpopt
+         -fno-stack-protector -fno-delayed-branch -mno-gpopt -I../include/
 
 LD      = mipsel-elf-ld
 LDFLAGS = -static
