@@ -42,6 +42,7 @@ static int      tl;		/* queue's tail */
 static int      buf[MAXELEM];
 static int      nconsumers = NCONSUMERS;
 static int      nempty;
+static int      nfull;
 static int      producing = 1;
 static int      lock = 1;
 static int      full = 0;
@@ -79,23 +80,17 @@ producer(void)
 		if (ct < MAXELEM) {
 			enqueue(i);
 			if (nempty > 0) {
-				flag = EMPTY;
+				Spin_unlock(&empty);
 				--nempty;
-			} else
-				flag = SUCCESS;
+			}
+			flag = SUCCESS;
 		} else {
+			nfull = 1;
 			flag = FULL;
 		}
 		Spin_unlock(&lock);
-		switch (flag) {
-		case SUCCESS:
-			break;
-		case EMPTY:
-			Spin_unlock(&empty);
-			break;
-		case FULL:
+		if (flag == FULL) {
 			Spin_lock(&full);
-			break;
 		}
 	}
 
@@ -103,8 +98,9 @@ producer(void)
 
 	producing = 0;
 
-	for (i = NCONSUMERS; i > 0; --i) {
+	while (nempty > 0) {
 		Spin_unlock(&empty);
+		--nempty;
 	}
 
 	Spin_unlock(&lock);
@@ -120,12 +116,12 @@ consumer(void)
 	while (flag != END) {
 		Spin_lock(&lock);
 		if (ct > 0) {
-			if (ct == MAXELEM) {
-				flag = FULL;
-			} else {
-				flag = SUCCESS;
-			}
+			flag = SUCCESS;
 			item = dequeue();
+			if (nfull) {
+				Spin_unlock(&full);
+				nfull = 0;
+			}
 		} else if (!producing) {
 			--nconsumers;
 			item = -1;
@@ -141,9 +137,6 @@ consumer(void)
 			break;
 		case EMPTY:
 			Spin_lock(&empty);
-			break;
-		case FULL:
-			Spin_unlock(&full);
 			break;
 		}
 	}

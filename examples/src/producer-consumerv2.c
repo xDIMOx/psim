@@ -36,7 +36,7 @@ enum flag {
 	END,
 };
 
-static int      ct = 0;
+static int      ct;
 static int      hd;		/* queue's head */
 static int      tl;		/* queue's tail */
 static int      buf[MAXELEM];
@@ -82,25 +82,17 @@ producer(void)
 		if (ct < MAXELEM) {
 			enqueue(val);
 			if (nempty > 0) {
-				flag = EMPTY;
+				Spin_unlock(&empty);
 				--nempty;
-			} else {
-				flag = SUCCESS;
 			}
+			flag = SUCCESS;
 		} else {
 			++nfull;
 			flag = FULL;
 		}
 		Spin_unlock(&lock);
-		switch (flag) {
-		case SUCCESS:
-			break;
-		case EMPTY:
-			Spin_unlock(&empty);
-			break;
-		case FULL:
+		if (flag == FULL) {
 			Spin_lock(&full);
-			break;
 		}
 	}
 
@@ -108,10 +100,9 @@ producer(void)
 
 	producing[tid & 1] = 0;
 
-	if (tid == 0) {
-		for (val = NCONSUMERS; val > 0; --val) {
-			Spin_unlock(&empty);
-		}
+	while (nempty > 0) {
+		Spin_unlock(&empty);
+		--nempty;
 	}
 
 	Spin_unlock(&lock);
@@ -127,13 +118,12 @@ consumer(void)
 	while (flag != END) {
 		Spin_lock(&lock);
 		if (ct > 0) {
-			if (nfull > 0) {
-				flag = FULL;
-				--nfull;
-			} else {
-				flag = SUCCESS;
-			}
 			item = dequeue();
+			if (nfull > 0) {
+				Spin_unlock(&full);
+				--nfull;
+			}
+			flag = SUCCESS;
 		} else if (!producing[0] && !producing[1]) {
 			--nconsumers;
 			item = -1;
@@ -149,9 +139,6 @@ consumer(void)
 			break;
 		case EMPTY:
 			Spin_lock(&empty);
-			break;
-		case FULL:
-			Spin_unlock(&full);
 			break;
 		}
 	}
