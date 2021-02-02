@@ -26,7 +26,6 @@ static struct {
 	ssize_t        *resaddr;	/* reserved addresses */
 	struct {
 		size_t          hd, tl;
-		size_t          ct;
 		ssize_t        *arr;
 	}               queue;
 	size_t          util;
@@ -88,7 +87,7 @@ Mem_create(size_t size, size_t nshr)
 			errno = ENOMEM;
 			return NULL;
 		}
-		memctl.queue.hd = memctl.queue.tl = memctl.queue.ct = 0;
+		memctl.queue.hd = memctl.queue.tl = 0;
 		memctl.util = 0;
 		for (i = 0; i < memctl.nshr; ++i) {
 			memctl.queue.arr[i] = -1;
