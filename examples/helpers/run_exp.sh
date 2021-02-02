@@ -3,12 +3,20 @@
 #
 # Run experiments and generates files with the data for later analysis
 
-PSIM="../psim"
-CY="./cy.awk"
-BU="./busutil.awk"
-MF="./memfail.awk"
-LOCKCY="./lockcy.awk"
-LOCKF="./lockfail.awk"
+REPOROOT="${HOME}/src/psim" # root of the repository
+HELPERS="${REPOROOT}/examples/helpers/" # helpers directory
+SRC="${REPOROOT}/examples/src/" # simulated program's source directory
+
+PSIM="${REPOROOT}/psim" # simulator executable
+
+# helper scripts
+CY="${HELPERS}/cy.awk"
+BU="${HELPERS}/busutil.awk"
+MF="${HELPERS}/memfail.awk"
+LOCKCY="${HELPERS}/lockcy.awk"
+LOCKF="${HELPERS}/lockfail.awk"
+
+pflag=0 # plot flag
 
 set -e
 
@@ -39,7 +47,7 @@ exp_producerconsumer() {
 			wait
 			# extract data from performance counters
 			rm -f tmp*.csv
-			for perfct in perfct_${EXE}_*_${ps}_${cs}; do
+			for perfct in perfct_${EXE}_*_${ps}_${cs}.csv; do
 				${CY} ${perfct} >>tmp0.csv
 				${BU} ${perfct} >>tmp1.csv
 				${MF} ${perfct} >>tmp2.csv
@@ -54,6 +62,17 @@ exp_producerconsumer() {
 		done
 	done
 
+	[ ${pflag} -eq 0 ] && return 0
+
+	for gp in ${HELPERS}/*_producer-consumer.gp; do
+		gnuplot ${gp} || return 1
+	done
+
+	chartdir=chart_producer-consumer_$(date +'%FT%H:%M')
+
+	mkdir ${chartdir}
+
+	mv *.png ${chartdir}
 }
 
 exp_producerconsumerv2() {
@@ -84,7 +103,7 @@ exp_producerconsumerv2() {
 			wait
 			# extract data from performance counters
 			rm -f tmp*.csv
-			for perfct in perfct_${EXE}_*_${ps}_${cs}; do
+			for perfct in perfct_${EXE}_*_${ps}_${cs}.csv; do
 				${CY} ${perfct} >>tmp0.csv
 				${BU} ${perfct} >>tmp1.csv
 				${MF} ${perfct} >>tmp2.csv
@@ -99,6 +118,17 @@ exp_producerconsumerv2() {
 		done
 	done
 
+	[ ${pflag} -eq 0 ] && return 0
+
+	for gp in ${HELPERS}/*_producer-consumerv2.gp; do
+		gnuplot ${gp} || return 1
+	done
+
+	chartdir=chart_producer-consumerv2_$(date +'%FT%H:%M')
+
+	mkdir ${chartdir}
+
+	mv *.png ${chartdir}
 }
 
 exp_diningphilosophers() {
@@ -130,8 +160,8 @@ exp_diningphilosophers() {
 				wait
 				# extract data from performance counters
 				rm -f tmp*.csv
-				PERFCT="perfct_${EXE}_*_${ideas}_${th}_${eat}"
-				for perfct in ${PERFCT}; do
+				PCT="perfct_${EXE}_*_${ideas}_${th}_${eat}.csv"
+				for perfct in ${PCT}; do
 					${CY} ${perfct} >>tmp0.csv
 					${BU} ${perfct} >>tmp1.csv
 					${MF} ${perfct} >>tmp2.csv
@@ -152,7 +182,37 @@ exp_diningphilosophers() {
 		done
 	done
 
+	[ ${pflag} -eq 0 ] && return 0
+
+	for gp in ${HELPERS}/*dining-philosophers.gp; do
+		gnuplot ${gp} || return 1
+	done
+
+	chartdir=chart_dining-philosophers_$(date +'%FT%H:%M')
+
+	mkdir ${chartdir}
+
+	mv *.png ${chartdir}
 }
+
+while getopts "hp" opt; do
+	case ${opt} in
+	'p')
+		export HELPERS
+		pflag=1 ;;
+	'h'|'?')
+		printf "usage: %s -h\n" $0 >&2
+		printf "       %s [-p] PROGRAM\n" $0 >&2
+		printf "\n" >&2
+		printf "The -p option requires gnuplot installed. It\n" >&2
+		printf "generates charts for the experiments." >&2
+		exit 1 ;;
+	esac
+done
+
+cd ${SRC}
+
+shift $(( OPTIND - 1 ))
 
 case $1 in
 1|producer-consumer)
@@ -162,8 +222,9 @@ case $1 in
 3|dining-philosophers)
 	exp_diningphilosophers ;;
 clean)
-	rm -f perfct* producer-consumer_[0-9]* dining-philosopher_[0-9]* \
-	    *.csv ;;
+	echo 'cleaning'
+	rm -f perfct* producer-consumer{v2,}_[0-9]* \
+	    dining-philosophers_[0-9]* *.csv *.dat *.png ;;
 *)
 	echo 'Invalid experiment' ;;
 esac

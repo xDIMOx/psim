@@ -20,7 +20,7 @@ set title "Cycles locked"
 set ylabel "cycles"
 set xlabel "processors"
 
-system('./lockcy_helper.awk "lockcy_10_13.csv" "lockcy_((i&1)==0?9+rem(randu(),7):9-rem(randu(),7))_1+(randu()&1023).csv" "lockcy_1+(randu()&1023)_1+(randu()&1023).csv" "lockcy_1+(randu()&1023)_((item&1)==0?9+rem(randu(),7):9-rem(randu(),7)).csv"')
+system('${HELPERS}/lockcy_helper.awk "lockcy_10_13.csv" "lockcy_((i&1)==0?9+rem(randu(),7):9-rem(randu(),7))_1+(randu()&1023).csv" "lockcy_1+(randu()&1023)_1+(randu()&1023).csv" "lockcy_1+(randu()&1023)_((item&1)==0?9+rem(randu(),7):9-rem(randu(),7)).csv"')
 
 plot "lockcy_2p.dat" u (1):1,  \
      "lockcy_4p.dat" u (2):1,  \
@@ -28,5 +28,3 @@ plot "lockcy_2p.dat" u (1):1,  \
      "lockcy_16p.dat" u (4):1, \
      "lockcy_32p.dat" u (5):1, \
      "lockcy_64p.dat" u (6):1, \
-
-system('rm -f lockcy*.dat')

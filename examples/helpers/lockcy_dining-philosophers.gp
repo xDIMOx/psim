@@ -1,7 +1,7 @@
 # Check LICENSE file for copyright and license details.
 
 set terminal png
-set output 'lockcy_producer-consumer.png'
+set output 'lockcy_dining-philosophers.png'
 
 unset key
 set style data boxplot
@@ -20,8 +20,7 @@ set title "Cycles locked"
 set ylabel "cycles"
 set xlabel "processors"
 
-
-system('./lockcy_helper.awk "lockcy_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25))).csv" "lockcy_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25)))_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5))).csv" "lockcy_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25))).csv" "lockcy_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25))).csv"')
+system('${HELPERS}/lockcy_helper.awk "lockcy_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25))).csv" "lockcy_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25)))_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5))).csv" "lockcy_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25))).csv" "lockcy_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25))).csv"')
 
 plot "lockcy_5p.dat" u (1):1,  \
      "lockcy_8p.dat" u (2):1,  \
@@ -29,5 +28,3 @@ plot "lockcy_5p.dat" u (1):1,  \
      "lockcy_16p.dat" u (4):1, \
      "lockcy_20p.dat" u (6):1, \
      "lockcy_32p.dat" u (5):1, \
-
-system('rm -f lockcy*.dat')

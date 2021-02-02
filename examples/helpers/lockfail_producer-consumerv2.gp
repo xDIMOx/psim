@@ -1,7 +1,7 @@
 # Check LICENSE file for copyright and license details.
 
 set terminal png
-set output 'lockfail_producer-consumer.png'
+set output 'lockfail_producer-consumerv2.png'
 
 unset key
 set style data boxplot
@@ -20,12 +20,10 @@ set title "Locking failures"
 set ylabel "accesses"
 set xlabel "processors"
 
-system('./lockfail_helper.awk "lockfail_10_13.csv" "lockfail_((val&1)==0?9+rem(randu(),7):9-rem(randu(),7))_1+(randu()&1023).csv" "lockfail_1+(randu()&1023)_1+(randu()&1023).csv" "lockfail_1+(randu()&1023)_((item&1)==0?9+rem(randu(),7):9-rem(randu(),7)).csv"')
+system('${HELPERS}/lockfail_helper.awk "lockfail_10_13.csv" "lockfail_((val&1)==0?9+rem(randu(),7):9-rem(randu(),7))_1+(randu()&1023).csv" "lockfail_1+(randu()&1023)_1+(randu()&1023).csv" "lockfail_1+(randu()&1023)_((item&1)==0?9+rem(randu(),7):9-rem(randu(),7)).csv"')
 
 plot "lockfail_4p.dat" u (1):1,  \
      "lockfail_8p.dat" u (2):1,  \
      "lockfail_16p.dat" u (3):1, \
      "lockfail_32p.dat" u (4):1, \
      "lockfail_64p.dat" u (5):1, \
-
-system('rm -f lockfail*.dat')

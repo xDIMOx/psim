@@ -1,7 +1,7 @@
 # Check LICENSE file for copyright and license details.
 
 set terminal png
-set output 'lockcy_producer-consumer.png'
+set output 'lockcy_producer-consumerv2.png'
 
 unset key
 set style data boxplot
@@ -20,12 +20,10 @@ set title "Cycles locked"
 set ylabel "cycles"
 set xlabel "processors"
 
-system('./lockcy_helper.awk "lockcy_10_13.csv" "lockcy_((val&1)==0?9+rem(randu(),7):9-rem(randu(),7))_1+(randu()&1023).csv" "lockcy_1+(randu()&1023)_1+(randu()&1023).csv" "lockcy_1+(randu()&1023)_((item&1)==0?9+rem(randu(),7):9-rem(randu(),7)).csv"')
+system('${HELPERS}/lockcy_helper.awk "lockcy_10_13.csv" "lockcy_((val&1)==0?9+rem(randu(),7):9-rem(randu(),7))_1+(randu()&1023).csv" "lockcy_1+(randu()&1023)_1+(randu()&1023).csv" "lockcy_1+(randu()&1023)_((item&1)==0?9+rem(randu(),7):9-rem(randu(),7)).csv"')
 
 plot "lockcy_4p.dat" u (1):1,  \
      "lockcy_8p.dat" u (2):1,  \
      "lockcy_16p.dat" u (3):1, \
      "lockcy_32p.dat" u (4):1, \
      "lockcy_64p.dat" u (5):1, \
-
-system('rm -f lockcy*.dat')

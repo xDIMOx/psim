@@ -1,7 +1,7 @@
 # Check LICENSE file for copyright and license details.
 
 set terminal png
-set output 'memfail_producer-consumer.png'
+set output 'memfail_dining-philosophers.png'
 
 set datafile separator ','
 set logscale x

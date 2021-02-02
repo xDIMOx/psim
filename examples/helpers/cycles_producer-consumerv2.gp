@@ -1,7 +1,7 @@
 # Check LICENSE file for copyright and license details.
 
 set terminal png
-set output 'cycles_producer-consumer.png'
+set output 'cycles_producer-consumerv2.png'
 
 set datafile separator ','
 set logscale x

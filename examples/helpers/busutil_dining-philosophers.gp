@@ -1,7 +1,7 @@
 # Check LICENSE file for copyright and license details.
 
 set terminal png
-set output 'busutil_producer-consumer.png'
+set output 'busutil_dining-philosophers.png'
 
 set datafile separator ','
 set logscale x
