@@ -20,7 +20,7 @@ SRC = null.c hello.c producer-consumer.c producer-consumerv2.c \
       dining-philosophers.c
 EXE = ${SRC:.c=}
 
-OBJ = ${SRC:.c=.o} ${LIBCOMMON_OBJ} ${LIBSPIN_OBJ} ${LIBCOMM_OBJ} 
+OBJ = ${SRC:.c=.o} start.o ${LIBCOMMON_OBJ} ${LIBSPIN_OBJ} ${LIBCOMM_OBJ}
 
 # prerequisites
 NULL_PREREQ = start.o null.o
