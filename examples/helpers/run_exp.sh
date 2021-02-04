@@ -3,11 +3,11 @@
 #
 # Run experiments and generates files with the data for later analysis
 
-REPOROOT="${HOME}/src/psim" # root of the repository
-HELPERS="${REPOROOT}/examples/helpers/" # helpers directory
-SRC="${REPOROOT}/examples/src/" # simulated program's source directory
+: ${REPOBASEDIR:="${HOME}/src/psim"} # root of the repository
+HELPERS="${REPOBASEDIR}/examples/helpers/" # helpers directory
+SRC="${REPOBASEDIR}/examples/src/" # simulated program's source directory
 
-PSIM="${REPOROOT}/psim" # simulator executable
+PSIM="${REPOBASEDIR}/psim" # simulator executable
 
 # helper scripts
 CY="${HELPERS}/cy.awk"
@@ -68,7 +68,7 @@ exp_producerconsumer() {
 		gnuplot ${gp} || return 1
 	done
 
-	chartdir=chart_producer-consumer_$(date +'%FT%H:%M')
+	chartdir=chart_producer-consumer
 
 	mkdir ${chartdir}
 
@@ -124,7 +124,7 @@ exp_producerconsumerv2() {
 		gnuplot ${gp} || return 1
 	done
 
-	chartdir=chart_producer-consumerv2_$(date +'%FT%H:%M')
+	chartdir=chart_producer-consumerv2
 
 	mkdir ${chartdir}
 
@@ -188,7 +188,7 @@ exp_diningphilosophers() {
 		gnuplot ${gp} || return 1
 	done
 
-	chartdir=chart_dining-philosophers_$(date +'%FT%H:%M')
+	chartdir=chart_dining-philosophers
 
 	mkdir ${chartdir}
 
@@ -202,10 +202,21 @@ while getopts "hp" opt; do
 		pflag=1 ;;
 	'h'|'?')
 		printf "usage: %s -h\n" $0 >&2
-		printf "       %s [-p] PROGRAM\n" $0 >&2
+		printf "       %s [-p] TARGET\n" $0 >&2
 		printf "\n" >&2
 		printf "The -p option requires gnuplot installed. It\n" >&2
-		printf "generates charts for the experiments." >&2
+		printf "generates charts for the experiments. The charts\n" >&2
+		printf "will located in %s/chart_TARGET\n" ${SRC} >&2
+		printf "\n" >&2
+		printf "TARGET can be one of:\n" >&2
+		printf "	producer-consumer\n" >&2
+		printf "	producer-consumerv2\n" >&2
+		printf "	dining-philosophers\n" >&2
+		printf "	clean\n" >&2
+		printf "\n" >&2
+		printf "To this script to work, REPOBASEDIR have to be\n" >&2
+		printf "set correctly. It's current value is:\n" >&2
+		printf "	REPOBASEDIR=%s\n" ${REPOBASEDIR} >&2
 		exit 1 ;;
 	esac
 done
