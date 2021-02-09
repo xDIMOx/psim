@@ -517,19 +517,16 @@ hop(Net *net, uint32_t id)
 			oob = ((nxt % net->x) == (net->x - 1)) || (nxt > id);
 			break;
 		}
-
 		out = &(net->nd[id].link[LINK_OUT][olink]);
 		if (out->len == 0) {
 			continue;
 		}
-
 		if (oob) {	/* out of bounds */
 			warnx("%s hop -- nd[%u] cycle %lu -- "
 			      "Can not send message out of the network (%s)",
 			      __FILE__, id, net->cycle, linkname[olink]);
 			continue;
 		}
-
 		in = &(net->nd[nxt].link[LINK_IN][ilink]);
 		if (in->len == LINK_BUFSZ) {
 			warnx("%s hop -- nd[%u] cycle %lu -- "
@@ -537,10 +534,11 @@ hop(Net *net, uint32_t id)
 			      __FILE__, id, net->cycle, linkname[ilink]);
 			continue;
 		}
-
 		msg = link_remmsg(out);
+		++(net->nd[id].linkutil[LINK_OUT][olink]);
 		++msg->hops;
 		link_insmsg(in, msg);
+		++(net->nd[nxt].linkutil[LINK_IN][ilink]);
 	}
 }
 
@@ -678,6 +676,9 @@ Net_create(size_t x, size_t y, size_t memsz)
 		memset(net->nd[i].link, 0,
 		       sizeof(struct link) * LINK_DIR * LINK_NAMES);
 
+		memset(net->nd[i].linkutil, 0,
+		       sizeof(size_t) * LINK_DIR * LINK_NAMES);
+
 		net->nd[i].mbox_start = 0;
 		net->nd[i].mbox_new = 0;
 		if (!(net->nd[i].mbox =
@@ -792,7 +793,7 @@ Net_perfct(Net *net, char *progname)
 {
 	int             fd;
 
-	size_t          i;
+	size_t          i, j, k;
 
 	char            perfct[NAME_MAX];
 
@@ -810,7 +811,11 @@ Net_perfct(Net *net, char *progname)
 		"ct0,"
 		"ninput,noutput,"
 		"commwait,"
-		"hops,nmsg\n");
+		"hops,nmsg,"
+		"linkutil[in].north,linkutil[in].east,"
+		"linkutil[in].south,linkutil[in].west,"
+		"linkutil[out].north,linkutil[out].east,"
+		"linkutil[out].south,linkutil[out].west\n");
 	dprintf(fd, "net,%lu\n", net->cycle);
 	for (i = 0; i < net->size; ++i) {
 		dprintf(fd, "%u,%lu,"	/* id,cycles */
@@ -821,7 +826,7 @@ Net_perfct(Net *net, char *progname)
 			"%lu,"		/* ct0 */
 			"%lu,%lu,"	/* ninput, noutput */
 			"%lu,"		/* commwait */
-			"%lu,%lu\n",	/* hops, nmsg */
+			"%lu,%lu",	/* hops, nmsg */
 			net->nd[i].cpu->gpr[K0],
 			net->nd[i].cpu->perfct.cycle,
 			net->nd[i].cpu->perfct.ld,
@@ -839,6 +844,12 @@ Net_perfct(Net *net, char *progname)
 			net->nd[i].cpu->perfct.commwait,
 			CPU_mfc2(net->nd[i].cpu, COP2_MSG, COP2_MSG_HOPS),
 			CPU_mfc2(net->nd[i].cpu, COP2_MSG, COP2_MSG_NMSG));
+		for (j = 0; j < LINK_DIR; ++j) {
+			for (k = 0; k < LINK_NAMES; ++k) {
+				dprintf(fd, ",%lu", net->nd[i].linkutil[j][k]);
+			}
+		}
+		dprintf(fd, "\n");
 	}
 
 	if (close(fd) < 0) {

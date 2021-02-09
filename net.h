@@ -68,6 +68,7 @@ typedef struct {
 			struct msg     *tl;
 			size_t          len;
 		}               link[LINK_DIR][LINK_NAMES];
+		size_t          linkutil[LINK_DIR][LINK_NAMES];
 		size_t          mbox_start;	/* for round-robin */
 		size_t          mbox_new;	/* new messages */
 		struct msg    **mbox;
