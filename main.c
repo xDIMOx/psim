@@ -33,6 +33,7 @@
 #endif
 
 enum org {
+	NONE,
 	SHRMEM,
 	NET,
 };
@@ -227,15 +228,16 @@ main(int argc, char *argv[])
 	 */
 	memsz = (1 << 24);	/* 16 Mib */
 	ncpu = 1;
-	flag = SHRMEM;
+	flag = NONE;
 	x = y = 1;
 
 	/*
 	 * Parse command line options
 	 */
-	while ((c = getopt(argc, argv, ":n:m:c:s")) != -1) {
+	while ((c = getopt(argc, argv, ":n:m:c:")) != -1) {
 		switch (c) {
 		case 'c':
+			flag = SHRMEM;
 			ncpu = strtoul(optarg, NULL, 10);
 			break;
 		case 'n':
@@ -245,9 +247,6 @@ main(int argc, char *argv[])
 			break;
 		case 'm':
 			memsz = strtoul(optarg, NULL, 10);
-			break;
-		case 's':
-			flag = SHRMEM;
 			break;
 		case ':':
 			errx(EXIT_FAILURE, "Option -%c requires an operand",
@@ -262,11 +261,16 @@ main(int argc, char *argv[])
 
 	prog.name = argv[optind];
 
+	if (flag == NONE) {
+		errx(EXIT_FAILURE, "need to pass a mode of operation");
+	}
+
 	/*
 	 * Read file
 	 */
 	if (!prog.name) {
-		errx(EXIT_FAILURE, "usage: %s /path/to/objfile", argv[0]);
+		errx(EXIT_FAILURE,
+		     "usage: %s (-c N | -n NxM) /path/to/objfile", argv[0]);
 	}
 
 	if ((fd = open(prog.name, O_RDONLY)) < 0) {
