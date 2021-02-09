@@ -1,4 +1,8 @@
-Yet another MIPS processor simulator.
+NAME:
+	psim - Yet another MIPS processor simulator.
+
+SYNOPSIS:
+	psim (-c N|-n NxM) [-m MEMSZ] program
 
 DESCRIPTION:
 This simulator runs a subset of the little endian MIPS32 (MIPSEL)
@@ -8,60 +12,86 @@ machine (that uses gcc 10.2). It does not implement caches and any type of
 memory management. It does not have a delay slot. It does not implements
 interruptions of any kind.
 
-To build the simulator:
-	- Build dependencies: c99 compiler, POSIX compatible libc, elf.h
-	  (installed via libelf on Linux) and err.h (installed via libbsd
-	  on Linux)
-	- check config.mk and, if needed, set compiler and flags to your liking
-	- make
+This simulator is intended to be a multiprocessor simulator and have two modes
+of operation:
+	* A shared memory mode;
+	* A networked mode, with distributed memory. By network, understand
+	  it as a NxM 2D mesh, where each node is a processor, each node having
+	  private memory and communication links which uses to communicate with
+	  the rest of the processors. This behaviour is to simulate how the
+	  transputer network capabilities were initially conceived.
 
-To build the examples:
-	- Build dependencies: MIPSEL capable assembler, compiler and linker
-		* To be fair, the assembly files were written with GNU as(1) in
-		  mind, nonetheless, it should be easy to port to another
-		  assembler, given that no fancy features were used. Anecdotal
-		  evidence points that GNU as is the most available option, so
-		  in the end, this is a non-issue.
-	- cd examples
-	- check config.mk and, if needed, set compiler and flags to your liking
-	- make
-		* It is possible to build individual programs by running
-		  make PROGRAM_NAME, where PROGRAM_NAME is the program's file
-		  name excluding the '.c'
+The objective of this simulator is to compare the performance of equivalent
+programs built specifically to run on both modes supported.
+
+OPTIONS:
+-c N		Run in shared memory mode with N processors.
+-n NxM		Run in network mode with a matrix of NxM processors.
+-m MEMSZ	Set size (in bytes) of the simulation's memory
+		(default: 16MiB).
 
 EXAMPLES:
-To run the simulator (from the repository's root directory):
-	- ./psim /path/to/mipsel_object_file
+To run the examples convenently:
+		examples/helpers/run_exp -h
 
-Alternatively, if a sh(1) compatible shell is available:
-	- cd examples
-	- ./run_exp PROGRAM_NAME
-		* This generates some data for plotting, so, after its
-		  execution a *LOT* of .csv files will be on the examples
-		  directory. Creating these plots needs gnuplot(1) and there
-		  are some .gp scripts already.
-
-If your program uses more than one processor (like most of the examples):
-	- ./psim -c NPROC /path/to/program
-By default, NPROC is 1.
-
-The '-c' option is for simulating a shared memory multiprocessor system. To
-simulate a network of processors use:
-	- ./psim -n NxM /path/to/program
-By "network", understand it as a NxM 2D mesh, where each node is a processor.
-This behaviour is to simulate how the transputer network capabilities were
-initially conceived.
-
-If your program needs more memory:
-	- ./psim -m MEMSZ_IN_BYTES /path/to/program
-By default MEMSZ_IN_BYTES is 16777216 bytes (16 MiB).
+	Probably REPOBASEDIR will have to be set correctly, the easiest way to
+	do so is to run from the root of the repository:
+		REPOBASEDIR=. examples/helpers/run_exp -p TARGET
 
 TODO:
-- Multi-threaded simulation
-- Better program loading in the networked mode
-- Better libraries for simulated programs
+Multi-threaded simulation;
+Better program loading in the networked mode;
 
 NOTES:
+To build the simulator:
+	* Build dependencies: c99 compiler, POSIX compatible libc, elf.h
+	  (installed via libelf on Linux) and err.h (installed via libbsd
+	  on Linux);
+	* check config.mk and, if needed, set compiler and flags to your
+	  liking;
+	* make
+
+To build the examples:
+	* Build dependencies: MIPSEL capable assembler, compiler and linker.
+		To be fair, the assembly files were written with GNU as(1) in
+		mind, nonetheless, it should be easy to port to another
+		assembler, given that no fancy features were used. Anecdotal
+		evidence points that GNU as(1) is the most available option,
+		so in the end, this is a non-issue.
+	* cd examples/src
+	* check config.mk and, if needed, set compiler and flags to your liking
+	* make
+		It is possible to build individual programs by running
+		make PROGRAM_NAME, where PROGRAM_NAME is the program's file
+		name excluding the '.c'
+
+Although it can simulate multiple processors, the simulator itself runs on
+a single thread. This makes easier to debug the examples (the simulation is
+deterministic and gives the same result every time) at the cost of simulation
+speed.
+
+All processors have their IDs set on the beggining of the simulation, and this
+value is available on the K0 register.
+
+All instructions besides memory accesses and network communication costs one
+cycle.
+
+Memory access instructions costs 1 cycle if running a simulation in network
+mode. When running a simulation of N processors in the shared memory mode, the
+memory can be accessed once per cycle, so "bus" arbitration will defer memory
+accesses of multiple processors, meaning that a memory access can cost between
+1 up to N cycles.
+
+Network communications instructions were implemented using the coprocessor 2
+operations. If in shared memory mode, executing this instructions will result
+in deadlock. In network mode an input or alt operation will cost 1 + number
+of cycles waiting for the message to arrive. An output operation will cost
+2 * number of hops to send the message (half is to send the message, half is
+receive an acknowledgement). These operations differ from what was implemented
+on the transputer because instead of using channels, the simulator implements
+communication by naming the processors involved by name, this makes it closer
+to how CSP was initially defined in 1978.
+
 If the INSTRDUMP macro is set when compiling (it is not by default) files
 called cpuXXXX_instrdump will be created when the program is executed. To
 check these files a MIPSEL capable disassembler is needed (it is possible
@@ -74,11 +104,6 @@ will print additional warning messages to stderr, maybe useful for debugging.
 
 At the end of the simulation, a file called perfct_PROGRAM_NAME.csv will be
 created at the current directory, containing a number of performance counters.
-
-Although it can simulate multiple processors, the simulator itself runs on
-a single thread. This makes easier to debug the examples (the simulation is
-deterministic and gives the same result every time) at the cost of simulation
-speed.
 
 Program loading on the network mode is quite dumb and wasteful, since it loads
 every processor in the the network with the same program.
