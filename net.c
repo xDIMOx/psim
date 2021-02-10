@@ -504,7 +504,7 @@ hop(Net *net, uint32_t id)
 		case LINK_EAST:
 			nxt = id + 1;
 			ilink = LINK_WEST;
-			oob = (nxt % net->x) == 0;
+			oob = (nxt % net->y) == 0;
 			break;
 		case LINK_SOUTH:
 			nxt = id - net->x;
@@ -514,7 +514,7 @@ hop(Net *net, uint32_t id)
 		case LINK_WEST:
 			nxt = id - 1;
 			ilink = LINK_EAST;
-			oob = ((nxt % net->x) == (net->x - 1)) || (nxt > id);
+			oob = ((nxt % net->y) == (net->y - 1)) || (nxt > id);
 			break;
 		}
 		out = &(net->nd[id].link[LINK_OUT][olink]);
