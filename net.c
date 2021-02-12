@@ -811,9 +811,9 @@ Net_perfct(Net *net, char *progname)
 		"stores,st defer,"
 		"ll,ll defer,"
 		"sc,sc defer,"
-		"rmail,"
+		"rmwfail,"
 		"ct0,"
-		"ninput,noutput,"
+		"ninput,noutput,nalt,"
 		"commwait,"
 		"hops,nmsg,"
 		"linkutil[in].north,linkutil[in].east,"
@@ -828,7 +828,7 @@ Net_perfct(Net *net, char *progname)
 			"%lu,%lu,"	/* ll, ll defer */
 			"%lu,%lu,%lu,"	/* sc, sc defer,rmwfail */
 			"%lu,"		/* ct0 */
-			"%lu,%lu,"	/* ninput, noutput */
+			"%lu,%lu,%lu,"	/* ninput, noutput, nalt */
 			"%lu,"		/* commwait */
 			"%lu,%lu",	/* hops, nmsg */
 			net->nd[i].cpu->gpr[K0],
@@ -845,6 +845,7 @@ Net_perfct(Net *net, char *progname)
 			net->nd[i].cpu->perfct.ct[0].ct,
 			net->nd[i].cpu->perfct.nin,
 			net->nd[i].cpu->perfct.nout,
+			net->nd[i].cpu->perfct.nalt,
 			net->nd[i].cpu->perfct.commwait,
 			CPU_mfc2(net->nd[i].cpu, COP2_MSG, COP2_MSG_HOPS),
 			CPU_mfc2(net->nd[i].cpu, COP2_MSG, COP2_MSG_NMSG));

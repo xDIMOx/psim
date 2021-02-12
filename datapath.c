@@ -404,7 +404,7 @@ execute(CPU *cpu, Mem *mem)
 			break;
 		case ALT:
 			CPU_mtc2(cpu, COP2_MSG, COP2_MSG_ST, COP2_MSG_OP_ALT);
-			++cpu->perfct.nin;
+			++cpu->perfct.nalt;
 			break;
 		default:
 			return ENOTSUP;
