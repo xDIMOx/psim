@@ -565,6 +565,7 @@ int
 Datapath_execute(CPU *cpu, Mem *mem)
 {
 	int             errnum;
+	int             ret;
 
 	size_t          i;
 
@@ -572,14 +573,16 @@ Datapath_execute(CPU *cpu, Mem *mem)
 
 	errnum = 0;
 
-	cpu->dec.stall = 0;
-	cpu->dec.rmwfail = 0;
-
 	if (!cpu->running) {
 		return -1;
 	}
 
 	cpu->gpr[0] = 0;	/* forces that r0 is zero */
+
+	cpu->dec.stall = 0;
+	cpu->dec.rmwfail = 0;
+
+	ret = 0;
 
 	if (CPU_mfc2(cpu, COP2_MSG, COP2_MSG_ST)) {
 		++cpu->perfct.commwait;
@@ -589,7 +592,8 @@ Datapath_execute(CPU *cpu, Mem *mem)
 	if ((instr = fetch(cpu, mem)) < 0) {
 		warnx("Datapath_execute -- cpu[%u] cycle %lu -- fetch failed",
 		      cpu->gpr[K0], cpu->perfct.cycle);
-		return -1;
+		ret = -1;
+		goto INC_CYCLE;
 	}
 
 #ifdef INSTRDUMP
@@ -600,7 +604,8 @@ Datapath_execute(CPU *cpu, Mem *mem)
 	if (decode(&cpu->dec)) {
 		warnx("Datapath_execute -- cpu[%u] cycle %lu -- decode failed",
 		      cpu->gpr[K0], cpu->perfct.cycle);
-		return -1;
+		ret = -1;
+		goto INC_CYCLE;
 	}
 
 	if (((errnum = execute(cpu, mem)) && !cpu->dec.rmwfail &&
@@ -608,7 +613,8 @@ Datapath_execute(CPU *cpu, Mem *mem)
 		warnx("Datapath_execute -- cpu[%u] cycle %lu -- "
 		      "execution failed: %s",
 		      cpu->gpr[K0], cpu->perfct.cycle, strerror(errnum));
-		return -1;
+		ret = -1;
+		goto INC_CYCLE;
 	}
 
 	if (cpu->dec.isjump) {
@@ -626,5 +632,5 @@ INC_CYCLE:
 		}
 	}
 
-	return 0;
+	return ret;
 }
