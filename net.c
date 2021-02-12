@@ -401,13 +401,17 @@ static
 int
 guidance(Net *net, size_t from, size_t to)
 {
-	if ((from % net->x) < (to % net->x)) {
-		return LINK_EAST;
-	} else if ((from % net->x) > (to % net->x)) {
-		return LINK_WEST;
-	} else if (from < to) {
+	if (from < to) {
+		if ((from % net->y) < (to % net->y)) {
+			return LINK_EAST;
+		}
 		return LINK_NORTH;
-	} else if (from > to) {
+	}
+
+	if (from > to) {
+		if ((from % net->y) > (to % net->y)) {
+			return LINK_WEST;
+		}
 		return LINK_SOUTH;
 	}
 
