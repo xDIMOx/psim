@@ -221,6 +221,12 @@ output(Net *net, size_t to, size_t from)
 					 COP2_MSG_ST, COP2_MSG_OP_NONE);
 				net->nd[from].mbox[to] = NULL;
 				free(msg);
+#ifdef VERBOSE
+				warnx("%s output -- nd[%lu] cycle %lu -- "
+				      "%lu!data",
+				      __FILE__, from, net->cycle, to);
+#endif
+
 				return 0;
 			} else {
 				warnx("%s output -- nd[%lu] cycle %lu -- "
@@ -263,11 +269,6 @@ output(Net *net, size_t to, size_t from)
 	/* set sent flag */
 	st |= 0x4;
 	CPU_mtc2(net->nd[from].cpu, COP2_MSG, COP2_MSG_ST, st);
-
-#ifdef VERBOSE
-	warnx("%s output -- nd[%lu] cycle %lu -- %lu!data",
-	      __FILE__, from, net->cycle, to);
-#endif
 
 	return 0;
 }
@@ -341,11 +342,6 @@ alt(Net *net, uint32_t *clauses, size_t to)
 			if (clauses[i] == cur) {
 				done = found = 1;
 				from = cur;
-#ifdef VERBOSE
-				warnx("%s alt -- nd[%lu] cycle %lu -- "
-				      "%u?data", __FILE__, to, net->cycle,
-				      from);
-#endif
 				break;
 			}
 		}
@@ -407,6 +403,11 @@ INC_CB:
 	free(msg);
 
 	net->nd[to].cpu->gpr[K1] = from;
+
+#ifdef VERBOSE
+	warnx("%s alt -- nd[%lu] cycle %lu -- %u?data",
+	      __FILE__, to, net->cycle, from);
+#endif
 
 	return 0;
 }
