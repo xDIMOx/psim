@@ -404,6 +404,8 @@ INC_CB:
 
 	net->nd[to].cpu->gpr[K1] = from;
 
+	++net->nd[to].cpu->perfct.nin;
+
 #ifdef VERBOSE
 	warnx("%s alt -- nd[%lu] cycle %lu -- %u?data",
 	      __FILE__, to, net->cycle, from);
