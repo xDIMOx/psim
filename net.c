@@ -292,7 +292,7 @@ alt(Net *net, uint32_t *clauses, size_t to)
 {
 	int             link;
 
-	int             done, found;
+	int             done, found, df;
 
 	uint32_t        from, hops, ncl;
 
@@ -309,7 +309,23 @@ alt(Net *net, uint32_t *clauses, size_t to)
 		return EDEADLK;
 	}
 
+	df = 0;
+	if (((int32_t) clauses[ncl - 1]) < 0) {
+		df = 1;		/* default */
+		net->nd[to].cpu->gpr[K1] = -1;
+		CPU_mtc2(net->nd[to].cpu, COP2_MSG, COP2_MSG_ST,
+			 COP2_MSG_OP_NONE);
+	}
+
 	if (!net->nd[to].mbox_new) {
+		if (df) {
+#ifdef VERBOSE
+			warnx("%s alt -- nd[%lu] cycle %lu -- "
+			      "default (no messages arrived)",
+			      __FILE__, to, net->cycle);
+#endif
+			return 0;
+		}
 		return EAGAIN;
 	}
 
@@ -344,6 +360,13 @@ INC_CB:
 	net->nd[to].mbox_start = (net->nd[to].mbox_start + 1) % net->size;
 
 	if (!found) {
+		if (df) {
+#ifdef VERBOSE
+			warnx("%s alt -- nd[%lu] cycle %lu -- "
+			      "default", __FILE__, to, net->cycle);
+#endif
+			return 0;
+		}
 		return EAGAIN;
 	}
 
