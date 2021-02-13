@@ -22,3 +22,7 @@ PRODCONV2_CFLAGS = -DNCONSUMERS=2 -DMAXELEM=16 -DMAXVAL=1024 \
 
 # definitions for dining philosophers program
 DINPHIL_CFLAGS = -DIDEAS=10 -DPHILOS=5 -DTHINK=1 -DEAT=1
+
+# definitions for d_producer-consumer program
+DPRODCON_CFLAGS = -DNCONSUMERS=1 -DMAXELEM=16 -DMAXVAL=1024 -DPRODUCER_WAIT=0 \
+                  -DCONSUMER_WAIT=item
