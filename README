@@ -8,7 +8,7 @@ DESCRIPTION:
 This simulator runs a subset of the little endian MIPS32 (MIPSEL)
 specification. Full compliance to the specification is a non-goal, in fact it
 only implements enough instructions to run the examples on the development
-machine (that uses gcc 10.2). It does not implement caches and any type of
+machine (that uses GCC 10.2). It does not implement caches and any type of
 memory management. It does not have a delay slot. It does not implements
 interruptions of any kind.
 
@@ -18,7 +18,7 @@ of operation:
 	* A networked mode, with distributed memory. By network, understand
 	  it as a NxM 2D mesh, where each node is a processor, each node having
 	  private memory and communication links which uses to communicate with
-	  the rest of the processors. This behaviour is to simulate how the
+	  the rest of the processors. This behavior is to simulate how the
 	  transputer network capabilities were initially conceived.
 
 The objective of this simulator is to compare the performance of equivalent
@@ -31,7 +31,7 @@ OPTIONS:
 		(default: 16MiB).
 
 EXAMPLES:
-To run the examples convenently:
+To run the examples conveniently:
 		examples/helpers/run_exp -h
 
 	Probably REPOBASEDIR will have to be set correctly, the easiest way to
@@ -70,7 +70,7 @@ a single thread. This makes easier to debug the examples (the simulation is
 deterministic and gives the same result every time) at the cost of simulation
 speed.
 
-All processors have their IDs set on the beggining of the simulation, and this
+All processors have their IDs set on the beginning of the simulation, and this
 value is available on the K0 register.
 
 All instructions besides memory accesses and network communication costs one
@@ -82,12 +82,12 @@ memory can be accessed once per cycle, so "bus" arbitration will defer memory
 accesses of multiple processors, meaning that a memory access can cost between
 1 up to N cycles.
 
-Network communications instructions were implemented using the coprocessor 2
+Network communications instructions were implemented using the co-processor 2
 operations. If in shared memory mode, executing this instructions will result
 in deadlock. In network mode an input or alt operation will cost 1 + number
 of cycles waiting for the message to arrive. An output operation will cost
 2 * number of hops to send the message (half is to send the message, half is
-receive an acknowledgement). These operations differ from what was implemented
+receive an acknowledgment). These operations differ from what was implemented
 on the transputer because instead of using channels, the simulator implements
 communication by naming the processors involved by name, this makes it closer
 to how CSP was initially defined in 1978.
