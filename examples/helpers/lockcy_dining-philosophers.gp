@@ -26,5 +26,5 @@ plot "lockcy_5p.dat" u (1):1,  \
      "lockcy_8p.dat" u (2):1,  \
      "lockcy_10p.dat" u (3):1, \
      "lockcy_16p.dat" u (4):1, \
-     "lockcy_20p.dat" u (6):1, \
-     "lockcy_32p.dat" u (5):1, \
+     "lockcy_20p.dat" u (5):1, \
+     "lockcy_32p.dat" u (6):1, \
