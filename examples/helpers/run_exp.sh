@@ -12,8 +12,10 @@ PSIM="${REPOBASEDIR}/psim" # simulator executable
 # helper scripts
 CY="${HELPERS}/cy.awk"
 BU="${HELPERS}/busutil.awk"
+NU="${HELPERS}/netutil.awk"
 MF="${HELPERS}/memfail.awk"
 LOCKCY="${HELPERS}/lockcy.awk"
+CW="${HELPERS}/cw.awk"
 LOCKF="${HELPERS}/lockfail.awk"
 
 pflag=0 # plot flag
@@ -195,6 +197,60 @@ exp_diningphilosophers() {
 	mv *.png ${chartdir}
 }
 
+exp_dproducerconsumer() {
+	EXE="d_producer-consumer"
+	PRODUCER_SYNTHLOAD="10 ((i&1)==0?9+rem(randu(),7):9-rem(randu(),7)) \
+	    ((i&1)==0?i+((randu()&1023)>>2):i-((randu()&1023)>>2))          \
+	    1+(randu()&1023)"
+	CONSUMER_SYNTHLOAD="13                                              \
+	    ((item&1)==0?9+rem(randu(),7):9-rem(randu(),7))                 \
+	    ((item&1)==0?item+((randu()&1023)>>2):item-((randu()&1023)>>2)) \
+	    1+(randu()&1023)"
+	TOPO="1x3 2x2 2x4 4x4 4x8 8x8"
+
+	for ps in ${PRODUCER_SYNTHLOAD}; do
+		for cs in ${CONSUMER_SYNTHLOAD}; do
+			# run experiment
+			for topo in ${TOPO}; do
+				NEXE=${EXE}_${topo}_${ps}_${cs}
+				x=${topo%x*}
+				y=${topo#*x}
+				nc=$(( (x * y) - 2 ))
+				make DPRODCON_CFLAGS="-DNCONSUMERS=${nc} \
+				    -DMAXELEM=16 -DMAXVAL=1024          \
+				    -DPRODUCER_WAIT=\"${ps}\"           \
+				    -DCONSUMER_WAIT=\"${cs}\""          \
+				    clean d_producer-consumer >/dev/null
+				mv ${EXE} ${NEXE}
+				${PSIM} -n ${topo} ${NEXE} &
+			done
+			wait
+			# extract data from performance counters
+			rm -f tmp*.csv
+			for perfct in perfct_${EXE}_*_${ps}_${cs}.csv; do
+				${CY} ${perfct} >>tmp0.csv
+				${NU} ${perfct} >>tmp1.csv
+				${CW} ${perfct} >>tmp2.csv
+			done
+			sort -n -t',' -k1,1 tmp0.csv >cycles_${ps}_${cs}.csv
+			sort -n -t',' -k1,1 tmp1.csv >netutil_${ps}_${cs}.csv
+			sort -n -t',' -k1,1 tmp2.csv >cw_${ps}_${cs}.csv
+		done
+	done
+
+	[ ${pflag} -eq 0 ] && return 0
+
+	for gp in ${HELPERS}/*_dproducer-consumer.gp; do
+		gnuplot ${gp} || return 1
+	done
+
+	chartdir=chart_dproducer-consumer
+
+	mkdir ${chartdir}
+
+	mv *.png ${chartdir}
+}
+
 while getopts "hp" opt; do
 	case ${opt} in
 	'p')
@@ -232,9 +288,11 @@ case $1 in
 	exp_producerconsumerv2 ;;
 3|dining-philosophers)
 	exp_diningphilosophers ;;
+5|d_producer-consumer)
+	exp_dproducerconsumer ;;
 clean)
 	echo 'cleaning'
-	rm -f perfct* producer-consumer{v2,}_[0-9]* \
+	rm -f perfct* {d_,}producer-consumer{v2,}_[0-9]* \
 	    dining-philosophers_[0-9]* *.csv *.dat *.png ;;
 *)
 	echo 'Invalid experiment' ;;

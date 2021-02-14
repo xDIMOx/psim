@@ -4,19 +4,20 @@
 BEGIN {
 	FS = OFS = ","
 	np = 0
-	cycles = 0
 }
 
-/^(id|bus|net)/ {
+/^(id|net)/ {
 	next
 }
 
 /^[0-9]+/ {
 	++np
-	cycles += $2
+	cycles[$1] = $16
 }
 
 END {
-	cycles /= np
-	print np, cycles
+	printf("%d,", np)
+	for (i = 0; i < (np - 1); ++i)
+		printf("%d,", cycles[i])
+	printf("%d\n", cycles[np - 1])
 }

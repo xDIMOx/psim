@@ -7,16 +7,22 @@ BEGIN {
 	cycles = 0
 }
 
-/^(id|bus|net)/ {
+/^id/ {
 	next
+}
+
+/^net/ {
+	netcycles = $2
 }
 
 /^[0-9]+/ {
 	++np
-	cycles += $2
+	cycles += $16
 }
 
 END {
 	cycles /= np
-	print np, cycles
+	netutil = cycles / netcycles
+	netutil *= 100
+	print np, netutil
 }
