@@ -4,8 +4,4 @@
  * Processor's datapath
  */
 
-/*
- * Error handling
- */
-
 int             Datapath_execute(CPU *, Mem *);
