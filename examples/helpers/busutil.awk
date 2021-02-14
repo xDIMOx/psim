@@ -4,7 +4,7 @@
 BEGIN {
 	FS = OFS = ","
 	np = 0
-	cycles = 0
+	meminstr = 0
 }
 
 /^id/ {
@@ -17,12 +17,12 @@ BEGIN {
 
 /^[0-9]+/ {
 	++np
-	cycles += $2
+	meminstr += $3 + $5 + $7 + $9
 }
 
 END {
-	cycles /= np
-	busutil = buscycles / cycles
+	meminstr /= np
+	busutil = meminstr / buscycles
 	busutil *= 100
 	print np, busutil
 }
