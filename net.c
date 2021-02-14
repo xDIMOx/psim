@@ -527,7 +527,7 @@ hop(Net *net, uint32_t id)
 		ilink = olink;
 		switch (olink) {
 		case LINK_NORTH:
-			nxt = id + net->x;
+			nxt = id + net->y;
 			ilink = LINK_SOUTH;
 			oob = (nxt >= net->size) || (nxt < id);
 			break;
@@ -537,7 +537,7 @@ hop(Net *net, uint32_t id)
 			oob = (nxt % net->y) == 0;
 			break;
 		case LINK_SOUTH:
-			nxt = id - net->x;
+			nxt = id - net->y;
 			ilink = LINK_NORTH;
 			oob = nxt > id;
 			break;
