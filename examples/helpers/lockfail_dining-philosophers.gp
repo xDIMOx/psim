@@ -26,5 +26,5 @@ plot "lockfail_5p.dat" u (1):1,  \
      "lockfail_8p.dat" u (2):1,  \
      "lockfail_10p.dat" u (3):1, \
      "lockfail_16p.dat" u (4):1, \
-     "lockfail_20p.dat" u (6):1, \
-     "lockfail_32p.dat" u (5):1, \
+     "lockfail_20p.dat" u (5):1, \
+     "lockfail_32p.dat" u (6):1, \
