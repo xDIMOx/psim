@@ -17,7 +17,7 @@ LIBCOMM_OBJ = ${LIBCOMM_SRC:.s=.o}
 LIBS = libcommon.a libspin.a libcomm.a
 
 SRC = null.c hello.c producer-consumer.c producer-consumerv2.c \
-      dining-philosophers.c d_producer-consumer.c
+      dining-philosophers.c d_producer-consumer.c d_producer-consumerv2.c
 EXE = ${SRC:.c=}
 
 OBJ = ${SRC:.c=.o} start.o ${LIBCOMMON_OBJ} ${LIBSPIN_OBJ} ${LIBCOMM_OBJ}
@@ -29,6 +29,7 @@ PRODCON_PREREQ = start.o producer-consumer.o libcommon.a libspin.a
 PRODCONV2_PREREQ = start.o producer-consumerv2.o libcommon.a libspin.a
 DININGPHIL_PREREQ = start.o dining-philosophers.o libcommon.a libspin.a
 DPRODCON_PREREQ = start.o d_producer-consumer.o libcommon.a libcomm.a
+DPRODCONV2_PREREQ = start.o d_producer-consumerv2.o libcommon.a libcomm.a
 
 all: ${EXE}
 
@@ -61,6 +62,10 @@ dining-philosophers.o: dining-philosophers.c
 d_producer-consumer.o: d_producer-consumer.c
 	@echo CC -c $<
 	@${CC} ${CFLAGS} ${DPRODCON_CFLAGS} -c $<
+
+d_producer-consumerv2.o: d_producer-consumerv2.c
+	@echo CC -c $<
+	@${CC} ${CFLAGS} ${DPRODCONV2_CFLAGS} -c $<
 
 libcommon.a: ${LIBCOMMON_OBJ}
 	@echo AR libcommon.a
@@ -97,6 +102,10 @@ dining-philosophers: ${DININGPHIL_PREREQ}
 d_producer-consumer: ${DPRODCON_PREREQ}
 	@echo LD -o $@
 	@${LD} ${LDFLAGS} ${DPRODCON_PREREQ} -o $@
+
+d_producer-consumerv2: ${DPRODCONV2_PREREQ}
+	@echo LD -o $@
+	@${LD} ${LDFLAGS} ${DPRODCONV2_PREREQ} -o $@
 
 clean:
 	@echo cleaning

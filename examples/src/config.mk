@@ -26,3 +26,8 @@ DINPHIL_CFLAGS = -DIDEAS=10 -DPHILOS=5 -DTHINK=1 -DEAT=1
 # definitions for d_producer-consumer program
 DPRODCON_CFLAGS = -DNCONSUMERS=1 -DMAXELEM=16 -DMAXVAL=1024 -DPRODUCER_WAIT=0 \
                   -DCONSUMER_WAIT=item
+
+# definitions for producer-consumer (v2) program
+DPRODCONV2_CFLAGS = -DNCONSUMERS=1 -DMAXELEM=16 -DMAXVAL=1024 \
+                   -DPRODUCER_WAIT=0 -DCONSUMER_WAIT=item -DPRODUCER0=0 \
+                   -DPRODUCER1=2 -DBUFFER=1

@@ -251,6 +251,61 @@ exp_dproducerconsumer() {
 	mv *.png ${chartdir}
 }
 
+exp_dproducerconsumerv2() {
+	EXE="d_producer-consumerv2"
+	PRODUCER_SYNTHLOAD="10 ((i&1)==0?9+rem(randu(),7):9-rem(randu(),7)) \
+	    ((i&1)==0?i+((randu()&1023)>>2):i-((randu()&1023)>>2))          \
+	    1+(randu()&1023)"
+	CONSUMER_SYNTHLOAD="13                                              \
+	    ((item&1)==0?9+rem(randu(),7):9-rem(randu(),7))                 \
+	    ((item&1)==0?item+((randu()&1023)>>2):item-((randu()&1023)>>2)) \
+	    1+(randu()&1023)"
+	TOPO="2x2 2x4 4x4 4x8 8x8"
+
+	for ps in ${PRODUCER_SYNTHLOAD}; do
+		for cs in ${CONSUMER_SYNTHLOAD}; do
+			# run experiment
+			for topo in ${TOPO}; do
+				NEXE=${EXE}_${topo}_${ps}_${cs}
+				x=${topo%x*}
+				y=${topo#*x}
+				nc=$(( (x * y) - 3 ))
+				make DPRODCONV2_CFLAGS="-DNCONSUMERS=${nc}  \
+				    -DMAXELEM=16 -DMAXVAL=1024              \
+				    -DPRODUCER_WAIT=\"${ps}\"               \
+				    -DCONSUMER_WAIT=\"${cs}\" -DPRODUCER0=0 \
+				    -DPRODUCER1=$((1 + y)) -DBUFFER=1"      \
+				    clean d_producer-consumerv2 >/dev/null
+				mv ${EXE} ${NEXE}
+				${PSIM} -n ${topo} ${NEXE} &
+			done
+			wait
+			# extract data from performance counters
+			rm -f tmp*.csv
+			for perfct in perfct_${EXE}_*_${ps}_${cs}.csv; do
+				${CY} ${perfct} >>tmp0.csv
+				${NU} ${perfct} >>tmp1.csv
+				${CW} ${perfct} >>tmp2.csv
+			done
+			sort -n -t',' -k1,1 tmp0.csv >cycles_${ps}_${cs}.csv
+			sort -n -t',' -k1,1 tmp1.csv >netutil_${ps}_${cs}.csv
+			sort -n -t',' -k1,1 tmp2.csv >cw_${ps}_${cs}.csv
+		done
+	done
+
+	[ ${pflag} -eq 0 ] && return 0
+
+	for gp in ${HELPERS}/*_dproducer-consumerv2.gp; do
+		gnuplot ${gp} || return 1
+	done
+
+	chartdir=chart_dproducer-consumerv2
+
+	mkdir ${chartdir}
+
+	mv *.png ${chartdir}
+}
+
 while getopts "hp" opt; do
 	case ${opt} in
 	'p')
@@ -290,6 +345,8 @@ case $1 in
 	exp_diningphilosophers ;;
 5|d_producer-consumer)
 	exp_dproducerconsumer ;;
+6|d_producer-consumerv2)
+	exp_dproducerconsumerv2 ;;
 clean)
 	echo 'cleaning'
 	rm -f perfct* {d_,}producer-consumer{v2,}_[0-9]* \
