@@ -32,11 +32,11 @@ OPTIONS:
 
 EXAMPLES:
 To run the examples conveniently:
-		examples/helpers/run_exp -h
+	examples/helpers/run_exp -h
 
-	Probably REPOBASEDIR will have to be set correctly, the easiest way to
-	do so is to run from the root of the repository:
-		REPOBASEDIR=. examples/helpers/run_exp -p TARGET
+Probably REPOBASEDIR will have to be set correctly, the easiest way to
+do so is to run from the root of the repository:
+	REPOBASEDIR=. examples/helpers/run_exp -p TARGET
 
 TODO:
 Multi-threaded simulation;
@@ -67,7 +67,7 @@ To build the examples:
 
 Although it can simulate multiple processors, the simulator itself runs on
 a single thread. This makes easier to debug the examples (the simulation is
-deterministic and gives the same result every time) at the cost of simulation
+deterministic, giving the same result every time) at the cost of simulation
 speed.
 
 All processors have their IDs set on the beginning of the simulation, and this
@@ -78,18 +78,18 @@ cycle.
 
 Memory access instructions costs 1 cycle if running a simulation in network
 mode. When running a simulation of N processors in the shared memory mode, the
-memory can be accessed once per cycle, so "bus" arbitration will defer memory
+memory can be accessed once per cycle, so bus arbitration will defer memory
 accesses of multiple processors, meaning that a memory access can cost between
 1 up to N cycles.
 
 Network communications instructions were implemented using the co-processor 2
 operations. If in shared memory mode, executing this instructions will result
 in deadlock. In network mode an input or alt operation will cost 1 + number
-of cycles waiting for the message to arrive. An output operation will cost
-2 * number of hops to send the message (half is to send the message, half is
-receive an acknowledgment). These operations differ from what was implemented
+of cycles waiting for the message to arrive. An output operation will cost 2
+* number of hops to send the message + cycles waiting for the correspondent
+input command to execute. These operations differ from what was implemented
 on the transputer because instead of using channels, the simulator implements
-communication by naming the processors involved by name, this makes it closer
+communication by naming the processors involved directly, this makes it closer
 to how CSP was initially defined in 1978.
 
 If the INSTRDUMP macro is set when compiling (it is not by default) files
@@ -97,7 +97,7 @@ called cpuXXXX_instrdump will be created when the program is executed. To
 check these files a MIPSEL capable disassembler is needed (it is possible
 to use hexdump but this will make debugging even worse). For example, using
 GNU objdump(1):
-	- objdump -b binary -m mips -EL -Mno-aliases -D cpuXXXX_instrdump
+	objdump -b binary -m mips -EL -Mno-aliases -D cpuXXXX_instrdump
 
 If the VERBOSE macro is set when compiling (it is not by default) the simulator
 will print additional warning messages to stderr, maybe useful for debugging.
