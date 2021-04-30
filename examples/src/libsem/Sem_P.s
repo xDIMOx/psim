@@ -3,9 +3,9 @@
 	.text
 	.align 0
 	.set noreorder
-	.global Spin_lock
-	.ent Spin_lock
-Spin_lock:
+	.global Sem_P
+	.ent Sem_P
+Sem_P:
 	c2 1 # CT0
 SPIN0:
 	ll $t0, 0($a0)
@@ -19,4 +19,4 @@ SPIN0:
 	jr $ra
 	nop
 
-	.end Spin_lock
+	.end Sem_P

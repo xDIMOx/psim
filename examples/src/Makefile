@@ -8,27 +8,27 @@ LIBCOMMON_SRC = libcommon/busywait.s libcommon/printhex.s libcommon/putchar.s \
                 libcommon/randu.s libcommon/rem.s libcommon/thread_id.s
 LIBCOMMON_OBJ = ${LIBCOMMON_SRC:.s=.o} 
 
-LIBSPIN_SRC = libspin/Spin_lock.s libspin/Spin_unlock.s
-LIBSPIN_OBJ = ${LIBSPIN_SRC:.s=.o}
+LIBSEM_SRC = libsem/Sem_P.s libsem/Sem_V.s
+LIBSEM_OBJ = ${LIBSEM_SRC:.s=.o}
 
 LIBCOMM_SRC = libcomm/C2_alt.s libcomm/C2_input.s libcomm/C2_output.s
 LIBCOMM_OBJ = ${LIBCOMM_SRC:.s=.o}
 
-LIBS = libcommon.a libspin.a libcomm.a
+LIBS = libcommon.a libsem.a libcomm.a
 
 SRC = null.c hello.c producer-consumer.c producer-consumerv2.c \
       dining-philosophers.c d_producer-consumer.c d_producer-consumerv2.c \
       d_dining-philosophers.c
 EXE = ${SRC:.c=}
 
-OBJ = ${SRC:.c=.o} start.o ${LIBCOMMON_OBJ} ${LIBSPIN_OBJ} ${LIBCOMM_OBJ}
+OBJ = ${SRC:.c=.o} start.o ${LIBCOMMON_OBJ} ${LIBSEM_OBJ} ${LIBCOMM_OBJ}
 
 # prerequisites
 NULL_PREREQ = start.o null.o
 HELLO_PREREQ = start.o hello.o libcommon.a
-PRODCON_PREREQ = start.o producer-consumer.o libcommon.a libspin.a
-PRODCONV2_PREREQ = start.o producer-consumerv2.o libcommon.a libspin.a
-DININGPHIL_PREREQ = start.o dining-philosophers.o libcommon.a libspin.a
+PRODCON_PREREQ = start.o producer-consumer.o libcommon.a libsem.a
+PRODCONV2_PREREQ = start.o producer-consumerv2.o libcommon.a libsem.a
+DININGPHIL_PREREQ = start.o dining-philosophers.o libcommon.a libsem.a
 DPRODCON_PREREQ = start.o d_producer-consumer.o libcommon.a libcomm.a
 DPRODCONV2_PREREQ = start.o d_producer-consumerv2.o libcommon.a libcomm.a
 DDININGPHIL_PREREQ = start.o d_dining-philosophers.o libcommon.a libcomm.a
@@ -77,9 +77,9 @@ libcommon.a: ${LIBCOMMON_OBJ}
 	@echo AR libcommon.a
 	@${AR} -rcs $@ ${LIBCOMMON_OBJ}
 
-libspin.a: ${LIBSPIN_OBJ}
+libsem.a: ${LIBSEM_OBJ}
 	@echo AR libcspin.a
-	@${AR} -rcs $@ ${LIBSPIN_OBJ}
+	@${AR} -rcs $@ ${LIBSEM_OBJ}
 
 libcomm.a: ${LIBCOMM_OBJ}
 	@echo AR libcomm.a

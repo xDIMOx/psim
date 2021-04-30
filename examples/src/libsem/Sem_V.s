@@ -3,15 +3,15 @@
 	.text
 	.align 0
 	.set noreorder
-	.global Spin_unlock
-	.ent Spin_unlock
-Spin_unlock:
+	.global Sem_V
+	.ent Sem_V
+Sem_V:
 	ll $t0, 0($a0)
 	addiu $t0, $t0, 1
 	sc $t0, 0($a0)
-	beqz $t0, Spin_unlock
+	beqz $t0, Sem_V
 	nop
 	jr $ra
 	nop
 
-	.end Spin_unlock
+	.end Sem_V
