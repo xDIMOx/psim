@@ -4,7 +4,7 @@
  * Common functions
  */
 
-int             thread_id(void);
+int             processor_id(void);
 void            putchar(char ch);
 void            printhex(int w);
 void            busywait(int nloops);

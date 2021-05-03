@@ -3,11 +3,11 @@
 	.text
 	.align 0
 	.set noreorder
-	.global thread_id
-	.ent thread_id
-thread_id:
+	.global processor_id
+	.ent processor_id
+processor_id:
 	ori $v0, $k0, 0
 	jr $ra
 	nop
 
-	.end thread_id
+	.end processor_id
