@@ -75,8 +75,6 @@ typedef struct {
 	}              *nd;
 } Net;				/* processor network */
 
-int             Net_errno;
-
 Net            *Net_create(size_t, size_t, size_t);
 void            Net_destroy(Net *);
 
