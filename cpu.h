@@ -149,7 +149,7 @@ typedef struct {
 			size_t          ct;	/* cycles counted */
 		}               ct[NCOUNTERS];
 	}               perfct;	/* performance counters */
-#ifndef NDEBUG
+#ifdef INSTRDUMP
 	struct {
 		int             fd;
 		char            fname[20];
