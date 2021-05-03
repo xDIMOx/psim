@@ -5,7 +5,7 @@
  */
 
 #include "common.h"
-#include "spinlock.h"
+#include "semaphore.h"
 
 #ifndef MAXELEM
 #error "You need to define MAXELEM"
@@ -48,6 +48,8 @@ static int      lock = 1;
 static int      full = 0;
 static int      empty = 0;
 
+extern int      randuseed;
+
 void
 enqueue(int item)
 {
@@ -76,11 +78,11 @@ producer(void)
 
 	for (i = 0; i < MAXVAL; ++i) {
 		busywait(PRODUCER_WAIT);	/* "producing" */
-		Spin_lock(&lock);
+		Sem_P(&lock);
 		if (ct < MAXELEM) {
 			enqueue(i);
 			if (nempty > 0) {
-				Spin_unlock(&empty);
+				Sem_V(&empty);
 				--nempty;
 			}
 			flag = SUCCESS;
@@ -88,22 +90,25 @@ producer(void)
 			nfull = 1;
 			flag = FULL;
 		}
-		Spin_unlock(&lock);
+		Sem_V(&lock);
 		if (flag == FULL) {
-			Spin_lock(&full);
+			Sem_P(&full);
+			Sem_P(&lock);
+			enqueue(i);
+			Sem_V(&lock);
 		}
 	}
 
-	Spin_lock(&lock);
+	Sem_P(&lock);
 
 	producing = 0;
 
 	while (nempty > 0) {
-		Spin_unlock(&empty);
+		Sem_V(&empty);
 		--nempty;
 	}
 
-	Spin_unlock(&lock);
+	Sem_V(&lock);
 }
 
 void
@@ -114,29 +119,28 @@ consumer(void)
 
 	flag = SUCCESS;
 	while (flag != END) {
-		Spin_lock(&lock);
+		Sem_P(&lock);
 		if (ct > 0) {
 			flag = SUCCESS;
 			item = dequeue();
 			if (nfull) {
-				Spin_unlock(&full);
+				Sem_V(&full);
 				nfull = 0;
 			}
 		} else if (!producing) {
-			--nconsumers;
 			item = -1;
 			flag = END;
 		} else {
 			++nempty;
 			flag = EMPTY;
 		}
-		Spin_unlock(&lock);
+		Sem_V(&lock);
 		switch (flag) {
 		case SUCCESS:
 			busywait(CONSUMER_WAIT);	/* "consuming" */
 			break;
 		case EMPTY:
-			Spin_lock(&empty);
+			Sem_P(&empty);
 			break;
 		}
 	}
@@ -145,7 +149,18 @@ consumer(void)
 int
 main(void)
 {
-	if (thread_id() == 0)
+	int id;
+
+	id = processor_id();
+
+	/* garantee that randu starts with odd value */
+	if (id & 1) {
+		randuseed = id * 3;
+	} else {
+		randuseed = id + 1;
+	}
+
+	if (id == 0)
 		producer();
 	else
 		consumer();
