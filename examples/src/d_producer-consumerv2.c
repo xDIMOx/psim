@@ -49,6 +49,8 @@ static int      buf[MAXELEM];
 static int      consumers[NCONSUMERS + 1];
 static int      producers[NPRODUCERS];
 
+extern int      randuseed;
+
 void
 enqueue(int item)
 {
@@ -78,10 +80,7 @@ buffer(void)
 	int             np;
 
 	np = NPRODUCERS;
-	for (;;) {
-		if (np == 0) {
-			goto REMITEMS;
-		}
+	while (np > 0) {
 		if (ct < MAXELEM) {
 			ret = C2_alt((int *) &producers, NPRODUCERS, &data);
 			if (data < 0) {
@@ -96,7 +95,6 @@ buffer(void)
 		}
 	}
 
-REMITEMS:
 	while (ct > 0) {
 		ret = C2_alt((int *) &consumers, NCONSUMERS, &data);
 		C2_output(ret, dequeue());
@@ -113,7 +111,7 @@ producer(void)
 {
 	int             i;
 
-	i = (thread_id() == PRODUCER1)? 1 : 0;
+	i = (processor_id() == PRODUCER1)? 1 : 0;
 	while (i < MAXVAL) {
 		busywait(PRODUCER_WAIT);	/* "producing" */
 		C2_output(BUFFER, i);
@@ -132,18 +130,26 @@ consumer(void)
 	while (item >= 0) {
 		C2_output(BUFFER, 0);
 		item = C2_input(BUFFER);
-		if (item >= 0) {
-			busywait(CONSUMER_WAIT);	/* "consuming" */
-		}
+		busywait(CONSUMER_WAIT);	/* "consuming" */
 	}
 }
 
 int
 main(void)
 {
+	int             id;
 	int             i, c;
 
-	switch (thread_id()) {
+
+	id = processor_id();
+	/* garantee that randu starts with odd value */
+	if (id & 1) {
+		randuseed = id * 3;
+	} else {
+		randuseed = id + 1;
+	}
+
+	switch (id) {
 	case PRODUCER0:
 	case PRODUCER1:
 		producer();
