@@ -30,5 +30,4 @@ TRY:
 	.data
 	.align 0
 	.global randuseed
-randulock: .word 1
 randuseed: .word 1
