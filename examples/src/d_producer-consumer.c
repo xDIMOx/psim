@@ -40,6 +40,8 @@ static int      buf[MAXELEM];
 
 static int      consumers[NCONSUMERS + 1];
 
+extern int      randuseed;
+
 void
 enqueue(int item)
 {
@@ -116,18 +118,24 @@ consumer(void)
 	while (item >= 0) {
 		C2_output(BUFFER, 0);
 		item = C2_input(BUFFER);
-		if (item >= 0) {
-			busywait(CONSUMER_WAIT);	/* "consuming" */
-		}
+		busywait(CONSUMER_WAIT);	/* "consuming" */
 	}
 }
 
 int
 main(void)
 {
-	int             i, c;
+	int             i, c, id;
 
-	switch (thread_id()) {
+	/* garantee that randu starts with odd value */
+	id = processor_id();
+	if (id & 1) {
+		randuseed = id * 3;
+	} else {
+		randuseed = id + 1;
+	}
+
+	switch (id) {
 	case PRODUCER:
 		producer();
 		break;
