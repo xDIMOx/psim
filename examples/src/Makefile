@@ -78,7 +78,7 @@ libcommon.a: ${LIBCOMMON_OBJ}
 	@${AR} -rcs $@ ${LIBCOMMON_OBJ}
 
 libsem.a: ${LIBSEM_OBJ}
-	@echo AR libcspin.a
+	@echo AR libsem.a
 	@${AR} -rcs $@ ${LIBSEM_OBJ}
 
 libcomm.a: ${LIBCOMM_OBJ}
