@@ -132,7 +132,6 @@ cutlery(int i)
 	np = 2;
 	while (np > 0) {
 		ret = C2_alt((int *) allowed, 2, &action);
-		printhex(ret);
 		switch (action) {
 		case PICKUP:
 			while (C2_input(ret) != PUTDOWN);
@@ -175,12 +174,13 @@ main(void)
 	int             i;
 	int             id;
 
-	id = thread_id();
+	id = processor_id();
 
+	/* garantee that randu starts with odd value */
 	if (id & 1) {
 		randuseed = id * 3;
 	} else {
-		randuseed = (id + 1) * 3;
+		randuseed = id + 1;
 	}
 
 	switch (id) {
