@@ -5,7 +5,7 @@
  */
 
 #include "common.h"
-#include "spinlock.h"
+#include "semaphore.h"
 
 #ifndef MAXELEM
 #error "You need to define MAXELEM"
@@ -48,6 +48,8 @@ static int      lock = 1;
 static int      full = 0;
 static int      empty = 0;
 
+extern int      randuseed;
+
 void
 enqueue(int item)
 {
@@ -71,18 +73,18 @@ dequeue(void)
 void
 producer(void)
 {
-	int             tid;
+	int             pid;
 	int             val;
 	int             flag;
 
-	tid = thread_id();
-	for (val = tid & 1; val < MAXVAL; val += 2) {
+	pid = processor_id();
+	for (val = pid & 1; val < MAXVAL; val += 2) {
 		busywait(PRODUCER_WAIT);
-		Spin_lock(&lock);
+		Sem_P(&lock);
 		if (ct < MAXELEM) {
 			enqueue(val);
 			if (nempty > 0) {
-				Spin_unlock(&empty);
+				Sem_V(&empty);
 				--nempty;
 			}
 			flag = SUCCESS;
@@ -90,22 +92,22 @@ producer(void)
 			++nfull;
 			flag = FULL;
 		}
-		Spin_unlock(&lock);
+		Sem_V(&lock);
 		if (flag == FULL) {
-			Spin_lock(&full);
+			Sem_P(&full);
 		}
 	}
 
-	Spin_lock(&lock);
+	Sem_P(&lock);
 
-	producing[tid & 1] = 0;
+	producing[pid & 1] = 0;
 
 	while (nempty > 0) {
-		Spin_unlock(&empty);
+		Sem_V(&empty);
 		--nempty;
 	}
 
-	Spin_unlock(&lock);
+	Sem_V(&lock);
 }
 
 void
@@ -116,29 +118,28 @@ consumer(void)
 
 	flag = SUCCESS;
 	while (flag != END) {
-		Spin_lock(&lock);
+		Sem_P(&lock);
 		if (ct > 0) {
 			item = dequeue();
 			if (nfull > 0) {
-				Spin_unlock(&full);
+				Sem_V(&full);
 				--nfull;
 			}
 			flag = SUCCESS;
 		} else if (!producing[0] && !producing[1]) {
-			--nconsumers;
 			item = -1;
 			flag = END;
 		} else {
 			++nempty;
 			flag = EMPTY;
 		}
-		Spin_unlock(&lock);
+		Sem_V(&lock);
 		switch (flag) {
 		case SUCCESS:
 			busywait(CONSUMER_WAIT);
 			break;
 		case EMPTY:
-			Spin_lock(&empty);
+			Sem_P(&empty);
 			break;
 		}
 	}
@@ -149,7 +150,14 @@ main(void)
 {
 	unsigned int    id;
 
-	id = thread_id();
+	id = processor_id();
+
+	/* garantee that randu starts with odd value */
+	if (id & 1) {
+		randuseed = id * 3;
+	} else {
+		randuseed = id + 1;
+	}
 
 	if (id == 0 || id == 3)
 		producer();
