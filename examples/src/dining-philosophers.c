@@ -5,7 +5,7 @@
  */
 
 #include "common.h"
-#include "spinlock.h"
+#include "semaphore.h"
 
 #ifndef PHILOS
 #define PHILOS 5
@@ -27,8 +27,9 @@
 
 static int      footman = PHILOS - 1;
 static int      fork[PHILOS];
-static int      philos = PHILOS;
 static int      lock = 1;
+
+extern int      randuseed;
 
 int
 main(void)
@@ -38,29 +39,27 @@ main(void)
 	unsigned int    id;
 	unsigned int    fid;
 	unsigned int    ideas;
-	unsigned int    t;
 
-	id = thread_id();
+	id = processor_id();
 	fork[id] = 1;
 
-	ideas = IDEAS;
+	/* garantee that randu starts with odd value */
+	if (id & 1) {
+		randuseed = id * 3;
+	} else {
+		randuseed = id + 1;
+	}
+
 	fid = rem(id + 1, PHILOS);
-	for (;;) {
+	for (ideas = IDEAS; ideas > 0; --ideas) {
 		busywait(THINK);
-		--ideas;
-		Spin_lock(&footman);
-		Spin_lock(&fork[id]);
-		Spin_lock(&fork[fid]);
+		Sem_P(&footman);
+		Sem_P(&fork[id]);
+		Sem_P(&fork[fid]);
 		busywait(EAT);
-		Spin_unlock(&fork[fid]);
-		Spin_unlock(&fork[id]);
-		Spin_unlock(&footman);
-		if (!ideas) {
-			Spin_lock(&lock);
-			--philos;
-			Spin_unlock(&lock);
-			goto out;
-		}
+		Sem_V(&fork[fid]);
+		Sem_V(&fork[id]);
+		Sem_V(&footman);
 	}
 
 out:
