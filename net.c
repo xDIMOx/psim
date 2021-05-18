@@ -156,9 +156,11 @@ input(Net *net, size_t from, size_t to)
 	link = guidance(net, to, ack->to);
 	olink = &(net->nd[to].link[LINK_OUT][link]);
 	if (olink->len >= LINK_BUFSZ) {
+#ifdef VERBOSE
 		warnx("%s input -- nd[%lu] cycle %lu -- "
 		      "could not send acknowledge (link %s full)",
 		      __FILE__, to, net->cycle, linkname[link]);
+#endif
 		return ENOBUFS;
 	}
 
@@ -251,9 +253,11 @@ output(Net *net, size_t to, size_t from)
 	link = guidance(net, from, to);
 	olink = &(net->nd[from].link[LINK_OUT][link]);
 	if (olink->len >= LINK_BUFSZ) {
+#ifdef VERBOSE
 		warnx("%s output -- nd[%lu] cycle %lu -- "
 		      "could not send message (link %s full)",
 		      __FILE__, from, net->cycle, linkname[link]);
+#endif
 		return ENOBUFS;
 	}
 
@@ -383,9 +387,11 @@ INC_CB:
 	link = guidance(net, to, ack->to);
 	olink = &(net->nd[to].link[LINK_OUT][link]);
 	if (olink->len >= LINK_BUFSZ) {
+#ifdef VEBOSE
 		warnx("%s alt -- nd[%lu] cycle %lu -- "
 		      "could not send acknowledge (link %s full)",
 		      __FILE__, to, net->cycle, linkname[link]);
+#endif
 		return ENOBUFS;
 	}
 
@@ -475,15 +481,19 @@ fwd(Net *net, size_t id)
 		if (olink != LINK_MBOX) {
 			out = &(net->nd[id].link[LINK_OUT][olink]);
 			if (out->len == LINK_BUFSZ) {
+#ifdef VERBOSE
 				warnx("%s fwd -- nd[%lu] cycle %lu -- "
 				      "output link %s is full",
 				      __FILE__, id, net->cycle,
 				      linkname[olink]);
+#endif
 				continue;
 			}
 		} else if (net->nd[id].mbox[msg->from]) {
+#ifdef VERBOSE
 			warnx("%s fwd -- nd[%lu] cycle %lu -- mailbox is full",
 			      __FILE__, id, net->cycle);
+#endif
 			continue;
 		}
 
@@ -559,9 +569,11 @@ hop(Net *net, uint32_t id)
 		}
 		in = &(net->nd[nxt].link[LINK_IN][ilink]);
 		if (in->len == LINK_BUFSZ) {
+#ifdef VERBOSE
 			warnx("%s hop -- nd[%u] cycle %lu -- "
 			      "target link %s is full",
 			      __FILE__, id, net->cycle, linkname[ilink]);
+#endif
 			continue;
 		}
 		msg = link_remmsg(out);
