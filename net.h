@@ -21,7 +21,7 @@ enum NetErrNo {
 };
 #undef X
 
-#define LINK_BUFSZ 2
+#define LINK_BUFSZ 4
 
 #define MAXMSG 1
 
