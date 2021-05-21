@@ -6,7 +6,7 @@ include config.mk
 
 LIBCOMMON_SRC = libcommon/busywait.s libcommon/printhex.s libcommon/putchar.s \
                 libcommon/randu.s libcommon/rem.s libcommon/processor_id.s \
-                libcommon/xorshift32.s
+                libcommon/xorshift32.s libcommon/randstate.s
 LIBCOMMON_OBJ = ${LIBCOMMON_SRC:.s=.o} 
 
 LIBSEM_SRC = libsem/Sem_P.s libsem/Sem_V.s

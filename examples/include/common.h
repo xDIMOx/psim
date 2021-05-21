@@ -1,5 +1,11 @@
 /* Check LICENSE file for copyright and license details. */
 
+#ifndef rand
+#define rand xorshift32
+#endif
+
+long            randstate;
+
 /*
  * Common functions
  */

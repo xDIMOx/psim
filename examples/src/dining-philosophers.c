@@ -29,8 +29,6 @@ static int      footman = PHILOS - 1;
 static int      fork[PHILOS];
 static int      lock = 1;
 
-extern int      randuseed;
-
 int
 main(void)
 {
@@ -45,9 +43,9 @@ main(void)
 
 	/* garantee that randu starts with odd value */
 	if (id & 1) {
-		randuseed = id * 3;
+		randstate = id * 3;
 	} else {
-		randuseed = id + 1;
+		randstate = id + 1;
 	}
 
 	fid = rem(id + 1, PHILOS);

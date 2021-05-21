@@ -56,8 +56,6 @@ static struct {
 	int             arr[PHILOS];
 }               table;
 
-extern int      randuseed;
-
 void
 sitdown(int new)
 {
@@ -178,9 +176,9 @@ main(void)
 
 	/* garantee that randu starts with odd value */
 	if (id & 1) {
-		randuseed = id * 3;
+		randstate = id * 3;
 	} else {
-		randuseed = id + 1;
+		randstate = id + 1;
 	}
 
 	switch (id) {

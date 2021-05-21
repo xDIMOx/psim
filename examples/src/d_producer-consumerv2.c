@@ -49,8 +49,6 @@ static int      buf[MAXELEM];
 static int      consumers[NCONSUMERS + 1];
 static int      producers[NPRODUCERS];
 
-extern int      randuseed;
-
 void
 enqueue(int item)
 {
@@ -144,9 +142,9 @@ main(void)
 	id = processor_id();
 	/* garantee that randu starts with odd value */
 	if (id & 1) {
-		randuseed = id * 3;
+		randstate = id * 3;
 	} else {
-		randuseed = id + 1;
+		randstate = id + 1;
 	}
 
 	switch (id) {
