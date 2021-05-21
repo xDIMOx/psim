@@ -852,7 +852,7 @@ Net_perfct(Net *net, char *progname)
 		"rmwfail,"
 		"ct0,"
 		"ninput,noutput,nalt,"
-		"commwait,"
+		"waitin,waitout,waitalt,"
 		"hops,nmsg,"
 		"linkutil[in].north,linkutil[in].east,"
 		"linkutil[in].south,linkutil[in].west,"
@@ -867,7 +867,7 @@ Net_perfct(Net *net, char *progname)
 			"%lu,%lu,%lu,"	/* sc, sc defer,rmwfail */
 			"%lu,"		/* ct0 */
 			"%lu,%lu,%lu,"	/* ninput, noutput, nalt */
-			"%lu,"		/* commwait */
+			"%lu,%lu,%lu,"	/* waitin, waitout, waitalt */
 			"%lu,%lu",	/* hops, nmsg */
 			net->nd[i].cpu->gpr[K0],
 			net->nd[i].cpu->perfct.cycle,
@@ -884,7 +884,9 @@ Net_perfct(Net *net, char *progname)
 			net->nd[i].cpu->perfct.nin,
 			net->nd[i].cpu->perfct.nout,
 			net->nd[i].cpu->perfct.nalt,
-			net->nd[i].cpu->perfct.commwait,
+			net->nd[i].cpu->perfct.waitin,
+			net->nd[i].cpu->perfct.waitout,
+			net->nd[i].cpu->perfct.waitalt,
 			CPU_mfc2(net->nd[i].cpu, COP2_MSG, COP2_MSG_HOPS),
 			CPU_mfc2(net->nd[i].cpu, COP2_MSG, COP2_MSG_NMSG));
 		for (j = 0; j < LINK_DIR; ++j) {

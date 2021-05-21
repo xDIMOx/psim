@@ -62,7 +62,7 @@ CPU_create(uint32_t id)
 	cpu->perfct.sc = cpu->perfct.scdefer = 0;
 	cpu->perfct.rmwfail = 0;
 	cpu->perfct.nin = cpu->perfct.nout = 0;
-	cpu->perfct.commwait = 0;
+	cpu->perfct.waitin = cpu->perfct.waitout = cpu->perfct.waitalt = 0;
 	for (i = 0; i < NCOUNTERS; ++i) {
 		cpu->perfct.ct[i].en = cpu->perfct.ct[i].ct = 0;
 	}

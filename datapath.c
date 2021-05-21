@@ -592,8 +592,17 @@ Datapath_execute(CPU *cpu, Mem *mem)
 
 	ret = 0;
 
-	if (CPU_mfc2(cpu, COP2_MSG, COP2_MSG_ST)) {
-		++cpu->perfct.commwait;
+	switch (COP2_MSG_ST_OP(CPU_mfc2(cpu, COP2_MSG, COP2_MSG_ST))) {
+	case COP2_MSG_OP_NONE:
+		break;
+	case COP2_MSG_OP_IN:
+		++cpu->perfct.waitin;
+		goto INC_CYCLE;
+	case COP2_MSG_OP_OUT:
+		++cpu->perfct.waitout;
+		goto INC_CYCLE;
+	case COP2_MSG_OP_ALT:
+		++cpu->perfct.waitalt;
 		goto INC_CYCLE;
 	}
 

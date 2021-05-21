@@ -142,8 +142,13 @@ typedef struct {
 		size_t          nin;		/* no. of inputs */
 		size_t          nout;		/* no. of outputs */
 		size_t          nalt;		/* no. of alt commands */
-		size_t          commwait;	/* cycles waiting to
-						 * communication to finish */
+		size_t          waitin;		/* cycles waiting to inputs
+						 * to finish */
+		size_t          waitout;	/* cycles waiting to outputs
+						 * to finish */
+		size_t          waitalt;	/* cycles waiting to
+						 * alternative commands to
+						 * finish */
 		struct {
 			size_t          en;	/* enable */
 			size_t          ct;	/* cycles counted */
