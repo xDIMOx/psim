@@ -284,6 +284,10 @@ execute(CPU *cpu, Mem *mem)
 		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] |
 		    cpu->gpr[cpu->dec.rt];
 		break;
+	case ((uint32_t) SPECIAL << 26) | XOR:
+		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rs] ^
+		    cpu->gpr[cpu->dec.rt];
+		break;
 	case ((uint32_t) SPECIAL << 26) | SLT:
 		cpu->gpr[cpu->dec.rd] = ((int32_t) cpu->gpr[cpu->dec.rs]) <
 		    ((int32_t) cpu->gpr[cpu->dec.rt]);
