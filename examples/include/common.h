@@ -9,4 +9,5 @@ void            putchar(char ch);
 void            printhex(int w);
 void            busywait(int nloops);
 long            randu(void);
+long            xorshift32(void);
 int             rem(int x, int y);
