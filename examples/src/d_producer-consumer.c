@@ -78,17 +78,20 @@ buffer(void)
 		}
 		ret = C2_alt((int *) &consumers, NCONSUMERS + 1, &data);
 		if (ret >= 0) {
+			printhex(ret);
 			C2_output(ret, dequeue());
 		}
 	}
 
 REMITEMS:
 	while (ct > 0) {
+		printhex(ret);
 		ret = C2_alt((int *) &consumers, NCONSUMERS, &data);
 		C2_output(ret, dequeue());
 	}
 
 	for (nc = NCONSUMERS; nc > 0; --nc) {
+		printhex(ret);
 		ret = C2_alt((int *) &consumers, NCONSUMERS, &data);
 		C2_output(ret, -1);
 	}
@@ -100,9 +103,7 @@ producer(void)
 	int             i, r;
 
 	for (i = 0; i < MAXVAL; ++i) {
-		r = PRODUCER_WAIT;
-		printhex(r);
-		busywait(r);	/* "producing" */
+		busywait(PRODUCER_WAIT);	/* "producing" */
 		C2_output(BUFFER, i);
 	}
 
@@ -118,9 +119,7 @@ consumer(void)
 	while (item >= 0) {
 		C2_output(BUFFER, 0);
 		item = C2_input(BUFFER);
-		r = CONSUMER_WAIT;
-		printhex(r);
-		busywait(r);	/* "consuming" */
+		busywait(CONSUMER_WAIT);	/* "consuming" */
 	}
 }
 
@@ -145,7 +144,7 @@ main(void)
 		for (i = 0, c = BUFFER + 1; i < NCONSUMERS; ++i, ++c) {
 			consumers[i] = c;
 		}
-		consumers[NCONSUMERS] = -1;	/* default clause */
+		consumers[NCONSUMERS] = -1;     /* default clause */
 		buffer();
 		break;
 	default:
