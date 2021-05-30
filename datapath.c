@@ -405,14 +405,17 @@ execute(CPU *cpu, Mem *mem)
 		case INPUT:
 			CPU_mtc2(cpu, COP2_MSG, COP2_MSG_ST, COP2_MSG_OP_IN);
 			++cpu->perfct.nin;
+			++cpu->perfct.waitin;
 			break;
 		case OUTPUT:
 			CPU_mtc2(cpu, COP2_MSG, COP2_MSG_ST, COP2_MSG_OP_OUT);
 			++cpu->perfct.nout;
+			++cpu->perfct.waitout;
 			break;
 		case ALT:
 			CPU_mtc2(cpu, COP2_MSG, COP2_MSG_ST, COP2_MSG_OP_ALT);
 			++cpu->perfct.nalt;
+			++cpu->perfct.waitalt;
 			break;
 		default:
 			return ENOTSUP;
