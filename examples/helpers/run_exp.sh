@@ -17,6 +17,12 @@ MF="${HELPERS}/memfail.awk"
 LOCKCY="${HELPERS}/lockcy.awk"
 CW="${HELPERS}/cw.awk"
 LOCKF="${HELPERS}/lockfail.awk"
+OUTPROD="${HELPERS}/outprod.awk"
+INBUF="${HELPERS}/inbuf.awk"
+ALTBUF="${HELPERS}/altbuf.awk"
+OUTBUF="${HELPERS}/outbuf.awk"
+OUTCON="${HELPERS}/outcon.awk"
+INCON="${HELPERS}/incon.awk"
 
 pflag=0 # plot flag
 
@@ -231,10 +237,22 @@ exp_dproducerconsumer() {
 				${CY} ${perfct} >>tmp0.csv
 				${NU} ${perfct} >>tmp1.csv
 				${CW} ${perfct} >>tmp2.csv
+				${OUTPROD} ${perfct} >>tmp3.csv
+				${INBUF} ${perfct} >>tmp4.csv
+				${ALTBUF} ${perfct} >>tmp5.csv
+				${OUTBUF} ${perfct} >>tmp6.csv
+				${OUTCON} ${perfct} >>tmp7.csv
+				${INCON} ${perfct} >>tmp8.csv
 			done
 			sort -n -t',' -k1,1 tmp0.csv >cycles_${ps}_${cs}.csv
 			sort -n -t',' -k1,1 tmp1.csv >netutil_${ps}_${cs}.csv
 			sort -n -t',' -k1,1 tmp2.csv >cw_${ps}_${cs}.csv
+			sort -n -t',' -k1,1 tmp3.csv >outprod_${ps}_${cs}.csv
+			sort -n -t',' -k1,1 tmp4.csv >inbuf_${ps}_${cs}.csv
+			sort -n -t',' -k1,1 tmp5.csv >altbuf_${ps}_${cs}.csv
+			sort -n -t',' -k1,1 tmp6.csv >outbuf_${ps}_${cs}.csv
+			sort -n -t',' -k1,1 tmp7.csv >outcon_${ps}_${cs}.csv
+			sort -n -t',' -k1,1 tmp8.csv >incon_${ps}_${cs}.csv
 		done
 	done
 
