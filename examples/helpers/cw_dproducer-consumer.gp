@@ -1,7 +1,7 @@
 # Check LICENSE file for copyright and license details.
 
 set terminal png
-set output 'cw_producer-consumer.png'
+set output 'cw_dproducer-consumer.png'
 
 unset key
 set style data boxplot
@@ -20,7 +20,7 @@ set title "Cycles locked"
 set ylabel "cycles"
 set xlabel "processors"
 
-system('${HELPERS}/cw_helper.awk "cw_10_13.csv" "cw_((i&1)==0?9+rem(randu(),7):9-rem(randu(),7))_1+(randu()&1023).csv" "cw_1+(randu()&1023)_1+(randu()&1023).csv" "cw_1+(randu()&1023)_((item&1)==0?9+rem(randu(),7):9-rem(randu(),7)).csv"')
+system('${HELPERS}/cw_helper.awk "cw_10_13.csv" "cw_((i&1)==0?9+(rand()&7):9-(rand()&7))_1+(rand()&1023).csv" "cw_1+(rand()&1023)_1+(rand()&1023).csv" "cw_1+(rand()&1023)_((item&1)==0?9+(rand()&7):9-(rand()&7)).csv"')
 
 plot "cw_3p.dat" u (1):1,  \
      "cw_4p.dat" u (2):1,  \

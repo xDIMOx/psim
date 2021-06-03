@@ -16,6 +16,7 @@ set ytics nomirror
 set size 1.0,1.0
 set border 3 lw 2
 
+set title "Cycles locked (consumers)"
 set ylabel "cycles"
 set xlabel "processors"
 
