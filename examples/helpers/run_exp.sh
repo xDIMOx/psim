@@ -33,13 +33,13 @@ set -e
 
 exp_producerconsumer() {
 	EXE="producer-consumer"
-	PRODUCER_SYNTHLOAD="10 ((i&1)==0?9+rem(randu(),7):9-rem(randu(),7)) \
-	    ((i&1)==0?i+((randu()&1023)>>2):i-((randu()&1023)>>2))          \
-	    1+(randu()&1023)"
+	PRODUCER_SYNTHLOAD="10 ((i&1)==0?9+(rand()&7):9-(rand()&7)) \
+	    ((i&1)==0?i+((rand()&1023)>>2):i-((rand()&1023)>>2))          \
+	    1+(rand()&1023)"
 	CONSUMER_SYNTHLOAD="13                                              \
-	    ((item&1)==0?9+rem(randu(),7):9-rem(randu(),7))                 \
-	    ((item&1)==0?item+((randu()&1023)>>2):item-((randu()&1023)>>2)) \
-	    1+(randu()&1023)"
+	    ((item&1)==0?9+(rand()&7):9-(rand()&7))                 \
+	    ((item&1)==0?item+((rand()&1023)>>2):item-((rand()&1023)>>2)) \
+	    1+(rand()&1023)"
 	NPROC="2 4 8 16 32 64"
 
 	for ps in ${PRODUCER_SYNTHLOAD}; do
