@@ -11,7 +11,7 @@ set boxwidth 0.5 absolute
 set nozero
 set tics in
 set nogrid
-set xtics nomirror ("5" 1, "8" 2, "10" 3, "16" 4, "20" 5, "32" 6)
+set xtics nomirror
 set ytics nomirror
 set size 1.0,1.0
 set border 3 lw 2
@@ -20,11 +20,6 @@ set title "Locking failures"
 set ylabel "accesses"
 set xlabel "processors"
 
-system('${HELPERS}/lockfail_helper.awk "lockfail_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25))).csv" "lockfail_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25)))_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5))).csv" "lockfail_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25))).csv" "lockfail_((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25)))_((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25))).csv"')
+system('${HELPERS}/lockfail_helper.awk "lockfail_10_((rem(rand(),13))>6?(9+(rand()&7)):(9-(rand()&7)))_((rem(rand(),13))>6?(9+(rand()&7)):(9-(rand()&7))).csv" "lockfail_((rem(rand(),13))>6?(10+(rand()&7)):(10-(rand()&7)))_((rem(rand(),13))>6?(50+rem(rand(),25)):(50-rem(rand(),25)))_((rem(rand(),13))>6?(9+(rand()&7)):(9-(rand()&7))).csv" "lockfail_((rem(rand(),13))>6?(10+(rand()&7)):(10-(rand()&7)))_((rem(rand(),13))>6?(9+(rand()&7)):(9-(rand()&7)))_((rem(rand(),13))>6?(50+rem(rand(),25)):(50-rem(rand(),25))).csv" "lockfail_((rem(rand(),13))>6?(10+(rand()&7)):(10-(rand()&7)))_((rem(rand(),13))>6?(50+rem(rand(),25)):(50-rem(rand(),25)))_((rem(rand(),13))>6?(50+rem(rand(),25)):(50-rem(rand(),25))).csv"')
 
-plot "lockfail_5p.dat" u (1):1,  \
-     "lockfail_8p.dat" u (2):1,  \
-     "lockfail_10p.dat" u (3):1, \
-     "lockfail_16p.dat" u (4):1, \
-     "lockfail_20p.dat" u (5):1, \
-     "lockfail_32p.dat" u (6):1, \
+plot "lockfail_5p.dat" u (5):1,

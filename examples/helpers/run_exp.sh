@@ -139,39 +139,35 @@ exp_producerconsumerv2() {
 
 	mkdir ${chartdir}
 
-	mv *.png ${chartdir}
+	mv *.{tex,eps} ${chartdir}
 }
 
 exp_diningphilosophers() {
 	EXE="dining-philosophers"
-	IDEAS="10 ((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5)))"
-	THINK="((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5))) \
-	    ((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25)))"
-	EAT="((randu()&3)==1?(10+rem(randu(),5)):(10-rem(randu(),5))) \
-	    ((randu()&3)==1?(50+rem(randu(),25)):(50-rem(randu(),25)))"
-	PHILOS="5 8 10 16 20 32"
+	IDEAS="10 ((rem(rand(),13))>6?(10+(rand()&7)):(10-(rand()&7)))"
+	THINK="((rem(rand(),13))>6?(9+(rand()&7)):(9-(rand()&7))) \
+	    ((rem(rand(),13))>6?(50+rem(rand(),25)):(50-rem(rand(),25)))"
+	EAT="((rem(rand(),13))>6?(9+(rand()&7)):(9-(rand()&7))) \
+	    ((rem(rand(),13))>6?(50+rem(rand(),25)):(50-rem(rand(),25)))"
 
 	for ideas in ${IDEAS}; do
 		for th in ${THINK}; do
 			for eat in ${EAT}; do
 				# run experiment
-				for philos in ${PHILOS}; do
-					NEXE=${EXE}_${philos}_${ideas}
-					NEXE=${NEXE}_${th}_${eat}
-					make DINPHIL_CFLAGS="    \
-					    -DIDEAS=\"${ideas}\" \
-					    -DPHILOS=${philos}   \
-					    -DTHINK=\"${th}\"    \
-					    -DEAT=\"${eat}\"" \
-					    clean \
-					    dining-philosophers >/dev/null
-					mv ${EXE} ${NEXE}
-					${PSIM} -c ${philos} ${NEXE} &
-				done
-				wait
+				NEXE=${EXE}_${ideas}
+				NEXE=${NEXE}_${th}_${eat}
+				make DINPHIL_CFLAGS="    \
+				    -DIDEAS=\"${ideas}\" \
+				    -DPHILOS=5           \
+				    -DTHINK=\"${th}\"    \
+				    -DEAT=\"${eat}\""    \
+				    clean                \
+				    ${EXE} >/dev/null
+				mv ${EXE} ${NEXE}
+				${PSIM} -c 5 ${NEXE} >/tmp/${NEXE}.out
 				# extract data from performance counters
 				rm -f tmp*.csv
-				PCT="perfct_${EXE}_*_${ideas}_${th}_${eat}.csv"
+				PCT="perfct_${EXE}_${ideas}_${th}_${eat}.csv"
 				for perfct in ${PCT}; do
 					${CY} ${perfct} >>tmp0.csv
 					${BU} ${perfct} >>tmp1.csv
@@ -195,7 +191,7 @@ exp_diningphilosophers() {
 
 	[ ${pflag} -eq 0 ] && return 0
 
-	for gp in ${HELPERS}/*dining-philosophers.gp; do
+	for gp in ${HELPERS}/*_dining-philosophers.gp; do
 		gnuplot ${gp} || return 1
 	done
 
