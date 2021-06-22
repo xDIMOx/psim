@@ -239,6 +239,10 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) SPECIAL << 26) | SRA:
 		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rt] >> cpu->dec.sa;
 		break;
+	case ((uint32_t) SPECIAL << 26) | SLLV:
+		cpu->gpr[cpu->dec.rd] = cpu->gpr[cpu->dec.rt] <<
+		    (0x1F & cpu->gpr[cpu->dec.rs]);
+		break;
 	case ((uint32_t) SPECIAL << 26) | JR:
 		cpu->dec.npc = cpu->gpr[cpu->dec.rs];
 		break;
