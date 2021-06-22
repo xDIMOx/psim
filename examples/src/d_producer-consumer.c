@@ -78,20 +78,17 @@ buffer(void)
 		}
 		ret = C2_alt((int *) &consumers, NCONSUMERS + 1, &data);
 		if (ret >= 0) {
-			printhex(ret);
 			C2_output(ret, dequeue());
 		}
 	}
 
 REMITEMS:
 	while (ct > 0) {
-		printhex(ret);
 		ret = C2_alt((int *) &consumers, NCONSUMERS, &data);
 		C2_output(ret, dequeue());
 	}
 
 	for (nc = NCONSUMERS; nc > 0; --nc) {
-		printhex(ret);
 		ret = C2_alt((int *) &consumers, NCONSUMERS, &data);
 		C2_output(ret, -1);
 	}
