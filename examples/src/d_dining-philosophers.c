@@ -53,8 +53,22 @@ static enum Forks fork[PHILOS] = {FORK0, FORK1, FORK2, FORK3, FORK4};
 
 static struct {
 	int             seated;
-	int             arr[PHILOS];
+	int             arr[PHILOS - 1];
 }               table;
+
+int
+find(int *arr, int size, int elem)
+{
+	int             i;
+
+	for (i = 0; i < size; ++i) {
+		if (arr[i] == elem) {
+			return i;
+		}
+	}
+
+	return -1;
+}
 
 void
 sitdown(int new)
@@ -67,13 +81,14 @@ getup(int exiting)
 {
 	int             i;
 
-	for (i = 0; i < table.seated; ++i) {
-		if (table.arr[i] == exiting) {
-			table.arr[i] = table.arr[table.seated - 1];
-			--table.seated;
-			return;
-		}
+	i = find(table.arr, PHILOS - 1, exiting);
+
+	if (i < 0) {
+		return;		/* FIXME: should be an error */
 	}
+
+	table.arr[i] = table.arr[table.seated - 1];
+	--table.seated;
 }
 
 void
@@ -187,11 +202,7 @@ main(void)
 	case PHIL2:
 	case PHIL3:
 	case PHIL4:
-		for (i = 0; i < PHILOS; ++i) {
-			if (philo[i] == id) {
-				philosopher(i);
-			}
-		}
+		philosopher(find((int *) philo, 5, id));
 		break;
 	case FOOTMAN:
 		footman();
@@ -201,11 +212,7 @@ main(void)
 	case FORK2:
 	case FORK3:
 	case FORK4:
-		for (i = 0; i < PHILOS; ++i) {
-			if (fork[i] == id) {
-				cutlery(i);
-			}
-		}
+		cutlery(find((int *) fork, 5, id));
 		break;
 	}
 }
