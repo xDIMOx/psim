@@ -225,7 +225,7 @@ output(Net *net, size_t to, size_t from)
 				free(msg);
 #ifdef VERBOSE
 				warnx("%s output -- nd[%lu] cycle %lu -- "
-				      "%lu!data",
+				      "ack (%lu)",
 				      __FILE__, from, net->cycle, to);
 #endif
 
@@ -274,6 +274,11 @@ output(Net *net, size_t to, size_t from)
 	st |= 0x4;
 	CPU_mtc2(net->nd[from].cpu, COP2_MSG, COP2_MSG_ST, st);
 
+#ifdef VERBOSE
+	warnx("%s output -- nd[%lu] cycle %lu -- %lu!data",
+	      __FILE__, from, net->cycle, to);
+#endif
+
 	return 0;
 }
 
@@ -297,7 +302,7 @@ alt(Net *net, uint32_t *clauses, size_t to)
 {
 	int             link;
 
-	int             done, found, df;
+	int             done, found, df, belongs;
 
 	uint32_t        from, hops, ncl;
 
@@ -314,50 +319,36 @@ alt(Net *net, uint32_t *clauses, size_t to)
 		return EDEADLK;
 	}
 
-	df = 0;
-	if (((int32_t) clauses[ncl - 1]) < 0) {
-		df = 1;		/* default */
+	df = (((int32_t) clauses[ncl - 1]) < 0);	/* default */
+	if (df) {
 		net->nd[to].cpu->gpr[K1] = -1;
 		CPU_mtc2(net->nd[to].cpu, COP2_MSG, COP2_MSG_ST,
 			 COP2_MSG_OP_NONE);
 	}
 
-	if (!net->nd[to].mbox_new) {
-		if (df) {
-#ifdef VERBOSE
-			warnx("%s alt -- nd[%lu] cycle %lu -- "
-			      "default (no messages arrived)",
-			      __FILE__, to, net->cycle);
-#endif
-			return 0;
-		}
-		return EAGAIN;
-	}
-
-	--net->nd[to].mbox_new;
-
 	cur = net->nd[to].mbox_start;
 	found = done = 0;
 	while (!done) {
-		if (!net->nd[to].mbox[cur]) {
-			goto INC_CB;
-		}
-		for (i = 0; i < ncl; ++i) {
+		for (i = 0, belongs = 0; i < ncl; ++i) {
 			if (clauses[i] == cur) {
-				done = found = 1;
-				from = cur;
-				break;
+				belongs = 1;
 			}
 		}
-INC_CB:
-		cur = (cur + 1) % net->size;
-		if (cur == net->nd[to].mbox_start) {
-			done = 1;
+		if (belongs && net->nd[to].mbox[cur]) {
+			done = found = 1;
+			from = cur;
+			goto END_SEARCH;
+		} else {
+			cur = (cur + 1) % net->size;
+			if (cur == net->nd[to].mbox_start) {
+				done = 1;
+			}
 		}
 	}
 
+END_SEARCH:
 	/* increment round-robin counter */
-	net->nd[to].mbox_start = (net->nd[to].mbox_start + 1) % net->size;
+	net->nd[to].mbox_start = (cur + 1) % net->size;
 
 	if (!found) {
 		if (df) {
@@ -409,8 +400,6 @@ INC_CB:
 	free(msg);
 
 	net->nd[to].cpu->gpr[K1] = from;
-
-	++net->nd[to].cpu->perfct.nin;
 
 #ifdef VERBOSE
 	warnx("%s alt -- nd[%lu] cycle %lu -- %u?data",
