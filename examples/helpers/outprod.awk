@@ -1,7 +1,7 @@
 #!/bin/awk -f
 # Check LICENSE file for copyright and license details.
 #
-# d_producer-consumer{v2,}: Average time the producer is waiting for the
+# d_producer-consumer: Average time the producer is waiting for the
 # output commands to finish
 
 BEGIN {

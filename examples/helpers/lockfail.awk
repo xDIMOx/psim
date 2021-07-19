@@ -1,12 +1,25 @@
 #!/bin/awk -f
 # Check LICENSE file for copyright and license details.
+#
+# Number of times locking failed
+#
+# The variable EXCLUDE is an regular expression. If set, the processors that
+# match it will be excluded from the computation
 
 BEGIN {
 	FS = OFS = ","
-	np = 0
+	nexc = np = 0
+	if (EXCLUDE == "")
+		EXCLUDE = "ign"
 }
 
 /^(id|bus)/ {
+	next
+}
+
+$1 ~ EXCLUDE {
+	++np
+	++nexc
 	next
 }
 
@@ -16,8 +29,12 @@ BEGIN {
 }
 
 END {
-	printf("%d,", np)
-	for (i = 0; i < (np - 1); ++i)
-		printf("%d,", fail[i])
-	printf("%d\n", fail[np - 1])
+	printf("%d", np - nexc)
+	for (i = 0; i < np; ++i) {
+		if (i ~ EXCLUDE) {
+			continue
+		}
+		printf(",%d", fail[i], i)
+	}
+	printf("\n");
 }

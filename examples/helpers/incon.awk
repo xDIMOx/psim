@@ -1,7 +1,7 @@
 #!/bin/awk -f
 # Check LICENSE file for copyright and license details.
 #
-# d_producer-consumer{v2,}: Average time the consumers wait for the
+# d_producer-consumer: Average time the consumers wait for the
 # input commands to finish
 
 BEGIN {
@@ -18,7 +18,7 @@ BEGIN {
 	++np
 }
 
-$1 > 1 {
+$1 > 1 { # consumers
 	++nc;
 	cycles += $16 / $13
 }

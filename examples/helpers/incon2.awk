@@ -6,8 +6,6 @@
 
 BEGIN {
 	FS = OFS = ","
-	np = nc = 0
-	cycles = 0
 
 	nf = split(ARGV[1], fields, "_")
 	split(fields[nf - 2], topo, "x")
