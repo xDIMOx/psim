@@ -323,6 +323,52 @@ exp_dproducerconsumerv2() {
 	mv *.png ${chartdir}
 }
 
+exp_ddiningphilosophers() {
+	EXE="d_dining-philosophers"
+	IDEAS="10 ((rem(rand(),13))>6?(10+(rand()&7)):(10-(rand()&7)))"
+	THINK="((rem(rand(),13))>6?(9+(rand()&7)):(9-(rand()&7))) \
+	    ((rem(rand(),13))>6?(50+rem(rand(),25)):(50-rem(rand(),25)))"
+	EAT="((rem(rand(),13))>6?(9+(rand()&7)):(9-(rand()&7))) \
+	    ((rem(rand(),13))>6?(50+rem(rand(),25)):(50-rem(rand(),25)))"
+
+	for ideas in ${IDEAS}; do
+		for th in ${THINK}; do
+			for eat in ${EAT}; do
+				# run experiment
+				NEXE=${EXE}_${ideas}_${th}_${eat}
+				make DINPHIL_CFLAGS="    \
+				    -DIDEAS=\"${ideas}\" \
+				    -DTHINK=\"${th}\"    \
+				    -DEAT=\"${eat}\""    \
+				    clean ${EXE} >/dev/null
+				mv ${EXE} ${NEXE}
+				${PSIM} -n 6x2 ${NEXE} >/tmp/${NEXE}.out 2>/tmp/${NEXE}.debug
+				# extract data from performance counters
+				perfct="perfct_${NEXE}.csv"
+				${CY} -vEXCLUDE='^8' ${perfct} \
+				    >cycles_${ideas}_${th}_${eat}.csv
+				${NU} -vEXCLUDE='^8' ${perfct} \
+				    >netutil_${ideas}_${th}_${eat}.csv
+				${CW} -vEXCLUDE='^8' ${perfct} \
+				    >cw_${ideas}_${th}_${eat}.csv
+			done
+		done
+	done
+
+	[ ${pflag} -eq 0 ] && return 0
+
+	for gp in ${HELPERS}/*_ddining-philosophers.gp; do
+		gnuplot ${gp} || return 1
+	done
+
+	chartdir=chart_ddining-philosophers
+
+	mkdir -p ${chartdir}
+
+	mv *.png ${chartdir}
+}
+
+
 while getopts "hp" opt; do
 	case ${opt} in
 	'p')
