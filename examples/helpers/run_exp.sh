@@ -139,7 +139,7 @@ exp_producerconsumerv2() {
 
 	mkdir ${chartdir}
 
-	mv *.{tex,eps} ${chartdir}
+	mv *.png ${chartdir}
 }
 
 exp_diningphilosophers() {
@@ -270,13 +270,13 @@ exp_dproducerconsumer() {
 
 exp_dproducerconsumerv2() {
 	EXE="d_producer-consumerv2"
-	PRODUCER_SYNTHLOAD="10 ((i&1)==0?9+rem(randu(),7):9-rem(randu(),7)) \
-	    ((i&1)==0?i+((randu()&1023)>>2):i-((randu()&1023)>>2))          \
-	    1+(randu()&1023)"
-	CONSUMER_SYNTHLOAD="13                                              \
-	    ((item&1)==0?9+rem(randu(),7):9-rem(randu(),7))                 \
-	    ((item&1)==0?item+((randu()&1023)>>2):item-((randu()&1023)>>2)) \
-	    1+(randu()&1023)"
+	PRODUCER_SYNTHLOAD="10 ((i&1)==0?9+(rand()&7):9-(rand()&7)) \
+	    ((i&1)==0?i+((rand()&1023)>>2):i-((rand()&1023)>>2))    \
+	    1+(rand()&1023)"
+	CONSUMER_SYNTHLOAD="13                                            \
+	    ((item&1)==0?9+(rand()&7):9-(rand()&7))                       \
+	    ((item&1)==0?item+((rand()&1023)>>2):item-((rand()&1023)>>2)) \
+	    1+(rand()&1023)"
 	TOPO="2x2 2x4 4x4 4x8 8x8"
 
 	for ps in ${PRODUCER_SYNTHLOAD}; do
@@ -303,10 +303,20 @@ exp_dproducerconsumerv2() {
 				${CY} ${perfct} >>tmp0.csv
 				${NU} ${perfct} >>tmp1.csv
 				${CW} ${perfct} >>tmp2.csv
+				${OUTPROD2} ${perfct} >>tmp3.csv
+				${ALTBUF} ${perfct} >>tmp5.csv
+				${OUTBUF} ${perfct} >>tmp6.csv
+				${OUTCON2} ${perfct} >>tmp7.csv
+				${INCON2} ${perfct} >>tmp8.csv
 			done
 			sort -n -t',' -k1,1 tmp0.csv >cycles_${ps}_${cs}.csv
 			sort -n -t',' -k1,1 tmp1.csv >netutil_${ps}_${cs}.csv
 			sort -n -t',' -k1,1 tmp2.csv >cw_${ps}_${cs}.csv
+			sort -n -t',' -k1,1 tmp3.csv >outprod_${ps}_${cs}.csv
+			sort -n -t',' -k1,1 tmp5.csv >altbuf_${ps}_${cs}.csv
+			sort -n -t',' -k1,1 tmp6.csv >outbuf_${ps}_${cs}.csv
+			sort -n -t',' -k1,1 tmp7.csv >outcon_${ps}_${cs}.csv
+			sort -n -t',' -k1,1 tmp8.csv >incon_${ps}_${cs}.csv
 		done
 	done
 
@@ -383,9 +393,12 @@ while getopts "hp" opt; do
 		printf "will located in %s/chart_TARGET\n" ${SRC} >&2
 		printf "\n" >&2
 		printf "TARGET can be one of:\n" >&2
-		printf "	producer-consumer\n" >&2
-		printf "	producer-consumerv2\n" >&2
-		printf "	dining-philosophers\n" >&2
+		printf "	1|producer-consumer\n" >&2
+		printf "	2|producer-consumerv2\n" >&2
+		printf "	3|dining-philosophers\n" >&2
+		printf "	4|d_producer-consumer\n" >&2
+		printf "	5|d_producer-consumerv2\n" >&2
+		printf "	6|d_dining-philosophers\n" >&2
 		printf "	clean\n" >&2
 		printf "\n" >&2
 		printf "To this script to work, REPOBASEDIR have to be\n" >&2
@@ -406,14 +419,16 @@ case $1 in
 	exp_producerconsumerv2 ;;
 3|dining-philosophers)
 	exp_diningphilosophers ;;
-5|d_producer-consumer)
+4|d_producer-consumer)
 	exp_dproducerconsumer ;;
-6|d_producer-consumerv2)
+5|d_producer-consumerv2)
 	exp_dproducerconsumerv2 ;;
+6|d_dining-philosophers)
+	exp_ddiningphilosophers ;;
 clean)
 	echo 'cleaning'
 	rm -f perfct* {d_,}producer-consumer{v2,}_[0-9]* \
-	    dining-philosophers_[0-9]* *.csv *.dat *.png ;;
+	    {d_,}dining-philosophers_* *.csv *.dat *.png ;;
 *)
 	echo 'Invalid experiment' ;;
 esac
