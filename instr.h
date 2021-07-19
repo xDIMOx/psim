@@ -31,20 +31,20 @@
 enum opcodes {
 	SPECIAL,
 	REGIMM,
-	J,
-	JAL,
-	BEQ,
-	BNE,
-	BLEZ,
-	BGTZ,
+	J,			/* impl */
+	JAL,			/* impl */
+	BEQ,			/* impl */
+	BNE,			/* impl */
+	BLEZ,			/* impl */
+	BGTZ,			/* impl */
 	ADDI,
-	ADDIU,
-	SLTI,
-	SLTIU,
-	ANDI,
-	ORI,
-	XORI,
-	LUI,
+	ADDIU,			/* impl */
+	SLTI,			/* impl */
+	SLTIU,			/* impl */
+	ANDI,			/* impl */
+	ORI,			/* impl */
+	XORI,			/* impl */
+	LUI,			/* impl */
 	COP0,
 	COP1,
 	COP2,
@@ -61,23 +61,23 @@ enum opcodes {
 	JALX,
 	OPC_IGN4,
 	SPECIAL3,
-	LB,
+	LB,			/* impl */
 	LH,
 	LWL,
-	LW,
+	LW,			/* impl */
 	LBU,
 	LHU,
 	LWR,
 	OPC_IGN5,
-	SB,
+	SB,			/* impl */
 	SH,
 	SWL,
-	SW,
+	SW,			/* impl */
 	OPC_IGN6,
 	OPC_IGN7,
 	SWR,
 	CACHE,
-	LL,
+	LL,			/* impl */
 	LWC1,
 	LWC2,
 	PREF,
@@ -85,7 +85,7 @@ enum opcodes {
 	LDC1,
 	LDC2,
 	OPC_IGN9,
-	SC,
+	SC,			/* impl */
 	SWC1,
 	SWC2,
 	OPC_IGN10,
@@ -96,49 +96,49 @@ enum opcodes {
 };
 
 enum special_func {
-	SLL,
+	SLL,			/* impl */
 	MOVCI,
 	SRL_FIELD,
-	SRA,
-	SLLV,
+	SRA,			/* impl */
+	SLLV,			/* impl */
 	FUNC_IGN0,
 	SRLV_FIELD,
 	SRAV,
-	JR,
+	JR,			/* impl */
 	JALR,
-	MOVZ,
-	MOVN,
+	MOVZ,			/* impl */
+	MOVN,			/* impl */
 	SYSCALL,
 	BREAK,
 	FUNC_IGN1,
 	SYNC,
-	MFHI,
+	MFHI,			/* impl */
 	MTHI,
-	MFLO,
+	MFLO,			/* impl */
 	MTLO,
 	FUNC_IGN2,
 	FUNC_IGN3,
 	FUNC_IGN4,
 	FUNC_IGN5,
-	MULT,
+	MULT,			/* impl */
 	MULTU,
-	DIV,
+	DIV,			/* impl */
 	DIVU,
 	FUNC_IGN6,
 	FUNC_IGN7,
 	FUNC_IGN8,
 	FUNC_IGN9,
 	ADD,
-	ADDU,
+	ADDU,			/* impl */
 	SUB,
-	SUBU,
-	AND,
-	OR,
-	XOR,
+	SUBU,			/* impl */
+	AND,			/* impl */
+	OR,			/* impl */
+	XOR,			/* impl */
 	NOR,
 	FUNC_IGN10,
 	FUNC_IGN11,
-	SLT,
+	SLT,			/* impl */
 	SLTU,
 	FUNC_IGN12,
 	FUNC_IGN13,
@@ -163,8 +163,8 @@ enum special_func {
 };
 
 enum regimm_rt {
-	BLTZ,
-	BGEZ,
+	BLTZ,			/* impl */
+	BGEZ,			/* impl */
 	BLTZL,
 	BGEZL,
 	RT_IGN0,
@@ -200,7 +200,7 @@ enum regimm_rt {
 enum special2_func {
 	MADD,
 	MADDU,
-	MUL,
+	MUL,			/* impl */
 	SPECIAL2_IGN0,
 	MSUB,
 	MSUBU,
@@ -265,7 +265,7 @@ enum special2_func {
 };
 
 enum special3_func {
-	EXT,
+	EXT,			/* impl */
 	SPECIAL3_IGN0,
 	SPECIAL3_IGN1,
 	SPECIAL3_IGN2,
@@ -434,7 +434,7 @@ enum cop0_co {
 	C0_IGN24,
 	C0_IGN25,
 	DERET,
-	WAIT,
+	WAIT,			/* impl */
 	C0_IGN26,
 	C0_IGN27,
 	C0_IGN28,
@@ -469,11 +469,11 @@ enum cop0_co {
 };
 
 enum cop2_rs {
-	MFC2,
+	MFC2,			/* impl */
 	COP2RS_IGN0,
 	CFC2,
 	MFHC2,
-	MTC2,
+	MTC2,			/* impl */
 	COP2RS_IGN1,
 	CTC2,
 	MTHC2,
