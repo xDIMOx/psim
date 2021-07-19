@@ -15,6 +15,7 @@ set size 1.0,1.0
 set border 3 lw 2
 set key right center
 
+set title "Avg. time waiting for input commands to finish (buffer)"
 set ylabel "cycles"
 set xlabel "processors"
 

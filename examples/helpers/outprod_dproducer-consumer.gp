@@ -15,6 +15,7 @@ set size 1.0,1.0
 set border 3 lw 2
 set key right center
 
+set title "Avg. time waiting for output commands to finish (producer)"
 set ylabel "cycles"
 set xlabel "processors"
 

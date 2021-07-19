@@ -18,7 +18,7 @@ set ytics nomirror
 set size 1.0,1.0
 set border 3 lw 2
 
-set title "Cycles Sem_P() takes to complete"
+set title "Cycles Sem\_P() takes to complete"
 set ylabel "cycles"
 set xlabel "processors"
 

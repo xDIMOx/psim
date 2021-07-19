@@ -16,6 +16,7 @@ set style data histograms
 set style fill solid
 set boxwidth 0.5
 
+set title "Cycles to execute"
 set ylabel "cycles"
 set xlabel "processors"
 

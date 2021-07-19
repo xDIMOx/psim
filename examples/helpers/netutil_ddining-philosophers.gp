@@ -16,7 +16,8 @@ set style data histograms
 set style fill solid
 set boxwidth 0.5
 
-set ylabel "\\%"
+set title "Net utilization"
+set ylabel "%"
 set xlabel "processors"
 
 plot "netutil_10_((rem(rand(),13))>6?(9+(rand()&7)):(9-(rand()&7)))_((rem(rand(),13))>6?(9+(rand()&7)):(9-(rand()&7))).csv" \
