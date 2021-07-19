@@ -176,9 +176,9 @@ philosopher(int i)
 		C2_output(FOOTMAN, GETUP);
 	}
 
-	C2_output(FOOTMAN, DONE);
 	C2_output(ownfork, DONE);
 	C2_output(nbrfork, DONE);
+	C2_output(FOOTMAN, DONE);
 }
 
 int
