@@ -19,10 +19,10 @@ set title "Net utilization"
 set ylabel "%"
 set xlabel "processors"
 
-plot "netutil_10_13.csv" u 1:2 w linesp title "static", \
+plot "netutil_10_13.csv" u 1:2 w linesp lw 3 title "static", \
      "netutil_((i&1)==0?9+(rand()&7):9-(rand()&7))_1+(rand()&1023).csv" \
-         u 1:2 w linesp title "low", \
+         u 1:2 w linesp lw 3 title "low", \
      "netutil_1+(rand()&1023)_1+(rand()&1023).csv" \
-         u 1:2 w linesp title "high", \
+         u 1:2 w linesp lw 3 title "high", \
      "netutil_1+(rand()&1023)_((item&1)==0?9+(rand()&7):9-(rand()&7)).csv" \
-         u 1:2 w linesp title "high-p", \
+         u 1:2 w linesp lw 3 title "high-p", \
