@@ -93,10 +93,10 @@ communication by naming the processors involved directly, this makes it closer
 to how CSP was initially defined in 1978.
 
 If the INSTRDUMP macro is set when compiling (it is not by default) files
-called cpuXXXX_instrdump will be created when the program is executed. To
-check these files a MIPSEL capable disassembler is needed (it is possible
-to use hexdump but this will make debugging even worse). For example, using
-GNU objdump(1):
+called cpuXXXX_instrdump will be created when the program is executed. To check
+these files a MIPSEL capable disassembler is needed (it is possible to use
+hexdump(1) but this will make the debugging process even worse). For example,
+using GNU objdump(1):
 	objdump -b binary -m mips -EL -Mno-aliases -D cpuXXXX_instrdump
 
 If the VERBOSE macro is set when compiling (it is not by default) the simulator
@@ -110,3 +110,13 @@ every processor in the the network with the same program.
 
 Always remember to use the correct number of simulated processors while
 running the examples, otherwise the simulation can hang forever.
+
+If you read Portuguese and want to check my bachelor thesis for
+my analysis of both modes of multiprocessing, it is available at
+<https://dalmon.xyz/tg_dalmon.pdf>. Otherwise, to sum it up, the CSP-like mode
+of multiprocessing is promising, but I made a mistake, my implementations are
+naive (a.k.a they are semantically right, but performance-wise they are not
+great). For the producer-consumer problem, CSP-like multiprocessing gave faster
+execution times and less code than the shared memory version. For the dining
+philosophers problem, CSP-like multiprocessing is slower and the code is bigger
+than the shared memory version.
