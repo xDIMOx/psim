@@ -395,7 +395,7 @@ execute(CPU *cpu, Mem *mem)
 	case ((uint32_t) COP2 << 26) | (MTC2 << 21):
 		if ((errnum = CPU_mtc2(cpu, cpu->dec.rd, cpu->dec.sel,
 			     cpu->gpr[cpu->dec.rt]))) {
-			return errno;	/* EINVAL */
+			return errnum;	/* EINVAL */
 		}
 		break;
 	case ((uint32_t) COP2 << 26) | (1 << 25): /* coprocessor operation */
@@ -490,7 +490,7 @@ execute(CPU *cpu, Mem *mem)
 			return EBUSY;
 		} else if ((errnum = Mem_sb(mem, addr,
 		           cpu->gpr[cpu->dec.rt]))) {
-			return errno;	/* EADDRNOTAVAIL */
+			return errnum;	/* EADDRNOTAVAIL */
 		}
 		break;
 	case ((uint32_t) SW << 26):
@@ -508,7 +508,7 @@ execute(CPU *cpu, Mem *mem)
 			return EBUSY;
 		} else if ((errnum = Mem_sw(mem, addr,
 		           cpu->gpr[cpu->dec.rt]))) {
-			return errno;	/* EADDRNOTAVAIL, EFAULT */
+			return errnum;	/* EADDRNOTAVAIL, EFAULT */
 		}
 		break;
 	case ((uint32_t) LL << 26):
@@ -638,6 +638,7 @@ Datapath_execute(CPU *cpu, Mem *mem)
 		      "execution failed: %s",
 		      cpu->gpr[K0], cpu->perfct.cycle, strerror(errnum));
 		ret = -1;
+		errno = errnum;
 		goto INC_CYCLE;
 	}
 
