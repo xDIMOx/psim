@@ -37,7 +37,11 @@ int             Datapath_execute(CPU *, Mem *);
  * mem: memory where the instruction is
  *
  * Returns instruction if success, -1 otherwise.
- */
+ *
+ * This function fails if:
+ *	EADDRNOTAVAIL: address is out of bounds.
+ *	EFAULT: address is not word aligned.
+*/
 static int64_t
 fetch(CPU *cpu, Mem *mem)
 {
@@ -216,7 +220,7 @@ decode(Decoder *dec)
  *	EBUSY: resource not available now.
  *	EADDRNOTAVAIL: address is out of bounds.
  *	EFAULT: address is not word aligned.
- *	EOVERFLOW: tried to access reserved addresses array out of bounds.
+ *	EOVERFLOW: array is too large.
  *	EAGAIN: SC failed.
  */
 static int
