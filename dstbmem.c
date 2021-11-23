@@ -35,11 +35,11 @@ static void     setpc(Net *, size_t, uint32_t);
 
 static int      progld(Net *, size_t, unsigned char *);
 
-static void     runsim(Net *);
+static int      sim(Net *);
 
 static void     perfct(Net *, char *);
 
-void            DstbMem_run(size_t, size_t, size_t, struct ProgInfo *);
+int             DstbMem_run(size_t, size_t, size_t, struct ProgInfo *);
 
 /*
  * create: create cpu network
@@ -171,12 +171,14 @@ progld(Net *net, size_t memsz, unsigned char *elf)
 }
 
 /*
- * runsim: run simulation
+ * sim: run simulation
  *
  * net: network
+ *
+ * Returns 0 if success, -1 otherwise.
  */
-static void
-runsim(Net *net)
+static int
+sim(Net *net)
 {
 	int             errcode;
 
@@ -195,10 +197,12 @@ runsim(Net *net)
 		if (!errcode) {
 			++net->cycle;
 		} else {
-			return;
+			return -1;
 		}
 		fflush(stdout);
 	}
+
+	return 0;
 }
 
 /*
@@ -279,16 +283,20 @@ perfct(Net *net, char *progname)
 }
 
 /*
- * sim_net: simulate a network of processors
+ * DstbMem_run: simulate a network of processors
  *
  * x: number of processors on the x axis
  * y: number of processors on the y axis
  * memsz: memory size
  * prog: information about the program to be executed
+ *
+ * Returns 0 if the simulation completed successfully, -1 otherwise.
  */
-void
+int
 DstbMem_run(size_t x, size_t y, size_t memsz, struct ProgInfo *prog)
 {
+	int             ret;
+
 	size_t          i;
 
 	Net            *net;
@@ -297,14 +305,16 @@ DstbMem_run(size_t x, size_t y, size_t memsz, struct ProgInfo *prog)
 	 * Create network
 	 */
 	if (!(net = create(x, y, memsz))) {
-		err(EXIT_FAILURE, "create");
+		warn("DstbMem_run -- create");
+		return -1;
 	}
 
 	/*
 	 * Program loading
 	 */
 	if (progld(net, memsz, prog->elf) < 0) {
-		err(EXIT_FAILURE, "progld");
+		warnx("DstbMem_run -- progld");
+		return -1;
 	}
 
 	for (i = 0; i < (x * y); ++i) {
@@ -313,16 +323,20 @@ DstbMem_run(size_t x, size_t y, size_t memsz, struct ProgInfo *prog)
 
 	/* free memory after loading */
 	if (munmap(prog->elf, prog->size) < 0) {
-		err(EXIT_FAILURE, "munmap");
+		warn("DstbMem_run -- munmap");
 	}
 
 	/*
 	 * Run simulation
 	 */
-	runsim(net);
-	if (errno) {
-		err(EXIT_FAILURE, "runsim");
+	ret = sim(net);
+	if (ret) {
+		warnx("DstbMem_run -- sim");
 	}
+
 	perfct(net, prog->name);
+
 	destroy(net);
+
+	return ret;
 }
