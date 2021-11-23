@@ -1,25 +1,19 @@
 /* Check LICENSE file for copyright and license details. */
 
 /*
- * Network node
+ * Network implementation
  */
 
 /*
  * Error handling
  */
 
-#define LinknameList   \
+#define LinkNameList   \
 Y(LINK_NORTH, "north") \
-Y(LINK_EAST, "east")   \
+Y(LINK_EAST,  "east")  \
 Y(LINK_SOUTH, "south") \
-Y(LINK_WEST, "west")   \
-Y(LINK_MBOX, "mbox")
-
-#define X(a, b) a,
-enum NetErrNo {
-	NetErrList
-};
-#undef X
+Y(LINK_WEST,  "west")  \
+Y(LINK_MBOX,  "mbox")
 
 #define LINK_BUFSZ 4
 
@@ -31,14 +25,14 @@ enum NetErrNo {
 
 #define MBOX_BUFSZ 1
 
-enum linkdir {			/* transmission direction */
+enum LinkDir {			/* transmission direction */
 	LINK_IN,
 	LINK_OUT,
 };
 
 #define Y(a, b) a,
-enum linkname {
-	LinknameList
+enum LinkName {
+	LinkNameList
 };
 #undef Y
 
@@ -46,13 +40,13 @@ enum linkname {
  * Definitions
  */
 
-struct msg {
+struct Msg {
 	uint16_t        to;
 	uint16_t        from;
 	uint32_t        data;
 	uint32_t        hops;
 	uint32_t        ack;
-	struct msg     *nxt;
+	struct Msg     *nxt;
 };
 
 typedef struct {
@@ -60,28 +54,19 @@ typedef struct {
 	size_t          size;
 	size_t          x, y;
 	size_t          nrun;	/* no. of running processors */
-	struct node {
+	struct Node {
 		CPU            *cpu;
 		Mem            *mem;
-		struct link {
-			struct msg     *hd;
-			struct msg     *tl;
+		struct Link {
+			struct Msg     *hd;
+			struct Msg     *tl;
 			size_t          len;
 		}               link[LINK_DIR][LINK_NAMES];
 		size_t          linkutil[LINK_DIR][LINK_NAMES];
 		size_t          mbox_start;	/* for round-robin */
 		size_t          mbox_new;	/* new messages */
-		struct msg    **mbox;
+		struct Msg    **mbox;
 	}              *nd;
 } Net;				/* processor network */
 
-Net            *Net_create(size_t, size_t, size_t);
-void            Net_destroy(Net *);
-
-void            Net_setpc(Net *, size_t, uint32_t);
-
-int             Net_progld(Net *, size_t, unsigned char *);
-
-void            Net_runsim(Net *);
-
-void            Net_perfct(Net *, char *);
+int             Net_execute(Net *);

@@ -6,30 +6,23 @@
 
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <libgen.h>
-#include <limits.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 #include "cpu.h"
 #include "mem.h"
-#include "datapath.h"
 
 /* Implements */
 #include "net.h"
 
 #define Y(a, b) b,
 static const char *linkname[] = {
-	LinknameList
+	LinkNameList
 };
 #undef Y
 
-static int         link_insmsg(struct link *, struct msg *);
-static struct msg *link_remmsg(struct link *);
+static int         link_insmsg(struct Link *, struct Msg *);
+static struct Msg *link_remmsg(struct Link *);
 
 static int      input(Net *, size_t, size_t);
 static int      output(Net *, size_t, size_t);
@@ -40,18 +33,7 @@ static void     fwd(Net *, size_t);
 static void     hop(Net *, uint32_t);
 static int      operate(Net *, size_t);
 
-static int      execute(Net *);
-
-Net            *Net_create(size_t, size_t, size_t);
-void            Net_destroy(Net *);
-
-void            Net_setpc(Net *, size_t, uint32_t);
-
-int             Net_progld(Net *, size_t, unsigned char *);
-
-void            Net_runsim(Net *);
-
-void            Net_perfct(Net *, char *);
+int             Net_execute(Net *);
 
 /*
  * link_insmsg: insert message on link
@@ -64,7 +46,7 @@ void            Net_perfct(Net *, char *);
  */
 static
 int
-link_insmsg(struct link *link, struct msg *msg)
+link_insmsg(struct Link *link, struct Msg *msg)
 {
 	if (link->len == LINK_BUFSZ) {
 		return -1;
@@ -92,10 +74,10 @@ link_insmsg(struct link *link, struct msg *msg)
  * Returns a pointer to the removed message if sucessfull, NULL otherwise.
  */
 static
-struct msg *
-link_remmsg(struct link *link)
+struct Msg *
+link_remmsg(struct Link *link)
 {
-	struct msg     *msg;
+	struct Msg     *msg;
 
 	if (!link->hd) {
 		return NULL;
@@ -130,9 +112,9 @@ input(Net *net, size_t from, size_t to)
 
 	uint32_t        hops;
 
-	struct msg     *msg, *ack;
+	struct Msg     *msg, *ack;
 
-	struct link    *olink;
+	struct Link    *olink;
 
 	msg = net->nd[to].mbox[from];
 
@@ -207,9 +189,9 @@ output(Net *net, size_t to, size_t from)
 
 	uint32_t        st;
 
-	struct msg     *msg;
+	struct Msg     *msg;
 
-	struct link    *olink;
+	struct Link    *olink;
 
 	st = CPU_mfc2(net->nd[from].cpu, COP2_MSG, COP2_MSG_ST);
 
@@ -308,8 +290,8 @@ alt(Net *net, uint32_t *clauses, size_t to)
 
 	size_t          i, cur;
 
-	struct msg     *msg, *ack;
-	struct link    *olink;
+	struct Msg     *msg, *ack;
+	struct Link    *olink;
 
 	ncl = CPU_mfc2(net->nd[to].cpu, COP2_MSG, COP2_MSG_NCL);
 
@@ -453,9 +435,9 @@ fwd(Net *net, size_t id)
 
 	uint32_t        nmsg;
 
-	struct msg     *msg;
+	struct Msg     *msg;
 
-	struct link    *in, *out;
+	struct Link    *in, *out;
 
 	for (ilink = LINK_NORTH; ilink < LINK_NAMES; ++ilink) {
 		in = &(net->nd[id].link[LINK_IN][ilink]);
@@ -516,9 +498,9 @@ hop(Net *net, uint32_t id)
 
 	uint32_t        nxt;
 
-	struct msg     *msg;
+	struct Msg     *msg;
 
-	struct link    *out, *in;
+	struct Link    *out, *in;
 
 	for (olink = LINK_NORTH; olink < LINK_NAMES; ++olink) {
 		oob = 0;
@@ -620,15 +602,14 @@ operate(Net *net, size_t id)
 }
 
 /*
- * execute: network cycle
+ * Net_execute: network cycle
  *
  * net: network
  *
  * Returns 0 if success, -1 otherwise.
  */
-static
 int
-execute(Net *net)
+Net_execute(Net *net)
 {
 	int             errnum;
 
@@ -652,241 +633,4 @@ execute(Net *net)
 	}
 
 	return 0;
-}
-
-/*
- * Net_create: create cpu network
- *
- * x:     number of processors on the x axis
- * y:     number of processors on the y axis
- * memsz: memory size
- *
- * Returns network if success, NULL otherwise. In case of failure, errno is set
- * to correspondent error number.
- *
- *	ENOMEM: Could not allocate the network object because some memory
- *		allocation failed.
- */
-Net *
-Net_create(size_t x, size_t y, size_t memsz)
-{
-	size_t          i;
-
-	Net            *net;
-
-	errno = 0;
-
-	if (!(net = malloc(sizeof(Net)))) {
-		errno = ENOMEM;
-		return NULL;
-	}
-
-	net->cycle = 0;
-
-	net->x = x;
-	net->y = y;
-	net->size = x * y;
-	net->nrun = net->size;
-
-	if (!(net->nd = malloc(sizeof(struct node) * net->size))) {
-		errno = ENOMEM;
-		return NULL;
-	}
-
-	for (i = 0; i < net->size; ++i) {
-		if (!(net->nd[i].cpu = CPU_create(i))) {
-			errno = ENOMEM;
-			return NULL;
-		}
-
-		if (!(net->nd[i].mem = Mem_create(memsz, 1))) {
-			errno = ENOMEM;
-			return NULL;
-		}
-
-		memset(net->nd[i].link, 0,
-		       sizeof(struct link) * LINK_DIR * LINK_NAMES);
-
-		memset(net->nd[i].linkutil, 0,
-		       sizeof(size_t) * LINK_DIR * LINK_NAMES);
-
-		net->nd[i].mbox_start = 0;
-		net->nd[i].mbox_new = 0;
-		if (!(net->nd[i].mbox =
-		      malloc(sizeof(struct msg *) * net->size))) {
-			errno = ENOMEM;
-			return NULL;
-		}
-	}
-
-	return net;
-}
-
-/*
- * Net_destroy: deallocate network object
- *
- * net: network object
- */
-void
-Net_destroy(Net *net)
-{
-	size_t          i;
-
-	for (i = 0; i < net->size; ++i) {
-		CPU_destroy(net->nd[i].cpu);
-		Mem_destroy(net->nd[i].mem);
-	}
-}
-
-/*
- * Net_setpc: set a program counter to a cpu on the network
- *
- * net: network
- * id: id of the cpu to set the program counter
- * pc: program counter
- *
- */
-inline void
-Net_setpc(Net *net, size_t id, uint32_t pc)
-{
-	CPU_setpc(net->nd[id].cpu, pc);
-}
-
-/*
- * Net_progld: loads program to all nodes in the network
- *
- * net: network
- * elf: ELF image
- *
- * Returns 0 if success, -1 otherwise. In case of failuere errno indicates the
- * error
- *
- * This function fails if:
- *	ENOSPC: could not load because the segment is out of bounds (inherited
- *		from Mem_progld).
- */
-int
-Net_progld(Net *net, size_t memsz, unsigned char *elf)
-{
-	size_t          i;
-
-	errno = 0;
-
-	if (Mem_progld(net->nd[0].mem, elf)) {
-		return -1;
-	}
-
-	for (i = 1; i < net->size; ++i) {
-		memcpy(net->nd[i].mem->data.b, net->nd[0].mem->data.b, memsz);
-	}
-
-	return 0;
-}
-
-/*
- * Net_runsim: run simulation
- *
- * net: network
- */
-void
-Net_runsim(Net *net)
-{
-	int             errcode;
-
-	size_t          i;
-
-	while (net->nrun > 0) {
-		for (i = 0; i < net->size; ++i) {
-			if (Datapath_execute(net->nd[i].cpu, net->nd[i].mem)) {
-				continue;
-			}
-			if (!net->nd[i].cpu->running) {
-				--net->nrun;
-			}
-		}
-		errcode = execute(net);
-		if (!errcode) {
-			++net->cycle;
-		} else {
-			return;
-		}
-		fflush(stdout);
-	}
-}
-
-/*
- * Net_perfct: print performance counters of the simulation
- *
- * net: network
- */
-void
-Net_perfct(Net *net, char *progname)
-{
-	int             fd;
-
-	size_t          i, j, k;
-
-	char            perfct[NAME_MAX];
-
-	sprintf(perfct, "./perfct_%s.csv", basename(progname));
-	if ((fd = open(perfct, O_WRONLY | O_CREAT | O_TRUNC,
-		       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0)
-		err(EXIT_FAILURE, "open: %s", perfct);
-
-	dprintf(fd, "id,cycles,"
-		"loads,ld defer,"
-		"stores,st defer,"
-		"ll,ll defer,"
-		"sc,sc defer,"
-		"rmwfail,"
-		"ct0,"
-		"ninput,noutput,nalt,"
-		"waitin,waitout,waitalt,"
-		"hops,nmsg,"
-		"linkutil[in].north,linkutil[in].east,"
-		"linkutil[in].south,linkutil[in].west,"
-		"linkutil[out].north,linkutil[out].east,"
-		"linkutil[out].south,linkutil[out].west\n");
-	dprintf(fd, "net,%lu\n", net->cycle);
-	for (i = 0; i < net->size; ++i) {
-		dprintf(fd, "%u,%lu,"	/* id,cycles */
-			"%lu,%lu,"	/* loads,ld defer */
-			"%lu,%lu,"	/* stores, st defer */
-			"%lu,%lu,"	/* ll, ll defer */
-			"%lu,%lu,%lu,"	/* sc, sc defer,rmwfail */
-			"%lu,"		/* ct0 */
-			"%lu,%lu,%lu,"	/* ninput, noutput, nalt */
-			"%lu,%lu,%lu,"	/* waitin, waitout, waitalt */
-			"%lu,%lu",	/* hops, nmsg */
-			net->nd[i].cpu->gpr[K0],
-			net->nd[i].cpu->perfct.cycle,
-			net->nd[i].cpu->perfct.ld,
-			net->nd[i].cpu->perfct.lddefer,
-			net->nd[i].cpu->perfct.st,
-			net->nd[i].cpu->perfct.stdefer,
-			net->nd[i].cpu->perfct.ll,
-			net->nd[i].cpu->perfct.lldefer,
-			net->nd[i].cpu->perfct.sc,
-			net->nd[i].cpu->perfct.scdefer,
-			net->nd[i].cpu->perfct.rmwfail,
-			net->nd[i].cpu->perfct.ct[0].ct,
-			net->nd[i].cpu->perfct.nin,
-			net->nd[i].cpu->perfct.nout,
-			net->nd[i].cpu->perfct.nalt,
-			net->nd[i].cpu->perfct.waitin,
-			net->nd[i].cpu->perfct.waitout,
-			net->nd[i].cpu->perfct.waitalt,
-			CPU_mfc2(net->nd[i].cpu, COP2_MSG, COP2_MSG_HOPS),
-			CPU_mfc2(net->nd[i].cpu, COP2_MSG, COP2_MSG_NMSG));
-		for (j = 0; j < LINK_DIR; ++j) {
-			for (k = 0; k < LINK_NAMES; ++k) {
-				dprintf(fd, ",%lu", net->nd[i].linkutil[j][k]);
-			}
-		}
-		dprintf(fd, "\n");
-	}
-
-	if (close(fd) < 0) {
-		err(EXIT_FAILURE, "close");
-	}
 }
