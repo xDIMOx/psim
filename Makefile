@@ -4,7 +4,7 @@
 
 include config.mk
 
-SRC = main.c cpu.c mem.c datapath.c net.c shrmem.c
+SRC = main.c cpu.c mem.c datapath.c net.c shrmem.c dstbmem.c
 OBJ = ${SRC:.c=.o}
 
 all: psim
@@ -19,6 +19,7 @@ mem.o: mem.c mem.h
 datapath.o: datapath.c datapath.h cpu.h mem.h instr.h
 net.o: net.c net.h
 shrmem.o: shrmem.c shrmem.h simutil.h cpu.h mem.h datapath.h
+dstbmem.o: dstbmem.c cpu.h mem.h net.h simutil.h
 
 psim: ${OBJ}
 	@echo CC -o $@
