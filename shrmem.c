@@ -114,7 +114,7 @@ perfct(CPU **cpu, size_t ncpu, char *progname)
  * memsz: memory size
  * prog: information about the program to be executed
  *
- * Returns 0 if the simulation completed successfully, 1 otherwise.
+ * Returns 0 if the simulation completed successfully, -1 otherwise.
  */
 int
 ShrMem_run(size_t ncpu, size_t memsz, struct ProgInfo *prog)
@@ -131,19 +131,19 @@ ShrMem_run(size_t ncpu, size_t memsz, struct ProgInfo *prog)
 
 	if (!(cpu = malloc(sizeof(CPU *) * ncpu))) {
 		warn("ShrMem_run -- could not allocate processors");
-		return 1;
+		return -1;
 	}
 
 	for (i = 0; i < ncpu; ++i) {
 		if (!(cpu[i] = CPU_create(i))) {
 			warn("ShrMem_run -- CPU_create(%lu)", i);
-			return 1;
+			return -1;
 		}
 	}
 
 	if (!(mem = Mem_create(memsz, ncpu))) {
 		warn("ShrMem_run -- Mem_create");
-		return 1;
+		return -1;
 	}
 
 	/*
@@ -151,7 +151,7 @@ ShrMem_run(size_t ncpu, size_t memsz, struct ProgInfo *prog)
 	 */
 	if ((errno = Mem_progld(mem, prog->elf))) {
 		warn("ShrMem_run -- Mem_progld");
-		return 1;
+		return -1;
 	}
 
 	for (i = 0; i < ncpu; ++i) {
@@ -161,7 +161,6 @@ ShrMem_run(size_t ncpu, size_t memsz, struct ProgInfo *prog)
 	/* free memory after loading */
 	if (munmap(prog->elf, prog->size) < 0) {
 		warn("ShrMem_run -- munmap");
-		return 1;
 	}
 
 	ret = sim(cpu, ncpu, mem);
