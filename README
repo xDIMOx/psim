@@ -15,11 +15,12 @@ interruptions of any kind.
 This simulator is intended to be a multiprocessor simulator and have two modes
 of operation:
 	* A shared memory mode;
-	* A networked mode, with distributed memory. By network, understand
-	  it as a NxM 2D mesh, where each node is a processor, each node having
-	  private memory and communication links which uses to communicate with
-	  the rest of the processors. This behavior is to simulate how the
-	  transputer network capabilities were initially conceived.
+	* A networked mode, with distributed memory. By network,
+	  understand it as a NxM 2D mesh, where each node is a processor,
+	  each node having private memory and communication links
+	  which uses to communicate with its neighbors. This behavior
+	  is to simulate how the transputer network capabilities were
+	  initially conceived.
 
 The objective of this simulator is to compare the performance of equivalent
 programs built specifically to run on both modes supported.
@@ -32,11 +33,11 @@ OPTIONS:
 
 EXAMPLES:
 To run the examples conveniently:
-	examples/helpers/run_exp -h
+	`examples/helpers/run_exp -h`
 
-Probably REPOBASEDIR will have to be set correctly, the easiest way to
-do so is to run from the root of the repository:
-	REPOBASEDIR=. examples/helpers/run_exp -p TARGET
+Probably the variable `REPOBASEDIR` will have to be set correctly, the easiest
+way to do so is to run from the root of the repository:
+	`REPOBASEDIR=. examples/helpers/run_exp -p TARGET`
 
 TODO:
 Multi-threaded simulation;
@@ -53,16 +54,16 @@ To build the simulator:
 
 To build the examples:
 	* Build dependencies: MIPSEL capable assembler, compiler and linker.
-		To be fair, the assembly files were written with GNU as(1) in
-		mind, nonetheless, it should be easy to port to another
-		assembler, given that no fancy features were used. Anecdotal
-		evidence points that GNU as(1) is the most available option,
-		so in the end, this is a non-issue.
+		To be fair, the assembly files were written for GNU as(1),
+		nonetheless, it should be easy to port to another assembler,
+		given that no fancy features were used. Anecdotal evidence
+		points that GNU as(1) is the most available option, so in
+		the end, this is a non-issue.
 	* cd examples/src
 	* check config.mk and, if needed, set compiler and flags to your liking
 	* make
 		It is possible to build individual programs by running
-		make PROGRAM_NAME, where PROGRAM_NAME is the program's file
+		`make PROGRAM_NAME`, where PROGRAM_NAME is the program's file
 		name excluding the '.c'
 
 Although it can simulate multiple processors, the simulator itself runs on
@@ -94,10 +95,10 @@ to how CSP was initially defined in 1978.
 
 If the INSTRDUMP macro is set when compiling (it is not by default) files
 called cpuXXXX_instrdump will be created when the program is executed. To check
-these files a MIPSEL capable disassembler is needed (it is possible to use
+these files, a MIPSEL capable disassembler is needed (it is possible to use
 hexdump(1) but this will make the debugging process even worse). For example,
 using GNU objdump(1):
-	objdump -b binary -m mips -EL -Mno-aliases -D cpuXXXX_instrdump
+	`objdump -b binary -m mips -EL -Mno-aliases -D cpuXXXX_instrdump`
 
 If the VERBOSE macro is set when compiling (it is not by default) the simulator
 will print additional warning messages to stderr, maybe useful for debugging.
@@ -114,9 +115,9 @@ running the examples, otherwise the simulation can hang forever.
 If you read Portuguese and want to check my bachelor thesis for
 my analysis of both modes of multiprocessing, it is available at
 <https://dalmon.xyz/tg_dalmon.pdf>. Otherwise, to sum it up, the CSP-like mode
-of multiprocessing is promising, but I made a mistake, my implementations are
-naive (a.k.a they are semantically right, but performance-wise they are not
-great). For the producer-consumer problem, CSP-like multiprocessing gave faster
-execution times and less code than the shared memory version. For the dining
-philosophers problem, CSP-like multiprocessing is slower and the code is bigger
-than the shared memory version.
+of multiprocessing is promising, but I made a mistake, my implementations
+are naive (i.e they are semantically right, but performance-wise they are
+not great). For the producer-consumer problem, CSP-like multiprocessing gave
+faster execution times and less code than the shared memory version. For the
+dining philosophers problem, CSP-like multiprocessing is slower and the code
+is bigger than the shared memory version.
