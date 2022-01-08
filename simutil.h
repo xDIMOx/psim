@@ -12,7 +12,7 @@ enum Org {
 
 struct ProgInfo {
 	off_t           size;
-	Elf32_Addr      entry;
+	size_t          entry;
 	char           *name;
 	unsigned char  *elf;
 };
