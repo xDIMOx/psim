@@ -23,6 +23,9 @@ typedef struct {
 Mem            *Mem_create(size_t, size_t);
 void            Mem_destroy(Mem *);
 
+Mem            *Mem_createarr(size_t size, size_t nmem);
+void            Mem_destroyarr(Mem *arr);
+
 int             Mem_busacc(uint32_t);
 void            Mem_busclr(void);
 size_t          Mem_busutil(void);

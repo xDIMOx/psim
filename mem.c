@@ -36,6 +36,9 @@ static struct {
 Mem            *Mem_create(size_t, size_t);
 void            Mem_destroy(Mem *);
 
+Mem            *Mem_createarr(size_t size, size_t nmem);
+void            Mem_destroyarr(Mem *arr);
+
 int             Mem_busacc(uint32_t);
 void            Mem_busclr(void);
 size_t          Mem_busutil(void);
@@ -119,6 +122,45 @@ Mem_destroy(Mem *mem)
 	}
 
 	free(mem);
+}
+
+/*
+ * Mem_createarr: create array of memories
+ *
+ */
+Mem *
+Mem_createarr(size_t size, size_t nmem)
+{
+	uint8_t        *arr;
+
+	size_t          i;
+	size_t          off;
+
+	Mem            *marr;
+
+	if (!(marr = malloc(sizeof(Mem) * nmem)) ||
+	    !(arr = malloc(sizeof(uint8_t) * size * nmem))) {
+		errno = ENOMEM;
+		return NULL;
+	}
+
+	for (i = off = 0; i < nmem; ++i, off += size) {
+		marr[i].data.b = &arr[off];
+		marr[i].size = size;
+	}
+
+	return marr;
+}
+
+/*
+ * Mem_destroyarr: destroy array of memories
+ *
+ */
+void
+Mem_destroyarr(Mem *arr)
+{
+	free(arr[0].data.b);
+	free(arr);
 }
 
 /*
