@@ -27,9 +27,9 @@
 /* Implements */
 #include "shrmem.h"
 
-static int      sim(CPU **, size_t, Mem *);
+static int      sim(CPU *, size_t, Mem *);
 
-static void     perfct(CPU **, size_t, char *);
+static void     perfct(CPU *, size_t, char *);
 
 int             ShrMem_run(size_t, size_t, struct ProgInfo *);
 
@@ -37,7 +37,7 @@ int             ShrMem_run(size_t, size_t, struct ProgInfo *);
  * Program execution
  */
 static int
-sim(CPU **cpu, size_t ncpu, Mem *mem)
+sim(CPU *cpu, size_t ncpu, Mem *mem)
 {
 	size_t          i;
 	size_t          nrun;
@@ -46,9 +46,9 @@ sim(CPU **cpu, size_t ncpu, Mem *mem)
 	while (nrun > 0) {
 		Mem_busclr();
 		for (i = 0; i < ncpu; ++i) {
-			if (Datapath_execute(cpu[i], mem)) {
+			if (Datapath_execute(&cpu[i], mem)) {
 				continue;
-			} else if (!cpu[i]->running) {
+			} else if (!cpu[i].running) {
 				--nrun;
 			}
 		}
@@ -59,7 +59,7 @@ sim(CPU **cpu, size_t ncpu, Mem *mem)
 }
 
 static void
-perfct(CPU **cpu, size_t ncpu, char *progname)
+perfct(CPU *cpu, size_t ncpu, char *progname)
 {
 	int             fd;
 
@@ -92,14 +92,14 @@ perfct(CPU **cpu, size_t ncpu, char *progname)
 		            "%lu,%lu,"	/* sc, sc defer */
 		            "%lu,"	/* rmwfail */
 		            "%lu\n",	/* ct0 */
-			cpu[i]->gpr[K0],
-			cpu[i]->perfct.cycle,
-			cpu[i]->perfct.ld, cpu[i]->perfct.lddefer,
-			cpu[i]->perfct.st, cpu[i]->perfct.stdefer,
-			cpu[i]->perfct.ll, cpu[i]->perfct.lldefer,
-			cpu[i]->perfct.sc, cpu[i]->perfct.scdefer,
-			cpu[i]->perfct.rmwfail,
-			cpu[i]->perfct.ct[0].ct);
+			cpu[i].gpr[K0],
+			cpu[i].perfct.cycle,
+			cpu[i].perfct.ld, cpu[i].perfct.lddefer,
+			cpu[i].perfct.st, cpu[i].perfct.stdefer,
+			cpu[i].perfct.ll, cpu[i].perfct.lldefer,
+			cpu[i].perfct.sc, cpu[i].perfct.scdefer,
+			cpu[i].perfct.rmwfail,
+			cpu[i].perfct.ct[0].ct);
 	}
 
 	if (close(fd) < 0) {
@@ -121,24 +121,15 @@ ShrMem_run(size_t ncpu, size_t memsz, struct ProgInfo *prog)
 {
 	int             ret;
 
-	size_t          i;
-
-	CPU           **cpu;
+	CPU            *cpu;
 
 	Mem            *mem;
 
 	ret = 0;
 
-	if (!(cpu = malloc(sizeof(CPU *) * ncpu))) {
-		warn("ShrMem_run -- could not allocate processors");
+	if (!(cpu = CPU_create(ncpu, prog->entry))) {
+		warn("ShrMem_run -- CPU_create");
 		return -1;
-	}
-
-	for (i = 0; i < ncpu; ++i) {
-		if (!(cpu[i] = CPU_create(i))) {
-			warn("ShrMem_run -- CPU_create(%lu)", i);
-			return -1;
-		}
 	}
 
 	if (!(mem = Mem_create(memsz, ncpu))) {
@@ -154,10 +145,6 @@ ShrMem_run(size_t ncpu, size_t memsz, struct ProgInfo *prog)
 		return -1;
 	}
 
-	for (i = 0; i < ncpu; ++i) {
-		CPU_setpc(cpu[i], prog->entry);
-	}
-
 	/* free memory after loading */
 	if (munmap(prog->elf, prog->size) < 0) {
 		warn("ShrMem_run -- munmap");
@@ -167,9 +154,7 @@ ShrMem_run(size_t ncpu, size_t memsz, struct ProgInfo *prog)
 
 	perfct(cpu, ncpu, prog->name);
 
-	for (i = 0; i < ncpu; ++i) {
-		CPU_destroy(cpu[i]);
-	}
+	CPU_destroy(cpu);
 
 	Mem_destroy(mem);
 
