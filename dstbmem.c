@@ -28,10 +28,14 @@
 /* Implements */
 #include "dstbmem.h"
 
-static Net     *create(size_t x, size_t y, size_t memsz);
-static void     destroy(Net *);
+static CPU         *cpubank;
 
-static void     setpc(Net *, size_t, uint32_t);
+static Mem         *membank;
+
+static struct Msg **mboxes;
+
+static Net     *create(size_t, size_t, size_t, int32_t);
+static void     destroy(Net *);
 
 static int      progld(Net *, size_t, unsigned char *);
 
@@ -47,24 +51,28 @@ int             DstbMem_run(size_t, size_t, size_t, struct ProgInfo *);
  * x:     number of processors on the x axis
  * y:     number of processors on the y axis
  * memsz: memory size
+ * entry: program entry point
  *
  * Returns network if success, NULL otherwise. In case of failure, errno is set
  * to correspondent error number.
  *
+ * This function fails if:
  *	ENOMEM: Could not allocate the network object because some memory
  *		allocation failed.
  */
 static Net *
-create(size_t x, size_t y, size_t memsz)
+create(size_t x, size_t y, size_t memsz, int32_t entry)
 {
-	size_t          i;
+	size_t          i, off;
 
 	Net            *net;
 
-	errno = 0;
+	errno = ENOMEM;		/* assume an error is going to happen */
 
 	if (!(net = malloc(sizeof(Net)))) {
-		errno = ENOMEM;
+#ifdef VERBOSE
+		warn("%s create -- malloc(net)", __FILE__);
+#endif
 		return NULL;
 	}
 
@@ -75,36 +83,55 @@ create(size_t x, size_t y, size_t memsz)
 	net->size = x * y;
 	net->nrun = net->size;
 
-	if (!(net->nd = malloc(sizeof(struct Node) * net->size))) {
-		errno = ENOMEM;
+	/*
+	 * allocate CPUs
+	 */
+	if (!(cpubank = CPU_create(net->size, entry))) {
+#ifdef VERBOSE
+		warn("%s create -- CPU_create(%lu,%u)", __FILE__,
+		     net->size, entry);
+#endif
 		return NULL;
 	}
 
-	for (i = 0; i < net->size; ++i) {
-		if (!(net->nd[i].cpu = CPU_create(i))) {
-			errno = ENOMEM;
-			return NULL;
-		}
-
-		if (!(net->nd[i].mem = Mem_create(memsz, 1))) {
-			errno = ENOMEM;
-			return NULL;
-		}
-
-		memset(net->nd[i].link, 0,
-		       sizeof(struct Link) * LINK_DIR * LINK_NAMES);
-
-		memset(net->nd[i].linkutil, 0,
-		       sizeof(size_t) * LINK_DIR * LINK_NAMES);
-
-		net->nd[i].mbox_start = 0;
-		net->nd[i].mbox_new = 0;
-		if (!(net->nd[i].mbox =
-		      malloc(sizeof(struct msg *) * net->size))) {
-			errno = ENOMEM;
-			return NULL;
-		}
+	/*
+	 * allocate memories
+	 */
+	if (!(membank = Mem_createarr(memsz, net->size))) {
+#ifdef VERBOSE
+		warn("%s create -- Mem_createarr", __FILE__);
+#endif
+		return NULL;
 	}
+
+	/*
+	 * allocate mailboxes
+	 */
+	if (!(mboxes = malloc(sizeof(*mboxes) * net->size * net->size))) {
+#ifdef VERBOSE
+		warn("%s create -- malloc(mboxes)", __FILE__);
+#endif
+		return NULL;
+	}
+
+	/*
+	 * allocate network
+	 */
+	if (!(net->nd = malloc(sizeof(struct Node) * net->size))) {
+#ifdef VERBOSE
+		warn("%s create -- malloc(net->nd)", __FILE__);
+#endif
+		return NULL;
+	}
+	memset(net->nd, 0, sizeof(struct Node) * net->size);
+
+	for (off = i = 0; i < net->size; ++i, off += net->size) {
+		net->nd[i].cpu  = &cpubank[i];
+		net->nd[i].mem  = &membank[i];
+		net->nd[i].mbox = &mboxes[off];
+	}
+
+	errno = 0;		/* no errors occured */
 
 	return net;
 }
@@ -117,26 +144,10 @@ create(size_t x, size_t y, size_t memsz)
 static void
 destroy(Net *net)
 {
-	size_t          i;
-
-	for (i = 0; i < net->size; ++i) {
-		CPU_destroy(net->nd[i].cpu);
-		Mem_destroy(net->nd[i].mem);
-	}
-}
-
-/*
- * setpc: set a program counter to a cpu on the network
- *
- * net: network
- * id: id of the cpu to set the program counter
- * pc: program counter
- *
- */
-static inline void
-setpc(Net *net, size_t id, uint32_t pc)
-{
-	CPU_setpc(net->nd[id].cpu, pc);
+	CPU_destroy(cpubank);
+	Mem_destroyarr(membank);
+	free(mboxes);
+	free(net);
 }
 
 /*
@@ -145,12 +156,7 @@ setpc(Net *net, size_t id, uint32_t pc)
  * net: network
  * elf: ELF image
  *
- * Returns 0 if success, -1 otherwise. In case of failuere errno indicates the
- * error
- *
- * This function fails if:
- *	ENOSPC: could not load because the segment is out of bounds (inherited
- *		from Mem_progld).
+ * Returns 0 if success, -1 otherwise.
  */
 static int
 progld(Net *net, size_t memsz, unsigned char *elf)
@@ -159,7 +165,10 @@ progld(Net *net, size_t memsz, unsigned char *elf)
 
 	errno = 0;
 
-	if (Mem_progld(net->nd[0].mem, elf)) {
+	if ((errno = Mem_progld(net->nd[0].mem, elf))) {
+#ifdef VERBOSE
+		warn("%s progld -- Mem_progld", __FILE__);
+#endif
 		return -1;
 	}
 
@@ -297,14 +306,12 @@ DstbMem_run(size_t x, size_t y, size_t memsz, struct ProgInfo *prog)
 {
 	int             ret;
 
-	size_t          i;
-
 	Net            *net;
 
 	/*
 	 * Create network
 	 */
-	if (!(net = create(x, y, memsz))) {
+	if (!(net = create(x, y, memsz, prog->entry))) {
 		warn("DstbMem_run -- create");
 		return -1;
 	}
@@ -315,10 +322,6 @@ DstbMem_run(size_t x, size_t y, size_t memsz, struct ProgInfo *prog)
 	if (progld(net, memsz, prog->elf) < 0) {
 		warnx("DstbMem_run -- progld");
 		return -1;
-	}
-
-	for (i = 0; i < (x * y); ++i) {
-		setpc(net, i, prog->entry);
 	}
 
 	/* free memory after loading */
