@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef INSTRDUMP
 #include <err.h>
@@ -20,7 +21,7 @@
 /* Implements */
 #include "cpu.h"
 
-CPU            *CPU_create(uint32_t);
+CPU            *CPU_create(uint32_t, uint32_t);
 void            CPU_destroy(CPU *);
 
 void            CPU_setpc(CPU *, uint32_t);
@@ -31,16 +32,18 @@ int             CPU_mtc2(CPU *, uint32_t, uint32_t, uint32_t);
 /*
  * CPU_create: create CPU object
  *
- * id: CPU id
+ * ncpu: number of CPU to create
+ * pc: initial program counter
  *
- * Returns cpu if success, NULL otherwise, errno indicates the error.
+ * Returns array with ncpu cpus if success, NULL otherwise, errno
+ * indicates the error. Each cpu on the array have its id on register K0.
  *
  * This function fails if:
  *	ENOMEM: Could not allocate CPU.
  *	ENOENT: Could not create debug file (if debuging is enabled).
  */
 CPU *
-CPU_create(uint32_t id)
+CPU_create(uint32_t ncpu, uint32_t pc)
 {
 	size_t          i;
 
@@ -48,23 +51,17 @@ CPU_create(uint32_t id)
 
 	errno = 0;
 
-	if (!(cpu = malloc(sizeof(CPU)))) {
+	if (!(cpu = malloc(sizeof(CPU) * ncpu))) {
 		errno = ENOMEM;
 		return NULL;
 	}
 
-	cpu->running = 1;
-	cpu->gpr[K0] = id;
-	cpu->perfct.cycle = 0;
-	cpu->perfct.ld = cpu->perfct.lddefer = 0;
-	cpu->perfct.st = cpu->perfct.stdefer = 0;
-	cpu->perfct.ll = cpu->perfct.lldefer = 0;
-	cpu->perfct.sc = cpu->perfct.scdefer = 0;
-	cpu->perfct.rmwfail = 0;
-	cpu->perfct.nin = cpu->perfct.nout = 0;
-	cpu->perfct.waitin = cpu->perfct.waitout = cpu->perfct.waitalt = 0;
-	for (i = 0; i < NCOUNTERS; ++i) {
-		cpu->perfct.ct[i].en = cpu->perfct.ct[i].ct = 0;
+	memset(cpu, 0, sizeof(CPU) * ncpu);
+
+	for (i = 0; i < ncpu; ++i) {
+		cpu[i].pc      = pc;
+		cpu[i].running = 1;
+		cpu[i].gpr[K0] = i;
 	}
 
 #ifdef INSTRDUMP

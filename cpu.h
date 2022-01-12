@@ -162,7 +162,7 @@ typedef struct {
 #endif
 } CPU;
 
-CPU            *CPU_create(uint32_t);
+CPU            *CPU_create(uint32_t, uint32_t);
 void            CPU_destroy(CPU *);
 
 void            CPU_setpc(CPU *, uint32_t);
