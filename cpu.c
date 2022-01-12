@@ -24,8 +24,6 @@
 CPU            *CPU_create(uint32_t, uint32_t);
 void            CPU_destroy(CPU *);
 
-void            CPU_setpc(CPU *, uint32_t);
-
 int64_t         CPU_mfc2(CPU *, uint32_t, uint32_t);
 int             CPU_mtc2(CPU *, uint32_t, uint32_t, uint32_t);
 
@@ -92,18 +90,6 @@ CPU_destroy(CPU *cpu)
 	}
 #endif
 	free(cpu);
-}
-
-/*
- * CPU_setpc: set program counter
- *
- * cpu: cpu object
- * pc:  program counter
- */
-inline void
-CPU_setpc(CPU *cpu, uint32_t pc)
-{
-	cpu->pc = pc;
 }
 
 /*

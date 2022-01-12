@@ -165,7 +165,5 @@ typedef struct {
 CPU            *CPU_create(uint32_t, uint32_t);
 void            CPU_destroy(CPU *);
 
-void            CPU_setpc(CPU *, uint32_t);
-
 int64_t         CPU_mfc2(CPU *, uint32_t, uint32_t);
 int             CPU_mtc2(CPU *, uint32_t, uint32_t, uint32_t);
